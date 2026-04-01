@@ -1,1 +1,513 @@
 
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Vetraj — Free Pet Consultation</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{--blue:#1a5a8a;--green:#22c55e;--bg:#f0f4f8;--white:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--red:#ef4444;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);display:flex;flex-direction:column;}
+
+/* HEADER */
+.hdr{background:var(--blue);padding:11px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;box-shadow:0 2px 10px rgba(0,0,0,.2);}
+.hdr-logo{width:38px;height:38px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.hdr-info{flex:1;}
+.hdr-name{font-size:13.5px;font-weight:700;color:#fff;}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,.75);display:flex;align-items:center;gap:5px;margin-top:2px;}
+.pulse{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.free-tag{background:#22c55e;color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:10px;flex-shrink:0;letter-spacing:.5px;}
+
+/* MESSAGES */
+.msgs{flex:1;overflow-y:auto;padding:12px 10px 6px;display:flex;flex-direction:column;gap:11px;}
+.msgs::-webkit-scrollbar{width:3px;}
+.msgs::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:2px;}
+
+/* ROWS */
+.row{display:flex;align-items:flex-end;gap:8px;animation:slideUp .2s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.row.user{flex-direction:row-reverse;}
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.av.doc{background:linear-gradient(135deg,#1a5a8a,#2777b5);}
+.av.usr{background:linear-gradient(135deg,#22c55e,#16a34a);}
+.bubble{max-width:82%;padding:10px 13px;border-radius:15px;font-size:13.5px;line-height:1.75;}
+.bubble.doc{background:#fff;border:1px solid var(--border);border-bottom-left-radius:3px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.bubble.usr{background:var(--blue);color:#fff;border-bottom-right-radius:3px;}
+.ts{font-size:10px;color:var(--muted);margin:2px 4px;}
+
+/* TYPING */
+.typing-row{display:flex;align-items:flex-end;gap:8px;}
+.tbubble{background:#fff;border:1px solid var(--border);padding:12px 15px;border-radius:15px;border-bottom-left-radius:3px;display:flex;gap:4px;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.dot{width:7px;height:7px;border-radius:50%;background:#94a3b8;animation:bounce .7s ease-in-out infinite;}
+.dot:nth-child(2){animation-delay:.12s;}.dot:nth-child(3){animation-delay:.24s;}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+
+/* QUICK BUTTONS */
+.quick-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.qbtn{background:#fff;border:1.5px solid var(--blue);color:var(--blue);padding:7px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;font-family:'Poppins',sans-serif;transition:all .15s;line-height:1.3;}
+.qbtn:active,.qbtn:hover{background:var(--blue);color:#fff;}
+
+/* BOTTOM */
+.bottom{background:#fff;border-top:1px solid var(--border);padding:8px 12px 12px;flex-shrink:0;box-shadow:0 -3px 12px rgba(0,0,0,.07);}
+
+/* MODE TOGGLE */
+.mode-row{display:flex;background:#f1f5f9;border-radius:10px;padding:3px;gap:2px;margin-bottom:9px;}
+.mbtn{flex:1;padding:7px 6px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;transition:all .2s;background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:5px;}
+.mbtn.active{background:var(--blue);color:#fff;box-shadow:0 2px 7px rgba(26,90,138,.35);}
+
+/* TEXT INPUT */
+.text-row{display:flex;gap:8px;align-items:flex-end;}
+.txt{flex:1;background:#f8fafc;border:1.5px solid var(--border);border-radius:22px;padding:10px 15px;font-family:'Poppins',sans-serif;font-size:13.5px;color:var(--text);outline:none;resize:none;max-height:80px;line-height:1.5;transition:border-color .2s;}
+.txt:focus{border-color:var(--blue);}
+.txt::placeholder{color:#94a3b8;}
+.send{width:43px;height:43px;background:var(--blue);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:16px;color:#fff;transition:all .2s;box-shadow:0 2px 8px rgba(26,90,138,.35);}
+.send:disabled{background:#94a3b8;box-shadow:none;cursor:not-allowed;}
+.send:active{transform:scale(.94);}
+
+/* VOICE */
+.voice-wrap{display:flex;flex-direction:column;align-items:center;gap:9px;padding:2px 0;}
+.voice-preview{background:#f0fdf4;border:1px solid #86efac;border-radius:9px;padding:7px 14px;font-size:12.5px;color:#15803d;width:100%;text-align:center;min-height:32px;display:none;font-style:italic;}
+.speak-bars{display:none;align-items:center;justify-content:center;gap:3px;height:26px;}
+.bar{width:3px;border-radius:2px;background:var(--blue);animation:spk .5s ease-in-out infinite;}
+.bar:nth-child(1){height:10px}.bar:nth-child(2){height:18px;animation-delay:.07s}
+.bar:nth-child(3){height:14px;animation-delay:.14s}.bar:nth-child(4){height:22px;animation-delay:.21s}
+.bar:nth-child(5){height:12px;animation-delay:.28s}
+@keyframes spk{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+.mic-btn{width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;font-size:26px;transition:all .25s;display:flex;align-items:center;justify-content:center;position:relative;}
+.mic-btn.idle{background:var(--blue);box-shadow:0 4px 16px rgba(26,90,138,.45);}
+.mic-btn.listening{background:var(--red);animation:mpulse .85s ease-in-out infinite;}
+.mic-btn.processing{background:#f59e0b;}
+@keyframes mpulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.45)}50%{box-shadow:0 0 0 14px rgba(239,68,68,0)}}
+.mic-label{font-size:11.5px;font-weight:500;color:var(--muted);}
+.mic-label.listening{color:var(--red);font-weight:600;}
+.mic-label.processing{color:#f59e0b;font-weight:600;}
+
+/* TOAST */
+.toast-box{position:fixed;bottom:130px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:9px 18px;border-radius:22px;font-size:12px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3);}
+.toast-box.visible{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-logo">🐾</div>
+  <div class="hdr-info">
+    <div class="hdr-name">Dr. Mohit Saini — Vetraj Pet Hospital</div>
+    <div class="hdr-sub">
+      <div class="pulse"></div>
+      Online — Abhi Available Hain
+    </div>
+  </div>
+  <div class="free-tag">FREE</div>
+</div>
+
+<div class="msgs" id="msgs">
+  <div class="row" id="opening-row">
+    <div class="av doc">👨‍⚕️</div>
+    <div>
+      <div class="bubble doc">
+        Namaskar! 🙏 Main Dr. Mohit hun — Vetraj Pet Hospital se.<br><br>
+        Bataiye — aapke pet ko kya takleef ho rahi hai? Seedha batao, main sun raha hun.
+      </div>
+      <div class="ts">Dr. Mohit • Abhi</div>
+      <div class="quick-wrap" id="quick-buttons">
+        <button class="qbtn" onclick="quickSend('Khansi aa rahi hai')">🤧 Khansi</button>
+        <button class="qbtn" onclick="quickSend('Loose motion ho raha hai')">💩 Loose Motion</button>
+        <button class="qbtn" onclick="quickSend('Ulti ho rahi hai')">🤢 Ulti</button>
+        <button class="qbtn" onclick="quickSend('Khana nahi kha raha')">🍽️ Khana Nahi</button>
+        <button class="qbtn" onclick="quickSend('Bahut thaka hua hai')">😴 Kamzori</button>
+        <button class="qbtn" onclick="quickSend('Khujali aur skin problem hai')">🐾 Skin/Khujali</button>
+        <button class="qbtn" onclick="quickSend('Aankhon mein problem hai')">👁️ Aankhein</button>
+        <button class="qbtn" onclick="quickSend('Kuch aur problem hai')">❓ Kuch Aur</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-box" id="toast"></div>
+
+<div class="bottom">
+  <div class="mode-row">
+    <button class="mbtn active" id="text-btn" onclick="switchMode('text')">⌨️ Type Karein</button>
+    <button class="mbtn" id="voice-btn" onclick="switchMode('voice')">🎙️ Bol Kar Batayein</button>
+  </div>
+
+  <div class="text-row" id="text-area">
+    <textarea class="txt" id="user-input" placeholder="Apni problem yahan likhein..."
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage();}"
+      oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px'"
+      rows="1"></textarea>
+    <button class="send" id="send-btn" onclick="sendMessage()">➤</button>
+  </div>
+
+  <div class="voice-wrap" id="voice-area" style="display:none;">
+    <div class="voice-preview" id="voice-preview"></div>
+    <div class="speak-bars" id="speak-bars">
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      <div class="bar"></div><div class="bar"></div>
+    </div>
+    <button class="mic-btn idle" id="mic-button" onclick="toggleMic()">🎙️</button>
+    <div class="mic-label" id="mic-label">Mic dabao aur apni problem bolein</div>
+  </div>
+</div>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// BACKEND URL — Replit ka URL yahan daalo
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const BACKEND = window.location.origin;
+// Replit pe host karne ke baad yeh automatically sahi rahega
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// STATE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let chatHistory = [];
+let isBusy = false;
+let currentMode = "text";
+let speechRecognition = null;
+let isListening = false;
+let isSpeaking = false;
+let voiceList = [];
+
+// Load voices
+if (window.speechSynthesis) {
+  window.speechSynthesis.onvoiceschanged = () => { voiceList = window.speechSynthesis.getVoices(); };
+  voiceList = window.speechSynthesis.getVoices();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// HELPERS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const getTime = () => new Date().toLocaleTimeString("hi-IN", { hour: "2-digit", minute: "2-digit" });
+const el = (id) => document.getElementById(id);
+
+function scrollToBottom() {
+  setTimeout(() => {
+    const msgs = el("msgs");
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 80);
+}
+
+function showToast(msg, duration = 2500) {
+  const t = el("toast");
+  t.textContent = msg;
+  t.classList.add("visible");
+  setTimeout(() => t.classList.remove("visible"), duration);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ADD MESSAGES TO CHAT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function addMessage(text, isUser) {
+  const msgs = el("msgs");
+  const row = document.createElement("div");
+  row.className = `row${isUser ? " user" : ""}`;
+
+  if (isUser) {
+    row.innerHTML = `
+      <div class="ts">${getTime()}</div>
+      <div class="bubble usr">${text}</div>
+      <div class="av usr">👤</div>`;
+  } else {
+    row.innerHTML = `
+      <div class="av doc">👨‍⚕️</div>
+      <div>
+        <div class="bubble doc">${text.replace(/\n/g, "<br>")}</div>
+        <div class="ts">Dr. Mohit • ${getTime()}</div>
+      </div>`;
+  }
+
+  msgs.appendChild(row);
+  scrollToBottom();
+}
+
+function showTypingIndicator() {
+  const msgs = el("msgs");
+  const div = document.createElement("div");
+  div.className = "typing-row";
+  div.id = "typing-indicator";
+  div.innerHTML = `
+    <div class="av doc">👨‍⚕️</div>
+    <div class="tbubble">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>`;
+  msgs.appendChild(div);
+  scrollToBottom();
+}
+
+function removeTypingIndicator() {
+  const t = el("typing-indicator");
+  if (t) t.remove();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// MAIN: SEND MESSAGE TO BACKEND
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function processMessage(text, fromVoice = false) {
+  if (isBusy) return;
+  isBusy = true;
+  el("send-btn").disabled = true;
+
+  // Remove quick buttons
+  const qb = el("quick-buttons");
+  if (qb) qb.remove();
+
+  addMessage(text, true);
+  chatHistory.push({ role: "user", content: text });
+  showTypingIndicator();
+
+  // Natural human-like delay
+  const delay = 900 + Math.random() * 1300;
+  await new Promise((r) => setTimeout(r, delay));
+
+  let reply = "Thoda issue aa gaya — dobara try karein 🙏";
+
+  try {
+    const response = await fetch(`${BACKEND}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: chatHistory }),
+    });
+
+    const data = await response.json();
+    reply = data.reply || reply;
+  } catch (err) {
+    console.error("Backend error:", err);
+    reply = "Connection issue — ek baar dobara try karein 🙏";
+  }
+
+  chatHistory.push({ role: "assistant", content: reply });
+  removeTypingIndicator();
+  addMessage(reply, false);
+
+  // Voice mode mein bolega bhi
+  if (fromVoice || currentMode === "voice") {
+    speakReply(reply);
+  } else {
+    isBusy = false;
+    el("send-btn").disabled = false;
+  }
+}
+
+function sendMessage() {
+  const input = el("user-input");
+  const text = input.value.trim();
+  if (!text || isBusy) return;
+  input.value = "";
+  input.style.height = "auto";
+  processMessage(text, false);
+}
+
+function quickSend(text) {
+  if (isBusy) return;
+  processMessage(text, currentMode === "voice");
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// MODE SWITCH
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function switchMode(mode) {
+  currentMode = mode;
+
+  if (mode === "text") {
+    el("text-area").style.display = "flex";
+    el("voice-area").style.display = "none";
+    el("text-btn").classList.add("active");
+    el("voice-btn").classList.remove("active");
+    if (isListening) stopListening();
+  } else {
+    el("text-area").style.display = "none";
+    el("voice-area").style.display = "flex";
+    el("text-btn").classList.remove("active");
+    el("voice-btn").classList.add("active");
+    setupRecognition();
+    showToast("🎙️ Mic dabao aur apni problem bolein");
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// VOICE RECOGNITION (SUNNA)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function setupRecognition() {
+  if (speechRecognition) return;
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    el("mic-label").textContent = "Chrome mein best kaam karta hai — Chrome use karein";
+    el("mic-button").disabled = true;
+    return;
+  }
+
+  speechRecognition = new SR();
+  speechRecognition.continuous = false;
+  speechRecognition.interimResults = true;
+  speechRecognition.lang = "hi-IN";
+
+  speechRecognition.onstart = () => {
+    isListening = true;
+    el("mic-button").className = "mic-btn listening";
+    el("mic-button").textContent = "🔴";
+    el("mic-label").textContent = "Sun raha hun... boliye";
+    el("mic-label").className = "mic-label listening";
+    el("voice-preview").style.display = "block";
+    el("voice-preview").textContent = "...";
+  };
+
+  speechRecognition.onresult = (event) => {
+    let finalText = "";
+    let interimText = "";
+
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      if (event.results[i].isFinal) {
+        finalText += event.results[i][0].transcript;
+      } else {
+        interimText += event.results[i][0].transcript;
+      }
+    }
+
+    el("voice-preview").textContent = finalText || interimText || "...";
+
+    if (finalText) {
+      stopListening();
+      processMessage(finalText, true);
+    }
+  };
+
+  speechRecognition.onerror = (event) => {
+    stopListening();
+    const errorMessages = {
+      "no-speech": "Awaaz nahi aayi — dobara try karein",
+      "not-allowed": "Microphone permission do (browser settings mein)",
+      network: "Network issue — dobara try karein",
+      "audio-capture": "Microphone nahi mila device pe",
+    };
+    el("mic-label").textContent = errorMessages[event.error] || "Error — dobara try karein";
+    showToast("⚠️ " + (errorMessages[event.error] || "Mic error"));
+  };
+
+  speechRecognition.onend = () => {
+    if (isListening) stopListening();
+  };
+}
+
+function toggleMic() {
+  if (isBusy && !isListening) {
+    showToast("Doctor jawab likh raha hai — ek second...");
+    return;
+  }
+  if (isSpeaking) {
+    window.speechSynthesis.cancel();
+    isSpeaking = false;
+  }
+  if (isListening) {
+    stopListening();
+  } else {
+    startListening();
+  }
+}
+
+function startListening() {
+  if (!speechRecognition) setupRecognition();
+  if (!speechRecognition) return;
+
+  try {
+    speechRecognition.start();
+  } catch (e) {
+    speechRecognition = null;
+    setupRecognition();
+    setTimeout(() => {
+      try { speechRecognition.start(); } catch (e2) {}
+    }, 200);
+  }
+}
+
+function stopListening() {
+  isListening = false;
+  try {
+    if (speechRecognition) speechRecognition.stop();
+  } catch (e) {}
+
+  el("mic-button").className = "mic-btn idle";
+  el("mic-button").textContent = "🎙️";
+  el("mic-label").textContent = "Mic dabao aur apni problem bolein";
+  el("mic-label").className = "mic-label";
+  el("voice-preview").style.display = "none";
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// TEXT TO SPEECH (BOLNA)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function speakReply(text) {
+  if (!window.speechSynthesis) {
+    isBusy = false;
+    el("send-btn").disabled = false;
+    return;
+  }
+
+  // Clean text
+  const cleanText = text
+    .replace(/<[^>]*>/g, "")
+    .replace(/[💊🥣🥩💧🐾🌡️👄✅🚫💉🧹🔵⚠️👁️🌫️🤧💩🤢🍽️😴❓🎙️]/g, "")
+    .replace(/\n/g, " ")
+    .trim();
+
+  if (!cleanText) {
+    isBusy = false;
+    el("send-btn").disabled = false;
+    return;
+  }
+
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.rate = 0.88;
+  utterance.pitch = 1.0;
+  utterance.volume = 1;
+
+  // Hindi voice prefer karo
+  if (!voiceList.length) voiceList = window.speechSynthesis.getVoices();
+  const hindiVoice =
+    voiceList.find((v) => v.lang === "hi-IN") ||
+    voiceList.find((v) => v.lang.startsWith("hi")) ||
+    voiceList.find((v) => v.name.includes("Hindi")) ||
+    voiceList.find((v) => v.lang.includes("IN"));
+
+  if (hindiVoice) {
+    utterance.voice = hindiVoice;
+  } else {
+    utterance.lang = "hi-IN";
+  }
+
+  utterance.onstart = () => {
+    isSpeaking = true;
+    el("speak-bars").style.display = "flex";
+    el("mic-button").className = "mic-btn processing";
+    el("mic-button").textContent = "🔊";
+    el("mic-label").textContent = "Dr. Mohit bol raha hai...";
+    el("mic-label").className = "mic-label processing";
+  };
+
+  utterance.onend = utterance.onerror = () => {
+    isSpeaking = false;
+    isBusy = false;
+    el("send-btn").disabled = false;
+    el("speak-bars").style.display = "none";
+
+    if (currentMode === "voice") {
+      el("mic-button").className = "mic-btn idle";
+      el("mic-button").textContent = "🎙️";
+      el("mic-label").textContent = "Jawab sunne ke baad — phir mic dabao";
+      el("mic-label").className = "mic-label";
+    }
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+</script>
+</body>
+</html>
+
