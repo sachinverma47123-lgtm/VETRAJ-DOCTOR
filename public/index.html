@@ -405,6 +405,13 @@ function focusNext(currentId, nextId, scrollToId){
   }
 }
 
+// Keep Render server awake — ping every 4 minutes
+function keepAwake(){
+  fetch(`${BACKEND}/ping`).catch(()=>{});
+}
+setInterval(keepAwake, 4 * 60 * 1000);
+keepAwake(); // ping immediately on load
+
 // Load doctor
 async function loadDoc(){
   try{
@@ -667,23 +674,34 @@ async function process(text,fromVoice=false){
 async function apiCall(mode){
   let reply="";
   const ctx={ownerName:oName,ownerPhone:oPhone,petName:pName,petType:pType,petAge:pAge,petBreed:pBreed,msgCount:msgN,doctorName:doc?doc.name:""};
-  try{
-    const res=await fetch(`${BACKEND}/chat`,{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({messages:hist,sessionId:SID,mode,context:ctx})});
-    if(!res.ok)throw new Error("err");
-    const data=await res.json();
-    if(data.doctor&&data.doctor.name)doc=data.doctor;
-    reply=data.reply||"Aage batayein 🙏";
-  }catch(e){
-    // Only show error once, not repeatedly
-    if(hist.filter(m=>m.role==="assistant"&&m.content.includes("wait")).length===0){
-      reply="Ek second ruko — connect ho raha hun... 🔄";
-    } else {
-      reply="Main sun raha hun — aage batayein. 🙏";
+  
+  // Try up to 3 times silently
+  for(let attempt=0; attempt<3; attempt++){
+    try{
+      const res=await fetch(`${BACKEND}/chat`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({messages:hist,sessionId:SID,mode,context:ctx})
+      });
+      if(!res.ok) throw new Error("err");
+      const data=await res.json();
+      if(data.doctor&&data.doctor.name) doc=data.doctor;
+      reply=data.reply||"Aage batayein 🙏";
+      break; // success — stop retrying
+    }catch(e){
+      if(attempt<2){
+        await sleep(1500); // wait before retry
+      } else {
+        reply=""; // silent fail — show nothing
+      }
     }
   }
+  
+  if(!reply){ busy=false; $("sb").disabled=false; rmTyping(); return; }
+  
   hist.push({role:"assistant",content:reply});
-  rmTyping();docMsg(reply);
+  rmTyping();
+  docMsg(reply);
 
   // Show Ganvet ONLY after payment card shown (end of conversation)
   if(payDone && /liver|tonic|ganvet|supplement/i.test(reply) && !document.querySelector(".ganvet-card")){
