@@ -808,11 +808,11 @@ async function process(text,fromVoice=false){
   userMsg(text);
 
   // Agar user wapas solution/booking maange — pay card dobara dikhao
-  if(!payDone && /solution|book|appointment|consultation|chahie|abhi|payment|slot|serious|haan|han\b|yes/i.test(text)){
+  if(!payDone && /solution|book|appointment|consultation|chahie|abhi|payment|slot|serious|haan|han\b|yes|baat kara|doctor se|karwa|dikh|dikhao|batao|karo na|karwa do|lena hai|book kar|kar do|kara do|contact|connect/i.test(text)){
     hist.push({role:"user",content:text});
     showTyping();await sleep(700);rmTyping();
-    docMsg(`<span class="hi">${oName}</span> ji — sahi decision! <span class="hi">${pName}</span> ke liye abhi slot available hai.`);
-    payDone=false; // reset so card shows again
+    docMsg(`<span class="hi">${oName}</span> ji — bilkul! <span class="hi">${pName}</span> ke liye abhi slot available hai — aaj hi book karein.`);
+    payDone=false;
     setTimeout(()=>{payDone=false;showPay();},500);
     busy=false;$("sb").disabled=false;return;
   }
