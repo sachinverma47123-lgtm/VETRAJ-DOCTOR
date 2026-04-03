@@ -384,7 +384,9 @@ function docMsg(text,opts=[]){
   const msgs=$("msgs");const row=document.createElement("div");row.className="row";
   const optsHtml=opts.length
     ?`<div class="copts">${opts.map(o=>`<button class="copt${o.e?' emer':o.g?' gold':o.yes?' yes':o.no?' no':''}" onclick="qr('${o.v}')">${o.t}</button>`).join("")}</div>`:"";
-  row.innerHTML=`<div class="av d">👨‍⚕️</div><div style="flex:1;min-width:0;"><div class="bub d">${fmt(text).replace(/\n/g,"<br>")}</div>${optsHtml}<div class="ts">${doc.name} • Vetraj • ${T()}</div></div>`;
+  // Use same doc.name everywhere - no mismatch
+  const dname = doc ? doc.name : "Dr. Rohit Saini";
+  row.innerHTML=`<div class="av d">👨‍⚕️</div><div style="flex:1;min-width:0;"><div class="bub d">${fmt(text).replace(/\n/g,"<br>")}</div>${optsHtml}<div class="ts">${dname} • Vetraj • ${T()}</div></div>`;
   msgs.appendChild(row);scrollChat();
 }
 function userMsg(t){
@@ -468,8 +470,12 @@ async function process(text,fromVoice=false){
     userMsg("🏥 Health Checkup");
     showTyping();await sleep(800);rmTyping();
     docMsg(`Bilkul! <span class="hi">${pName}</span> ka health checkup karte hain.\n\nMain kuch sawaal poochunga — answers se proper analysis karunga.`);
-    await sleep(600);
-    await apiCall(`${pName} ka health checkup shuru karo. Pehla sawaal poochho.`,"health");
+    await sleep(400);
+    // Push first message to hist
+    const firstMsg = `${pName} ka health checkup shuru karo. Pet type: ${pType}, Age: ${pAge}. Pehla sawaal poochho seedha.`;
+    hist.push({role:"user", content: firstMsg});
+    showTyping();
+    await apiCall(firstMsg,"health");
     busy=false;$("sb").disabled=false;return;
   }
   if(text==="__FOOD_CHART__"){
@@ -509,17 +515,18 @@ async function process(text,fromVoice=false){
 
   userMsg(text);
 
+  // Build context-aware messages for API
+  const apiMessages = [...hist];
+
   if(chatMode==="health"){
     hcN++;
     hist.push({role:"user",content:text});
     showTyping();await sleep(700+Math.random()*800);
-    // After 8 questions in health mode — show video ask
     if(hcN>=8&&!videoAsked){
-      rmTyping();
-      showVideoAsk();
+      rmTyping();showVideoAsk();
       busy=false;$("sb").disabled=false;return;
     }
-    await apiCall(text,"health");
+    await apiCall("health");
   } else {
     msgN++;
     hist.push({role:"user",content:text});
@@ -528,37 +535,60 @@ async function process(text,fromVoice=false){
       rmTyping();showVideoAsk();
       busy=false;$("sb").disabled=false;return;
     }
-    await apiCall(text,"consult");
+    await apiCall("consult");
   }
 }
 
-async function apiCall(text,mode){
+async function apiCall(mode){
   let reply="";
+  const ctx = {
+    ownerName:oName,
+    ownerPhone:oPhone,
+    petName:pName,
+    petType:pType,
+    petAge:pAge,
+    petBreed:pBreed,
+    msgCount:msgN,
+    doctorName: doc ? doc.name : "Dr. Rohit Saini"
+  };
   try{
     const res=await fetch(`${BACKEND}/chat`,{
-      method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({messages:hist,sessionId:SID,mode:mode,
-        context:{ownerName:oName,ownerPhone:oPhone,petName:pName,petType:pType,petAge:pAge,petBreed:pBreed,msgCount:msgN}})
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        messages:hist,
+        sessionId:SID,
+        mode:mode,
+        context:ctx
+      })
     });
-    if(!res.ok)throw new Error("err");
+    if(!res.ok)throw new Error("Server error "+res.status);
     const data=await res.json();
-    reply=data.reply||"Ek second — dobara try karein 🙏";
+    // Update doc if server returns updated doctor
+    if(data.doctor && data.doctor.name) doc = data.doctor;
+    reply=data.reply||"Aage batayein — main sun raha hun 🙏";
   }catch(e){
-    try{
-      await sleep(2000);
-      const r2=await fetch(`${BACKEND}/chat`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:hist,sessionId:SID,mode:mode,context:{ownerName:oName,petName:pName,petType:pType,petAge:pAge,msgCount:msgN}})});
-      const d2=await r2.json();reply=d2.reply||"Dobara try karein 🙏";
-    }catch(e2){reply="Network slow — dobara bhejein 🙏";}
+    console.log("API error:",e.message);
+    reply="Thoda wait karke dobara bhejein 🙏";
   }
   hist.push({role:"assistant",content:reply});
-  rmTyping();docMsg(reply);
-  if(mode==="consult"&&fromVoice||mode==="consult"&&window._voice)speak(reply);
-  else{busy=false;$("sb").disabled=false;}
+  rmTyping();
+  docMsg(reply);
+  busy=false;
+  $("sb").disabled=false;
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
-function send(){const inp=$("inp");const t=inp.value.trim();if(!t||busy)return;inp.value="";inp.style.height="auto";process(t,false);}
+function send(){
+  const inp=$("inp");
+  const t=inp.value.trim();
+  if(!t||busy)return;
+  inp.value="";
+  inp.style.height="auto";
+  inp.blur(); // close keyboard briefly to prevent issues
+  process(t,false);
+}
 function qr(t){if(!busy)process(t,mode==="voice");}
 
 function setM(m){
