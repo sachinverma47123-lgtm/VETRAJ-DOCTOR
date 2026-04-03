@@ -417,11 +417,26 @@ function showPay(){
   msgs.appendChild(d);scrollChat();
 }
 
+function showConsultPush(){
+  if(payDone||videoAsked)return;
+  videoAsked=true;
+  docMsg(
+    `<span class="hi">${oName}</span> ji — <span class="hi">${pName}</span> ke liye <span class="rhi">expert examination zaroori</span> hai.\n\nKya aap <span class="hi">${pName}</span> ke liye serious hain?`,
+    [
+      {t:"✅ Haan, Main Serious Hun",v:"__YES_VIDEO__",yes:true},
+      {t:"❌ Nahi, Baad Mein",v:"__NO_VIDEO__",no:true}
+    ]
+  );
+}
+
 function showVideoAsk(){
   if(videoAsked)return;videoAsked=true;
   docMsg(
-    `<span class="hi">${pName}</span> ki proper help ke liye mujhe ek **short video** chahiye.\n\nKya aap <span class="hi">${pName}</span> ki health ke liye **serious** hain?`,
-    [{t:"✅ Haan, Main Serious Hun",v:"__YES_VIDEO__",yes:true},{t:"Baad Mein",v:"__NO_VIDEO__",no:true}]
+    `<span class="hi">${pName}</span> ki sahi help ke liye mujhe ek short **video** chahiye.\n\nKya aap <span class="hi">${pName}</span> ke liye **serious** hain?`,
+    [
+      {t:"✅ Haan, Main Serious Hun",v:"__YES_VIDEO__",yes:true},
+      {t:"❌ Nahi, Baad Mein",v:"__NO_VIDEO__",no:true}
+    ]
   );
 }
 
@@ -574,8 +589,21 @@ async function apiCall(mode){
   hist.push({role:"assistant",content:reply});
   rmTyping();
   docMsg(reply);
+
+  // After 4 messages in consult mode — show YES/NO consultation buttons
+  if(mode==="consult" && msgN>=4 && !payDone && !videoAsked){
+    setTimeout(()=>{
+      showConsultPush();
+    }, 600);
+  }
+
   busy=false;
   $("sb").disabled=false;
+  // Always re-enable input
+  setTimeout(()=>{
+    $("sb").disabled=false;
+    busy=false;
+  }, 500);
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
