@@ -19,7 +19,7 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
 
 /* HEADER */
 .hdr{background:linear-gradient(135deg,var(--dk),var(--blue),var(--blue2));padding:8px 12px;display:flex;align-items:center;gap:9px;flex-shrink:0;box-shadow:0 2px 10px rgba(0,0,0,.3);}
-.hdr-logo{width:34px;height:34px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.hdr-logo{width:38px;height:38px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;padding:2px;}
 .hdr-mid{flex:1;min-width:0;}
 .hdr-hosp{font-size:13px;font-weight:800;color:#fff;}
 .hdr-tag{font-size:9px;color:rgba(255,255,255,.65);margin-bottom:1px;}
@@ -169,7 +169,23 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
 
 <!-- HEADER -->
 <div class="hdr">
-  <div class="hdr-logo">🐾</div>
+  <div class="hdr-logo">
+    <!-- Vetraj Logo SVG -->
+    <svg width="34" height="34" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="48" fill="#1a5a8a"/>
+      <circle cx="50" cy="50" r="40" fill="#0d3d6b"/>
+      <!-- Dog silhouette -->
+      <ellipse cx="38" cy="52" rx="18" ry="14" fill="#fff" opacity="0.9"/>
+      <ellipse cx="38" cy="38" rx="12" ry="11" fill="#fff" opacity="0.9"/>
+      <polygon points="28,30 24,20 32,28" fill="#fff" opacity="0.9"/>
+      <polygon points="48,30 52,20 44,28" fill="#fff" opacity="0.9"/>
+      <!-- Cat silhouette -->
+      <ellipse cx="64" cy="55" rx="14" ry="11" fill="#00d4ff" opacity="0.8"/>
+      <ellipse cx="64" cy="43" rx="10" ry="9" fill="#00d4ff" opacity="0.8"/>
+      <polygon points="57,37 54,28 61,36" fill="#00d4ff" opacity="0.8"/>
+      <polygon points="71,37 74,28 67,36" fill="#00d4ff" opacity="0.8"/>
+    </svg>
+  </div>
   <div class="hdr-mid">
     <div class="hdr-hosp">VETRAJ Pet Hospital</div>
     <div class="hdr-tag">Veterinary Diagnostics &amp; Surgical Center</div>
@@ -199,7 +215,20 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
 <div class="screen" id="s1">
   <div class="card">
     <div class="wb">
-      <div class="wb-ico">🐾</div>
+      <div class="wb-ico">
+        <svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="48" fill="rgba(255,255,255,0.2)"/>
+          <circle cx="50" cy="50" r="40" fill="rgba(255,255,255,0.1)"/>
+          <ellipse cx="38" cy="52" rx="18" ry="14" fill="#fff" opacity="0.95"/>
+          <ellipse cx="38" cy="38" rx="12" ry="11" fill="#fff" opacity="0.95"/>
+          <polygon points="28,30 24,20 32,28" fill="#fff" opacity="0.95"/>
+          <polygon points="48,30 52,20 44,28" fill="#fff" opacity="0.95"/>
+          <ellipse cx="64" cy="55" rx="14" ry="11" fill="#4ade80" opacity="0.9"/>
+          <ellipse cx="64" cy="43" rx="10" ry="9" fill="#4ade80" opacity="0.9"/>
+          <polygon points="57,37 54,28 61,36" fill="#4ade80" opacity="0.9"/>
+          <polygon points="71,37 74,28 67,36" fill="#4ade80" opacity="0.9"/>
+        </svg>
+      </div>
       <div class="wb-h" id="s1-title">Dr. Rohit Saini — Abhi Online Hain</div>
       <div class="wb-s">Vetraj Pet Hospital — Free Consultation<br>Apni details bharein aur shuru karein.</div>
     </div>
