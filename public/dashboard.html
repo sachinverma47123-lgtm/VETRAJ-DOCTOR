@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vetraj — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --navy:#0a1628;--blue:#1a5a8a;--blue2:#2980b9;
+  --green:#16a34a;--red:#dc2626;--gold:#f59e0b;--purple:#7c3aed;
+  --bg:#f0f4f8;--white:#fff;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;
+}
+body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);}
+
+/* LOGIN */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,var(--navy),var(--blue));}
+.login-card{background:#fff;border-radius:20px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.login-logo{text-align:center;margin-bottom:20px;}
+.login-logo img{width:60px;height:60px;border-radius:50%;object-fit:cover;}
+.login-h{font-size:20px;font-weight:800;color:var(--navy);text-align:center;margin-bottom:4px;}
+.login-s{font-size:12px;color:var(--muted);text-align:center;margin-bottom:20px;}
+.li{margin-bottom:14px;}
+.li label{font-size:11px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px;text-transform:uppercase;}
+.li input{width:100%;padding:11px 14px;border:2px solid var(--border);border-radius:10px;font-family:'Poppins',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+.li input:focus{border-color:var(--blue);}
+.login-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border:none;border-radius:12px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;}
+.login-err{background:#fee2e2;color:var(--red);font-size:12px;font-weight:600;padding:8px 12px;border-radius:8px;text-align:center;margin-top:10px;display:none;}
+
+/* MAIN DASHBOARD */
+.dash{display:none;}
+
+/* TOPBAR */
+.topbar{background:linear-gradient(135deg,var(--navy),var(--blue));padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.tb-logo{width:34px;height:34px;background:#fff;border-radius:50%;overflow:hidden;}
+.tb-logo img{width:100%;height:100%;object-fit:cover;}
+.tb-title{flex:1;}
+.tb-h{font-size:13px;font-weight:800;color:#fff;}
+.tb-s{font-size:10px;color:rgba(255,255,255,.6);}
+.tb-btns{display:flex;gap:8px;}
+.tb-btn{background:rgba(255,255,255,.15);color:#fff;border:none;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;}
+.tb-btn.active{background:#fff;color:var(--navy);}
+
+/* TABS */
+.tabs{display:flex;background:#fff;border-bottom:2px solid var(--border);overflow-x:auto;flex-shrink:0;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{padding:12px 16px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;transition:all .2s;}
+.tab.on{color:var(--blue);border-bottom-color:var(--blue);}
+
+/* CONTENT */
+.content{padding:14px;}
+
+/* STAT CARDS */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.stat{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid var(--blue);}
+.stat.green{border-left-color:var(--green);}
+.stat.red{border-left-color:var(--red);}
+.stat.gold{border-left-color:var(--gold);}
+.stat.purple{border-left-color:var(--purple);}
+.stat-n{font-size:28px;font-weight:900;color:var(--navy);}
+.stat-l{font-size:11px;color:var(--muted);font-weight:600;margin-top:2px;}
+
+/* TABLE */
+.table-wrap{background:#fff;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden;margin-bottom:14px;}
+.table-hdr{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);}
+.table-title{font-size:13px;font-weight:800;color:var(--navy);}
+.search-inp{padding:7px 12px;border:1.5px solid var(--border);border-radius:20px;font-size:12px;font-family:'Poppins',sans-serif;outline:none;width:140px;}
+.search-inp:focus{border-color:var(--blue);}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{padding:9px 12px;background:#f8fafc;font-weight:700;color:var(--navy);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;}
+.tbl td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:#f8faff;}
+.badge{display:inline-block;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:700;}
+.badge.new{background:#dbeafe;color:#1e40af;}
+.badge.booked{background:#dcfce7;color:#15803d;}
+.badge.done{background:#e0e7ff;color:#4338ca;}
+.badge.pending{background:#fef3c7;color:#92400e;}
+.name-cell{font-weight:700;color:var(--navy);}
+.pet-cell{font-weight:600;color:var(--blue);}
+.phone-cell{color:var(--muted);}
+.action-btn{background:var(--navy);color:#fff;border:none;padding:4px 10px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;margin-right:4px;}
+.action-btn.assign{background:var(--blue);}
+.action-btn.call{background:var(--green);}
+.action-btn.done-btn{background:var(--purple);}
+
+/* SECTION PAGE */
+.section-page{display:none;}
+.section-page.on{display:block;}
+
+/* DOCTOR CARDS */
+.doc-grid{display:grid;gap:10px;margin-bottom:14px;}
+.doc-card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:12px;}
+.doc-av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--blue));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.doc-info{flex:1;}
+.doc-nm{font-size:14px;font-weight:800;color:var(--navy);}
+.doc-exp{font-size:11px;color:var(--muted);}
+.doc-slots{font-size:11px;font-weight:700;color:var(--green);margin-top:2px;}
+.doc-actions{display:flex;flex-direction:column;gap:4px;}
+.doc-btn{font-size:10px;font-weight:700;padding:5px 10px;border-radius:8px;border:none;cursor:pointer;font-family:'Poppins',sans-serif;white-space:nowrap;}
+.doc-btn.view{background:#dbeafe;color:#1e40af;}
+.doc-btn.assign{background:var(--green);color:#fff;}
+
+/* ASSIGN MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;}
+.modal-h{font-size:16px;font-weight:800;color:var(--navy);margin-bottom:14px;display:flex;justify-content:space-between;}
+.modal-close{background:#f1f5f9;border:none;width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;}
+.doc-sel-item{display:flex;align-items:center;gap:10px;padding:10px;border:2px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .2s;}
+.doc-sel-item.on{border-color:var(--blue);background:#eff6ff;}
+.doc-sel-nm{font-size:13px;font-weight:700;color:var(--navy);}
+.doc-sel-slots{font-size:11px;color:var(--green);}
+.modal-confirm{width:100%;padding:13px;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border:none;border-radius:12px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px;}
+
+/* EMPTY */
+.empty{text-align:center;padding:32px 20px;color:var(--muted);}
+.empty-ico{font-size:40px;margin-bottom:10px;}
+.empty-t{font-size:14px;font-weight:600;}
+
+/* REFRESH */
+.refresh-btn{background:var(--blue);color:#fff;border:none;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;display:flex;align-items:center;gap:5px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:9px 18px;border-radius:22px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">
+      <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCABkAGQDASIAAhEBAxEB/8QAHAAAAQUBAQEAAAAAAAAAAAAAAAQFBgcIAwIB/8QANRAAAQMDAwIEBAQGAwAAAAAAAQACAwQREiExBUEGEyJRYRQjMkJxgZEVUmKhscEzctH/xAAZAQADAQEBAAAAAAAAAAAAAAABAgMABAX/xAAlEQACAgICAQQDAQAAAAAAAAAAAQIREiExA0ETIlFhBBQy/9oADAMBAAIRAxEAPwDIoQhAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCABCEIAEIQgAQhCAD//Z" alt="V">
+    </div>
+    <div class="login-h">Vetraj Admin Panel</div>
+    <div class="login-s">Sirf authorized users ke liye</div>
+    <div class="li">
+      <label>Username</label>
+      <input type="text" id="l-user" placeholder="Username daalo">
+    </div>
+    <div class="li">
+      <label>Password</label>
+      <input type="password" id="l-pass" placeholder="Password daalo" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">🔐 Login Karein</button>
+    <div class="login-err" id="login-err">❌ Galat username ya password</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dash" id="dash">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="tb-logo"><img src="data:image/jpeg;base64,/9j/4AAQ..." alt="V"></div>
+    <div class="tb-title">
+      <div class="tb-h">Vetraj Dashboard</div>
+      <div class="tb-s" id="tb-time">Loading...</div>
+    </div>
+    <div class="tb-btns">
+      <button class="tb-btn" onclick="refreshData()">🔄 Refresh</button>
+      <button class="tb-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab on" onclick="showTab('leads')">📋 Leads</div>
+    <div class="tab" onclick="showTab('appointments')">📅 Appointments</div>
+    <div class="tab" onclick="showTab('doctors')">👨‍⚕️ Doctors</div>
+    <div class="tab" onclick="showTab('stats')">📊 Stats</div>
+  </div>
+
+  <div class="content">
+
+    <!-- LEADS TAB -->
+    <div class="section-page on" id="tab-leads">
+      <div class="stats">
+        <div class="stat"><div class="stat-n" id="s-total">0</div><div class="stat-l">Total Leads</div></div>
+        <div class="stat green"><div class="stat-n" id="s-today">0</div><div class="stat-l">Aaj Ke Leads</div></div>
+        <div class="stat gold"><div class="stat-n" id="s-book">0</div><div class="stat-l">Booked</div></div>
+        <div class="stat red"><div class="stat-n" id="s-pend">0</div><div class="stat-l">Pending</div></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-hdr">
+          <div class="table-title">All Leads</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input class="search-inp" id="srch" placeholder="🔍 Search..." oninput="filterLeads()">
+            <button class="refresh-btn" onclick="downloadCSV()">⬇️ CSV</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Owner</th>
+                <th>Phone</th>
+                <th>Pet</th>
+                <th>Problem</th>
+                <th>Doctor</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="leads-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- APPOINTMENTS TAB -->
+    <div class="section-page" id="tab-appointments">
+      <div class="stats">
+        <div class="stat green"><div class="stat-n" id="a-today">0</div><div class="stat-l">Aaj Ke</div></div>
+        <div class="stat"><div class="stat-n" id="a-total">0</div><div class="stat-l">Total</div></div>
+        <div class="stat purple"><div class="stat-n" id="a-done">0</div><div class="stat-l">Complete</div></div>
+        <div class="stat gold"><div class="stat-n" id="a-pending">0</div><div class="stat-l">Pending</div></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-hdr">
+          <div class="table-title">Appointments</div>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Owner</th>
+                <th>Pet</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Doctor</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="appt-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOCTORS TAB -->
+    <div class="section-page" id="tab-doctors">
+      <div class="doc-grid" id="doc-grid"></div>
+    </div>
+
+    <!-- STATS TAB -->
+    <div class="section-page" id="tab-stats">
+      <div class="stats">
+        <div class="stat"><div class="stat-n" id="st-leads">0</div><div class="stat-l">Total Leads</div></div>
+        <div class="stat green"><div class="stat-n" id="st-rev">₹0</div><div class="stat-l">Revenue</div></div>
+        <div class="stat gold"><div class="stat-n" id="st-conv">0%</div><div class="stat-l">Conversion</div></div>
+        <div class="stat purple"><div class="stat-n" id="st-docs">16</div><div class="stat-l">Active Doctors</div></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-hdr"><div class="table-title">📈 Recent Activity</div></div>
+        <div id="activity-log" style="padding:12px;">
+          <div class="empty"><div class="empty-ico">📊</div><div class="empty-t">Data load ho raha hai...</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /dash -->
+
+<!-- ASSIGN MODAL -->
+<div class="modal-bg" id="assign-modal">
+  <div class="modal">
+    <div class="modal-h">
+      <span>👨‍⚕️ Doctor Assign Karein</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="doc-sel-list"></div>
+    <button class="modal-confirm" onclick="confirmAssign()">✅ Assign Karein</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ━━━━ CONFIG ━━━━
+const ADMIN_USER = "vetraj";
+const ADMIN_PASS = "vetraj@2024";
+const BACKEND = window.location.origin;
+
+const DOCTORS = [
+  {name:"Dr. Rohit Saini",exp:10},{name:"Dr. Tanmay",exp:9},
+  {name:"Dr. Aman",exp:8},{name:"Dr. Vineet Pal",exp:12},
+  {name:"Dr. Neeraj Batra",exp:11},{name:"Dr. Neeraj Singhal",exp:14},
+  {name:"Dr. Rajan Gangwar",exp:13},{name:"Dr. Gurpreet Singh",exp:10},
+  {name:"Dr. Amit Saini",exp:9},{name:"Dr. Sushant Agrawal",exp:15},
+  {name:"Dr. Sanjeet Singh",exp:11},{name:"Dr. Harsh Sharma",exp:8},
+  {name:"Dr. Rajesh Saini",exp:20},{name:"Dr. Mohit Saini",exp:25},
+  {name:"Dr. Nishant Singh",exp:12},{name:"Dr. David",exp:9}
+];
+
+let leads = [], appointments = [], selectedLead = null, selectedDoc = null;
+
+// ━━━━ LOGIN ━━━━
+function doLogin(){
+  const u = document.getElementById('l-user').value.trim();
+  const p = document.getElementById('l-pass').value.trim();
+  if(u===ADMIN_USER && p===ADMIN_PASS){
+    document.getElementById('login-wrap').style.display='none';
+    document.getElementById('dash').style.display='block';
+    initDash();
+  } else {
+    document.getElementById('login-err').style.display='block';
+  }
+}
+
+function doLogout(){
+  document.getElementById('dash').style.display='none';
+  document.getElementById('login-wrap').style.display='flex';
+}
+
+// ━━━━ INIT ━━━━
+function initDash(){
+  updateTime();
+  setInterval(updateTime, 60000);
+  loadData();
+  buildDoctors();
+}
+
+function updateTime(){
+  const now = new Date();
+  document.getElementById('tb-time').textContent = now.toLocaleString('hi-IN',{
+    weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'
+  });
+}
+
+// ━━━━ DATA LOAD ━━━━
+async function loadData(){
+  try{
+    const res = await fetch(`${BACKEND}/download-leads?key=vetraj2024`);
+    if(!res.ok) throw new Error('No data');
+    const csv = await res.text();
+    leads = parseCSV(csv);
+    appointments = JSON.parse(localStorage.getItem('vetraj_appointments')||'[]');
+    renderAll();
+  }catch(e){
+    leads = [];
+    renderAll();
+  }
+}
+
+function parseCSV(csv){
+  const lines = csv.trim().split('\n');
+  if(lines.length < 2) return [];
+  const headers = lines[0].split(',');
+  return lines.slice(1).map((line,i) => {
+    const vals = line.split(',');
+    const obj = {id:i+1, status:'new'};
+    headers.forEach((h,j) => obj[h.trim()] = (vals[j]||'').trim());
+    return obj;
+  });
+}
+
+function renderAll(){
+  renderLeads(leads);
+  renderAppointments();
+  renderStats();
+}
+
+// ━━━━ LEADS ━━━━
+function renderLeads(data){
+  const today = new Date().toLocaleDateString('en-IN');
+  const todayLeads = data.filter(l => l.Date === today);
+  document.getElementById('s-total').textContent = data.length;
+  document.getElementById('s-today').textContent = todayLeads.length;
+  document.getElementById('s-book').textContent = appointments.length;
+  document.getElementById('s-pend').textContent = Math.max(0, data.length - appointments.length);
+
+  const tbody = document.getElementById('leads-tbody');
+  if(!data.length){
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#94a3b8;">Koi lead nahi — panel se leads aayengi</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map((l,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td class="name-cell">${l.Owner||l['Owner Name']||'—'}</td>
+      <td class="phone-cell"><a href="tel:${l.Phone}" style="color:#1a5a8a;text-decoration:none;">📞 ${l.Phone||'—'}</a></td>
+      <td class="pet-cell">${l['Pet Name']||l.Pet||'—'} <span style="font-size:10px;color:#94a3b8;">(${l.Type||''})</span></td>
+      <td style="max-width:120px;font-size:11px;color:#64748b;">${(l.Problem||'—').substring(0,40)}${(l.Problem||'').length>40?'...':''}</td>
+      <td style="font-size:11px;">${l.Doctor||'<span style="color:#94a3b8;">Unassigned</span>'}</td>
+      <td style="font-size:11px;">${l.Date||'—'}</td>
+      <td><span class="badge ${l.status||'new'}">${l.status==='booked'?'Booked':l.status==='done'?'Done':'New'}</span></td>
+      <td>
+        <button class="action-btn call" onclick="callLead('${l.Phone}')">📞</button>
+        <button class="action-btn assign" onclick="openAssign(${i})">Assign</button>
+      </td>
+    </tr>`).join('');
+}
+
+function filterLeads(){
+  const q = document.getElementById('srch').value.toLowerCase();
+  const filtered = leads.filter(l =>
+    (l.Owner||'').toLowerCase().includes(q) ||
+    (l['Owner Name']||'').toLowerCase().includes(q) ||
+    (l.Phone||'').includes(q) ||
+    (l.Pet||l['Pet Name']||'').toLowerCase().includes(q)
+  );
+  renderLeads(filtered);
+}
+
+function callLead(phone){
+  window.open(`tel:${phone}`);
+}
+
+function downloadCSV(){
+  window.open(`${BACKEND}/download-leads?key=vetraj2024`,'_blank');
+}
+
+// ━━━━ APPOINTMENTS ━━━━
+function renderAppointments(){
+  const today = new Date().toLocaleDateString('en-IN');
+  const todayAppts = appointments.filter(a => a.date === today);
+  const done = appointments.filter(a => a.status === 'done');
+  const pending = appointments.filter(a => a.status !== 'done');
+
+  document.getElementById('a-today').textContent = todayAppts.length;
+  document.getElementById('a-total').textContent = appointments.length;
+  document.getElementById('a-done').textContent = done.length;
+  document.getElementById('a-pending').textContent = pending.length;
+
+  const tbody = document.getElementById('appt-tbody');
+  if(!appointments.length){
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#94a3b8;">Koi appointment nahi abhi</td></tr>';
+    return;
+  }
+  tbody.innerHTML = appointments.map((a,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td class="name-cell">${a.owner||'—'}</td>
+      <td class="pet-cell">${a.pet||'—'}</td>
+      <td style="font-size:11px;">${a.date||'—'}</td>
+      <td style="font-size:12px;font-weight:700;">${a.time||'—'}</td>
+      <td style="font-size:11px;">${a.doctor||'Unassigned'}</td>
+      <td><span class="badge ${a.status==='done'?'done':a.status==='booked'?'booked':'pending'}">${a.status==='done'?'Done':a.status==='booked'?'Confirmed':'Pending'}</span></td>
+      <td>
+        <button class="action-btn done-btn" onclick="markDone(${i})">✓ Done</button>
+        <button class="action-btn call" onclick="callLead('${a.phone}')">📞</button>
+      </td>
+    </tr>`).join('');
+}
+
+function markDone(i){
+  appointments[i].status = 'done';
+  localStorage.setItem('vetraj_appointments', JSON.stringify(appointments));
+  renderAppointments();
+  toast('✅ Consultation complete mark ho gaya!');
+}
+
+// ━━━━ DOCTORS ━━━━
+function buildDoctors(){
+  const grid = document.getElementById('doc-grid');
+  grid.innerHTML = DOCTORS.map((d,i) => {
+    const myAppts = appointments.filter(a => a.doctor === d.name && a.status !== 'done');
+    return `
+    <div class="doc-card">
+      <div class="doc-av">👨‍⚕️</div>
+      <div class="doc-info">
+        <div class="doc-nm">${d.name}</div>
+        <div class="doc-exp">${d.exp} Saal Experience</div>
+        <div class="doc-slots">${myAppts.length} Active Consultations</div>
+      </div>
+      <div class="doc-actions">
+        <button class="doc-btn view" onclick="viewDoctorAppts('${d.name}')">View</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function viewDoctorAppts(docName){
+  const myAppts = appointments.filter(a => a.doctor === docName);
+  if(!myAppts.length){
+    toast(`${docName} ke paas koi appointment nahi`);
+    return;
+  }
+  alert(`${docName} ki Appointments:\n\n${myAppts.map(a=>`${a.date} ${a.time} — ${a.owner} (${a.pet})`).join('\n')}`);
+}
+
+// ━━━━ ASSIGN MODAL ━━━━
+function openAssign(leadIdx){
+  selectedLead = leadIdx;
+  selectedDoc = null;
+  const list = document.getElementById('doc-sel-list');
+  list.innerHTML = DOCTORS.map((d,i) => {
+    const cnt = appointments.filter(a => a.doctor === d.name && a.status !== 'done').length;
+    return `<div class="doc-sel-item" onclick="selDoc(this,'${d.name}')">
+      <div>
+        <div class="doc-sel-nm">${d.name}</div>
+        <div class="doc-sel-slots">${cnt} active · ${d.exp} saal exp</div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('assign-modal').classList.add('show');
+}
+
+function selDoc(el, name){
+  document.querySelectorAll('.doc-sel-item').forEach(d=>d.classList.remove('on'));
+  el.classList.add('on');
+  selectedDoc = name;
+}
+
+function closeModal(){
+  document.getElementById('assign-modal').classList.remove('show');
+}
+
+function confirmAssign(){
+  if(!selectedDoc){toast('⚠️ Doctor select karein');return;}
+  if(selectedLead !== null){
+    leads[selectedLead].doctor = selectedDoc;
+    // Add to appointments
+    const l = leads[selectedLead];
+    appointments.push({
+      owner: l.Owner||l['Owner Name']||'',
+      phone: l.Phone||'',
+      pet: l.Pet||l['Pet Name']||'',
+      date: l.Date||new Date().toLocaleDateString('en-IN'),
+      time: 'TBD',
+      doctor: selectedDoc,
+      status: 'booked'
+    });
+    localStorage.setItem('vetraj_appointments', JSON.stringify(appointments));
+    renderAll();
+    buildDoctors();
+    toast(`✅ ${selectedDoc} ko assign ho gaya!`);
+  }
+  closeModal();
+}
+
+// ━━━━ STATS ━━━━
+function renderStats(){
+  const rev = appointments.filter(a=>a.status==='done').length * 399;
+  const conv = leads.length ? Math.round((appointments.length/leads.length)*100) : 0;
+  document.getElementById('st-leads').textContent = leads.length;
+  document.getElementById('st-rev').textContent = `₹${rev.toLocaleString('en-IN')}`;
+  document.getElementById('st-conv').textContent = `${conv}%`;
+
+  // Activity log
+  const log = document.getElementById('activity-log');
+  if(!leads.length && !appointments.length){
+    log.innerHTML = '<div class="empty"><div class="empty-ico">📊</div><div class="empty-t">Koi activity nahi abhi</div></div>';
+    return;
+  }
+  const recent = [...leads].slice(-5).reverse();
+  log.innerHTML = recent.map(l=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+      <span style="font-size:20px;">🐾</span>
+      <div>
+        <div style="font-size:12px;font-weight:700;">${l.Owner||l['Owner Name']||'—'} — ${l.Pet||l['Pet Name']||'—'}</div>
+        <div style="font-size:11px;color:#64748b;">${l.Date||''} ${l.Time||''} · ${l.Doctor||'Unassigned'}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ━━━━ TABS ━━━━
+function showTab(name){
+  document.querySelectorAll('.section-page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById(`tab-${name}`).classList.add('on');
+  event.currentTarget.classList.add('on');
+  if(name==='doctors') buildDoctors();
+}
+
+function refreshData(){
+  toast('🔄 Data refresh ho raha hai...');
+  loadData();
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+</script>
+</body>
+</html>
