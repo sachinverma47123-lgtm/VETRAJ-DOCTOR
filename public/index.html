@@ -12,7 +12,7 @@
   --blue:#1a5a8a;--blue2:#2980b9;--dk:#0d3d6b;
   --green:#16a34a;--red:#dc2626;--gold:#d97706;
   --bg:#f0f9ff;--white:#fff;--text:#0f172a;--muted:#475569;--border:#cbd5e1;
-  --yellow:#fef9c3;--yborder:#fbbf24;
+  --yel:#fef9c3;--ybdr:#fbbf24;
 }
 html,body{height:100%;overflow:hidden;}
 body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);display:flex;flex-direction:column;}
@@ -23,7 +23,7 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
 .hdr-mid{flex:1;min-width:0;}
 .hdr-hosp{font-size:13px;font-weight:800;color:#fff;}
 .hdr-tag{font-size:9px;color:rgba(255,255,255,.65);margin-bottom:1px;}
-.hdr-doc{display:flex;align-items:center;gap:4px;}
+.hdr-doc-row{display:flex;align-items:center;gap:4px;}
 .odot{width:6px;height:6px;border-radius:50%;background:#4ade80;flex-shrink:0;animation:blink 1.4s infinite;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 .hdr-dname{font-size:11px;font-weight:700;color:#4ade80;}
@@ -32,7 +32,7 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
 .bfree{background:var(--green);color:#fff;font-size:10px;font-weight:800;padding:3px 9px;border-radius:12px;}
 .bverify{background:rgba(255,255,255,.15);color:#fff;font-size:9px;padding:2px 6px;border-radius:7px;font-weight:600;}
 
-/* TRUST */
+/* TRUST BAR */
 .trust{background:var(--dk);padding:5px 12px;display:flex;gap:12px;overflow-x:auto;flex-shrink:0;}
 .trust::-webkit-scrollbar{display:none;}
 .ti{font-size:10px;color:#93c5fd;white-space:nowrap;font-weight:600;}
@@ -40,36 +40,24 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
 /* SCREENS */
 .screen{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 13px 24px;}
 .card{background:var(--white);border-radius:16px;padding:18px 15px;box-shadow:0 4px 20px rgba(0,0,0,.1);border:1.5px solid #e0f2fe;}
-
-/* WELCOME */
 .wb{background:linear-gradient(135deg,var(--dk),var(--blue2));border-radius:12px;padding:13px 14px;text-align:center;margin-bottom:15px;}
 .wb-ico{font-size:26px;margin-bottom:4px;}
 .wb-h{font-size:15px;font-weight:800;color:#fff;margin-bottom:3px;}
 .wb-s{font-size:12px;color:rgba(255,255,255,.8);line-height:1.5;}
-
-/* QUESTION BOX */
-.qb{background:var(--yellow);border:2.5px solid var(--yborder);border-radius:12px;padding:11px 13px;margin-bottom:10px;}
+.qb{background:var(--yel);border:2.5px solid var(--ybdr);border-radius:12px;padding:11px 13px;margin-bottom:10px;}
 .qb-l{font-size:10px;font-weight:700;color:#92400e;letter-spacing:.7px;margin-bottom:4px;text-transform:uppercase;}
 .qb-t{font-size:16px;font-weight:800;color:#1c1917;line-height:1.35;}
 .qb-t .hl{background:#fbbf24;padding:1px 5px;border-radius:4px;color:#7c2d12;}
-
-/* INPUTS */
 .f{margin-bottom:10px;}
 .inp{width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:11px;font-family:'Poppins',sans-serif;font-size:15px;color:var(--text);outline:none;background:#fff;transition:border-color .2s;-webkit-appearance:none;}
 .inp:focus{border-color:var(--blue);}
 .inp::placeholder{color:#94a3b8;}
-
-/* OPTS */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
 .opt{background:#fff;border:2px solid var(--border);border-radius:11px;padding:11px 8px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s;text-align:center;color:var(--text);-webkit-appearance:none;}
 .opt.on{background:var(--blue);border-color:var(--blue);color:#fff;}
-
-/* BUTTONS */
 .btn-m{width:100%;padding:13px;background:linear-gradient(135deg,var(--dk),var(--blue2));color:#fff;border:none;border-radius:13px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(26,90,138,.4);margin-top:6px;-webkit-appearance:none;}
 .btn-b{width:100%;padding:10px;background:transparent;color:var(--blue);border:2px solid var(--blue);border-radius:11px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;-webkit-appearance:none;}
-
-/* STEP */
-.sb{margin-bottom:13px;}
+.sb2{margin-bottom:13px;}
 .si{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:600;}
 .pr{height:4px;background:#e2e8f0;border-radius:3px;overflow:hidden;}
 .pf{height:100%;background:linear-gradient(90deg,var(--blue),var(--blue2));border-radius:3px;}
@@ -93,21 +81,22 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
 .bub .bhi{background:#dbeafe;color:#1e40af;padding:2px 5px;border-radius:4px;font-weight:700;display:inline;}
 .ts{font-size:10px;color:var(--muted);margin:2px 4px;}
 
-/* TYPING INDICATOR */
-.typing-row{display:flex;align-items:flex-end;gap:7px;}
-.typing-info{font-size:11px;color:var(--muted);font-style:italic;margin:2px 4px;}
+/* TYPING */
+.trow{display:flex;align-items:flex-end;gap:7px;}
 .tbub{background:#fff;border:1.5px solid var(--border);padding:11px 14px;border-radius:15px;border-bottom-left-radius:3px;display:flex;gap:4px;align-items:center;box-shadow:0 2px 6px rgba(0,0,0,.07);}
 .td{width:7px;height:7px;border-radius:50%;background:#94a3b8;animation:td .7s ease-in-out infinite;}
 .td:nth-child(2){animation-delay:.12s;}.td:nth-child(3){animation-delay:.24s;}
 @keyframes td{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+.typ-lbl{font-size:10px;color:var(--muted);font-style:italic;margin:2px 4px;}
 
-/* CHAT OPTIONS */
+/* OPTS */
 .copts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
 .copt{background:#fff;border:2px solid var(--blue);color:var(--blue);padding:7px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Poppins',sans-serif;transition:all .15s;-webkit-appearance:none;}
 .copt:active{background:var(--blue);color:#fff;}
 .copt.emer{border-color:var(--red);color:var(--red);}
 .copt.gold{border-color:#d97706;color:#92400e;background:#fffbeb;}
-.copt.gold:active{background:#d97706;color:#fff;}
+.copt.yes{background:var(--green);border-color:var(--green);color:#fff;font-weight:800;font-size:13px;padding:9px 16px;}
+.copt.no{background:#f1f5f9;border-color:#94a3b8;color:var(--muted);}
 
 /* BOTTOM */
 .bot{background:#fff;border-top:2px solid var(--border);padding:9px 12px 12px;flex-shrink:0;box-shadow:0 -3px 10px rgba(0,0,0,.08);}
@@ -120,8 +109,6 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
 .txti::placeholder{color:#94a3b8;}
 .sbtn{width:42px;height:42px;background:linear-gradient(135deg,var(--dk),var(--blue2));border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;color:#fff;box-shadow:0 3px 10px rgba(26,90,138,.4);flex-shrink:0;-webkit-appearance:none;}
 .sbtn:disabled{background:#94a3b8;box-shadow:none;}
-
-/* VOICE */
 .vwrap{display:flex;flex-direction:column;align-items:center;gap:8px;padding:2px 0;}
 .vtxt{background:#f0fdf4;border:1.5px solid #86efac;border-radius:9px;padding:7px 13px;font-size:13px;color:#15803d;width:100%;text-align:center;display:none;font-style:italic;}
 .spkbar{display:none;align-items:center;justify-content:center;gap:3px;height:24px;}
@@ -138,12 +125,14 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
 .mlbl{font-size:11px;font-weight:600;color:var(--muted);}
 .mlbl.listen{color:var(--red);}
 
-/* PAYMENT CARD */
+/* PAYMENT */
 .paycard{background:linear-gradient(135deg,var(--dk),var(--blue),var(--blue2));border-radius:16px;padding:16px;color:#fff;margin-top:8px;}
-.pc-doc{display:flex;align-items:center;gap:9px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.15);}
-.pc-av{width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;}
-.pc-nm{font-size:13px;font-weight:700;}
+.pc-top{display:flex;align-items:center;gap:9px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.15);}
+.pc-av{width:38px;height:38px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.pc-nm{font-size:14px;font-weight:800;}
 .pc-sb{font-size:11px;opacity:.8;}
+.pc-alert{background:rgba(255,255,255,.12);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13px;line-height:1.7;}
+.pc-alert .pnm{font-weight:800;font-size:14px;color:#fbbf24;}
 .pc-price{font-size:28px;font-weight:800;margin-bottom:2px;}
 .pc-price span{font-size:13px;font-weight:400;opacity:.8;}
 .pc-list{font-size:13px;opacity:.9;line-height:1.9;margin-bottom:12px;}
@@ -151,28 +140,23 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
 .pc-trust{font-size:11px;opacity:.65;text-align:center;margin-top:7px;}
 .pc-call{background:rgba(255,255,255,.1);border-radius:9px;padding:8px 12px;font-size:12px;text-align:center;margin-top:9px;}
 
-/* PRODUCT CARDS */
-.prodcard{background:#fff;border:2px solid #e0f2fe;border-radius:13px;padding:13px;margin-top:8px;}
-.prod-hdr{display:flex;align-items:center;gap:7px;margin-bottom:9px;}
-.prod-ttl{font-size:14px;font-weight:700;color:var(--blue);}
-.prod-row{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#f8fafc;border:1.5px solid var(--border);border-radius:10px;margin-bottom:6px;cursor:pointer;transition:all .18s;}
-.prod-row:last-child{margin-bottom:0;}
-.prod-row:active{border-color:var(--blue);background:#eff6ff;}
-.prod-nm{font-size:13px;font-weight:600;}
-.prod-pr{font-size:14px;font-weight:800;color:var(--blue);}
-.best{background:var(--green);color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:7px;margin-left:5px;}
-
-/* INFO CARD (food chart / parenting) */
-.info-card{background:linear-gradient(135deg,#92400e,#d97706);border-radius:13px;padding:14px;color:#fff;margin-top:8px;}
-.info-h{font-size:14px;font-weight:800;margin-bottom:6px;}
-.info-b{font-size:12.5px;line-height:1.7;opacity:.95;margin-bottom:10px;}
-.info-btn{background:#fff;color:#92400e;border:none;padding:11px;border-radius:11px;font-size:14px;font-weight:800;cursor:pointer;width:100%;font-family:'Poppins',sans-serif;}
+/* INFO CARDS */
+.infocard{border-radius:13px;padding:14px;color:#fff;margin-top:8px;}
+.ic-food{background:linear-gradient(135deg,#065f46,#059669);}
+.ic-parent{background:linear-gradient(135deg,#6b21a8,#9333ea);}
+.ic-h{font-size:14px;font-weight:800;margin-bottom:6px;}
+.ic-b{font-size:12.5px;line-height:1.7;opacity:.95;margin-bottom:10px;}
+.ic-row{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:rgba(255,255,255,.15);border-radius:10px;margin-bottom:6px;cursor:pointer;}
+.ic-row:last-child{margin-bottom:0;}
+.ic-nm{font-size:13px;font-weight:600;}
+.ic-pr{font-size:14px;font-weight:800;}
+.ic-best{background:rgba(255,255,255,.3);font-size:9px;font-weight:700;padding:2px 5px;border-radius:7px;margin-left:5px;}
 
 /* SOS */
 .soscard{background:linear-gradient(135deg,#7f1d1d,#dc2626);border-radius:13px;padding:15px;color:#fff;margin-top:8px;animation:pulsered 1.2s ease-in-out infinite;}
 @keyframes pulsered{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.5)}50%{box-shadow:0 0 0 12px rgba(220,38,38,0)}}
-.sos-ttl{font-size:16px;font-weight:800;margin-bottom:6px;}
-.sos-body{font-size:13px;line-height:1.7;opacity:.95;margin-bottom:11px;}
+.sos-t{font-size:16px;font-weight:800;margin-bottom:6px;}
+.sos-b{font-size:13px;line-height:1.7;opacity:.95;margin-bottom:11px;}
 .sos-btn{background:#fff;color:var(--red);border:none;padding:12px;border-radius:11px;font-size:14px;font-weight:800;cursor:pointer;width:100%;font-family:'Poppins',sans-serif;}
 
 /* TOAST */
@@ -189,11 +173,11 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
   <div class="hdr-mid">
     <div class="hdr-hosp">VETRAJ Pet Hospital</div>
     <div class="hdr-tag">Veterinary Diagnostics &amp; Surgical Center</div>
-    <div class="hdr-doc">
+    <div class="hdr-doc-row">
       <div class="odot"></div>
-      <div class="hdr-dname">Dr. Rohit Saini — Line Pe Hain</div>
+      <div class="hdr-dname" id="hdr-dname">Dr. Rohit Saini — Live Baat Karen</div>
     </div>
-    <div class="hdr-dexp">10 Saal Anubhav | Pet Consultant | Nutrition Expert</div>
+    <div class="hdr-dexp" id="hdr-dexp">Veterinary Expert | Pet Consultant | Nutrition Expert</div>
   </div>
   <div class="hdr-right">
     <div class="bfree">FREE</div>
@@ -203,8 +187,8 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
 
 <!-- TRUST BAR -->
 <div class="trust">
-  <span class="ti">🏥 3 Hospitals</span>
-  <span class="ti">👨‍⚕️ 10 Saal</span>
+  <span class="ti">🏥 10 Hospitals</span>
+  <span class="ti">👨‍⚕️ 25 Saal Experience</span>
   <span class="ti">🎓 Nutrition Expert</span>
   <span class="ti">⭐ 5L+ Pet Parents</span>
   <span class="ti">📞 9568606006</span>
@@ -216,26 +200,19 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
   <div class="card">
     <div class="wb">
       <div class="wb-ico">🐾</div>
-      <div class="wb-h">Vetraj Pet Hospital Mein Swagat!</div>
-      <div class="wb-s">Dr. Rohit Saini abhi online hain.<br>Free consultation shuru karein.</div>
+      <div class="wb-h" id="s1-title">Dr. Rohit Saini — Abhi Online Hain</div>
+      <div class="wb-s">Vetraj Pet Hospital — Free Consultation<br>Apni details bharein aur shuru karein.</div>
     </div>
-
     <div class="qb">
       <div class="qb-l">👤 Aapke Baare Mein</div>
       <div class="qb-t">Aapka <span class="hl">Naam</span> kya hai?</div>
     </div>
-    <div class="f">
-      <input class="inp" id="oname" type="text" placeholder="Apna naam likhein..." maxlength="50" autocomplete="off">
-    </div>
-
+    <div class="f"><input class="inp" id="oname" type="text" placeholder="Apna naam likhein..." maxlength="50" autocomplete="off"></div>
     <div class="qb">
       <div class="qb-l">📱 WhatsApp Number</div>
       <div class="qb-t">Aapka <span class="hl">Mobile Number</span></div>
     </div>
-    <div class="f">
-      <input class="inp" id="ophone" type="tel" placeholder="10 digit number" maxlength="10" inputmode="numeric" autocomplete="off">
-    </div>
-
+    <div class="f"><input class="inp" id="ophone" type="tel" placeholder="10 digit number" maxlength="10" inputmode="numeric" autocomplete="off"></div>
     <button class="btn-m" onclick="goS2()">Aage Badhein →</button>
   </div>
 </div>
@@ -243,28 +220,23 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
 <!-- SCREEN 2 — PET -->
 <div class="screen hide" id="s2">
   <div class="card">
-    <div class="sb">
+    <div class="sb2">
       <div class="si"><span>Step 2 / 2</span><span>Pet Ki Jaankari</span></div>
       <div class="pr"><div class="pf" style="width:65%"></div></div>
     </div>
-
     <div class="qb">
       <div class="qb-l">🐾 Pet Ka Naam — Zaroori</div>
       <div class="qb-t">Aapke pet ka <span class="hl">Naam</span> kya hai?</div>
     </div>
-    <div class="f">
-      <input class="inp" id="pname" type="text" placeholder="Jaise: Tommy, Moti, Sheru, Kitty..." maxlength="30" autocomplete="off">
-    </div>
-
+    <div class="f"><input class="inp" id="pname" type="text" placeholder="Jaise: Tommy, Moti, Sheru, Kitty..." maxlength="30" autocomplete="off"></div>
     <div class="qb">
       <div class="qb-l">🐕🐈 Pet Ka Type — Zaroori</div>
       <div class="qb-t"><span class="hl">Dog</span> hai ya <span class="hl">Cat</span>?</div>
     </div>
     <div class="g2">
-      <button class="opt" id="od" onclick="pick(this,'pt','dog')">🐕 Dog</button>
-      <button class="opt" id="oc" onclick="pick(this,'pt','cat')">🐈 Cat</button>
+      <button class="opt" onclick="pick(this,'pt','dog')">🐕 Dog</button>
+      <button class="opt" onclick="pick(this,'pt','cat')">🐈 Cat</button>
     </div>
-
     <div class="qb">
       <div class="qb-l">📅 Pet Ki Umar</div>
       <div class="qb-t">Kitni <span class="hl">Age</span> hai?</div>
@@ -277,16 +249,12 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
       <button class="opt" onclick="pick(this,'pa','7+ years')">7+ Saal</button>
       <button class="opt" onclick="pick(this,'pa','unknown')">Pata Nahi</button>
     </div>
-
     <div class="qb">
       <div class="qb-l">🧬 Breed (Optional)</div>
       <div class="qb-t">Pet ki <span class="hl">Breed</span>?</div>
     </div>
-    <div class="f">
-      <input class="inp" id="pbreed" type="text" placeholder="Jaise: Labrador, Persian, Desi...">
-    </div>
-
-    <button class="btn-m" onclick="startChat()">🩺 Dr. Rohit Se Baat Shuru Karein</button>
+    <div class="f"><input class="inp" id="pbreed" type="text" placeholder="Jaise: Labrador, Persian, Desi..."></div>
+    <button class="btn-m" onclick="startChat()">🩺 <span id="s2-btn">Dr. Rohit Saini</span> Se Baat Shuru Karein</button>
     <button class="btn-b" onclick="goS1()">← Wapas</button>
   </div>
 </div>
@@ -327,11 +295,13 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
 const BACKEND = window.location.origin;
 const RAZORPAY = "https://rzp.io/l/vetraj399";
 const HELPLINE = "9568606006";
+const SID = Math.random().toString(36).substr(2,9);
 
 let oName="",oPhone="",pName="",pType="",pAge="",pBreed="";
-let hist=[],busy=false,mode="text";
-let rec=null,listening=false,speaking=false;
-let voices=[],msgN=0,payDone=false,prodDone=false;
+let doc = {name:"Dr. Rohit Saini",exp:10};
+let hist=[], busy=false, mode="text", chatMode="consult";
+let rec=null, listening=false, speaking=false;
+let voices=[], msgN=0, hcN=0, payDone=false, videoAsked=false;
 let picks={};
 
 if(window.speechSynthesis){
@@ -343,295 +313,260 @@ const T=()=>new Date().toLocaleTimeString("hi-IN",{hour:"2-digit",minute:"2-digi
 const $=id=>document.getElementById(id);
 function scrollChat(){setTimeout(()=>{const m=$("msgs");if(m)m.scrollTop=m.scrollHeight;},100);}
 function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2500);}
-
-function pick(btn,k,v){
-  btn.parentElement.querySelectorAll(".opt").forEach(b=>b.classList.remove("on"));
-  btn.classList.add("on"); picks[k]=v;
+function pick(btn,k,v){btn.parentElement.querySelectorAll(".opt").forEach(b=>b.classList.remove("on"));btn.classList.add("on");picks[k]=v;}
+function fmt(t){
+  t=t.replace(/\*\*([^*\n]+)\*\*/g,'<span class="hi">$1</span>');
+  t=t.replace(/\[RED:([^\]]+)\]/g,'<span class="rhi">$1</span>');
+  t=t.replace(/\[GREEN:([^\]]+)\]/g,'<span class="ghi">$1</span>');
+  t=t.replace(/\[BLUE:([^\]]+)\]/g,'<span class="bhi">$1</span>');
+  return t;
 }
 
-function goS1(){$("s2").classList.add("hide");$("s1").classList.remove("hide");}
+// Load doctor
+async function loadDoc(){
+  try{
+    const r=await fetch(`${BACKEND}/get-doctor`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({sessionId:SID})});
+    const d=await r.json();
+    doc=d.doctor;
+    $("hdr-dname").textContent=`${doc.name} — Live Baat Karen`;
+    $("hdr-dexp").textContent=`${doc.exp} Saal Anubhav | Pet Consultant | Nutrition Expert`;
+    $("s1-title").textContent=`${doc.name} — Abhi Online Hain`;
+    $("s2-btn").textContent=doc.name;
+  }catch(e){}
+}
+loadDoc();
 
+// SCREENS
+function goS1(){$("s2").classList.add("hide");$("s1").classList.remove("hide");}
 function goS2(){
-  oName=$("oname").value.trim();
-  oPhone=$("ophone").value.trim();
-  if(!oName){toast("⚠️ Apna naam daalna zaroori hai");$("oname").focus();return;}
+  oName=$("oname").value.trim();oPhone=$("ophone").value.trim();
+  if(!oName){toast("⚠️ Apna naam daalo");$("oname").focus();return;}
   if(oPhone.length<10){toast("⚠️ Sahi 10 digit number daalo");$("ophone").focus();return;}
-  $("s1").classList.add("hide");
-  $("s2").classList.remove("hide");
+  $("s1").classList.add("hide");$("s2").classList.remove("hide");
   setTimeout(()=>$("s2").scrollTop=0,50);
 }
 
 function startChat(){
-  pName=$("pname").value.trim();
-  pType=picks["pt"]||"";
-  pAge=picks["pa"]||"unknown";
-  pBreed=$("pbreed").value.trim()||"";
-
+  pName=$("pname").value.trim();pType=picks["pt"]||"";
+  pAge=picks["pa"]||"unknown";pBreed=$("pbreed").value.trim()||"";
   if(!pName){toast("⚠️ Pet ka naam daalo");$("pname").focus();return;}
   if(!pType){toast("⚠️ Dog ya Cat select karo");return;}
 
-  $("s1").classList.add("hide");
-  $("s2").classList.add("hide");
-  $("chatscreen").classList.remove("hide");
-  $("botbar").classList.remove("hide");
+  fetch(`${BACKEND}/save-lead`,{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({ownerName:oName,ownerPhone:oPhone,petName:pName,petType:pType,petAge:pAge,petBreed:pBreed,doctorName:doc.name,problem:"Panel opened"})
+  }).catch(()=>{});
+
+  $("s1").classList.add("hide");$("s2").classList.add("hide");
+  $("chatscreen").classList.remove("hide");$("botbar").classList.remove("hide");
 
   docMsg(
-    `Namaskar <span class="hi">${oName}</span> ji! 🙏\n\nMain Dr. Rohit Saini hun — Vetraj Pet Hospital se.\n\n<span class="hi">${pName}</span> ko kya takleef ho rahi hai?`,
+    `Namaskar <span class="hi">${oName}</span> ji! 🙏\n\n<span class="hi">${pName}</span> ko kya problem ho rahi hai?`,
     [
       {t:"🤧 Khansi",v:"khansi ho rahi hai"},
-      {t:"🌡️ Bukhar",v:"bukhar hai"},
+      {t:"🌡️ Bukhar/Fever",v:"bukhar hai"},
       {t:"💩 Loose Motion",v:"loose motion ho raha hai"},
       {t:"🤢 Ulti",v:"ulti ho rahi hai"},
       {t:"🍽️ Khana Nahi",v:"khana nahi kha raha"},
       {t:"😴 Kamzori",v:"bahut kamzor aur thaka hua hai"},
       {t:"🐾 Khujali/Skin",v:"khujali aur skin problem hai"},
       {t:"👁️ Aankhein",v:"aankhon mein problem hai"},
-      {t:"🥗 Food Chart Chahiye",v:"pet ke liye customised food chart chahiye",g:true},
-      {t:"📚 Pet Parenting",v:"pet parenting sikhni hai mujhe",g:true},
-      {t:"🚨 Emergency",v:"bahut serious emergency lag rahi hai",e:true}
+      {t:"🏥 Health Checkup",v:"__HEALTH_CHECKUP__",g:true},
+      {t:"🥗 Food Chart",v:"__FOOD_CHART__",g:true},
+      {t:"📚 Pet Parenting",v:"__PET_PARENTING__",g:true},
+      {t:"❓ Kuch Aur",v:"mere pet ke baare mein kuch aur poochhna hai"},
+      {t:"🚨 Emergency",v:"__EMERGENCY__",e:true}
     ]
   );
 }
 
-// ━━━ FORMAT REPLY ━━━
-function fmt(text){
-  text=text.replace(/\*\*([^*\n]+)\*\*/g,'<span class="hi">$1</span>');
-  text=text.replace(/\[RED:([^\]]+)\]/g,'<span class="rhi">$1</span>');
-  text=text.replace(/\[GREEN:([^\]]+)\]/g,'<span class="ghi">$1</span>');
-  text=text.replace(/\[BLUE:([^\]]+)\]/g,'<span class="bhi">$1</span>');
-  return text;
-}
-
-// ━━━ MESSAGES ━━━
+// MESSAGES
 function docMsg(text,opts=[]){
-  const msgs=$("msgs");
-  const row=document.createElement("div");
-  row.className="row";
+  const msgs=$("msgs");const row=document.createElement("div");row.className="row";
   const optsHtml=opts.length
-    ?`<div class="copts">${opts.map(o=>`<button class="copt${o.e?' emer':o.g?' gold':''}" onclick="qr('${o.v}')">${o.t}</button>`).join("")}</div>`
-    :"";
-  row.innerHTML=`
-    <div class="av d">👨‍⚕️</div>
-    <div style="flex:1;min-width:0;">
-      <div class="bub d">${fmt(text).replace(/\n/g,"<br>")}</div>
-      ${optsHtml}
-      <div class="ts">Dr. Rohit Saini • Vetraj • ${T()}</div>
-    </div>`;
+    ?`<div class="copts">${opts.map(o=>`<button class="copt${o.e?' emer':o.g?' gold':o.yes?' yes':o.no?' no':''}" onclick="qr('${o.v}')">${o.t}</button>`).join("")}</div>`:"";
+  row.innerHTML=`<div class="av d">👨‍⚕️</div><div style="flex:1;min-width:0;"><div class="bub d">${fmt(text).replace(/\n/g,"<br>")}</div>${optsHtml}<div class="ts">${doc.name} • Vetraj • ${T()}</div></div>`;
   msgs.appendChild(row);scrollChat();
 }
-
-function userMsg(text){
-  const msgs=$("msgs");
-  const row=document.createElement("div");
-  row.className="row u";
-  row.innerHTML=`<div class="ts">${T()}</div><div class="bub u">${text}</div><div class="av u">👤</div>`;
+function userMsg(t){
+  const msgs=$("msgs");const row=document.createElement("div");row.className="row u";
+  row.innerHTML=`<div class="ts">${T()}</div><div class="bub u">${t}</div><div class="av u">👤</div>`;
   msgs.appendChild(row);scrollChat();
 }
-
 function showTyping(){
-  const msgs=$("msgs");
-  const d=document.createElement("div");
-  d.id="typ";
-  d.innerHTML=`
-    <div class="typing-row">
-      <div class="av d">👨‍⚕️</div>
-      <div>
-        <div class="tbub"><div class="td"></div><div class="td"></div><div class="td"></div></div>
-        <div class="typing-info">Dr. Rohit typing...</div>
-      </div>
-    </div>`;
+  const msgs=$("msgs");const d=document.createElement("div");d.id="typ";
+  d.innerHTML=`<div class="trow"><div class="av d">👨‍⚕️</div><div><div class="tbub"><div class="td"></div><div class="td"></div><div class="td"></div></div><div class="typ-lbl">${doc.name} typing...</div></div></div>`;
   msgs.appendChild(d);scrollChat();
 }
 function rmTyping(){const t=$("typ");if(t)t.remove();}
 
-// ━━━ SPECIAL CARDS ━━━
+// SPECIAL CARDS
 function showPay(){
   if(payDone)return;payDone=true;
-  const msgs=$("msgs");
-  const d=document.createElement("div");
-  d.innerHTML=`
-    <div class="paycard">
-      <div class="pc-doc">
-        <div class="pc-av">👨‍⚕️</div>
-        <div>
-          <div class="pc-nm">Dr. Mohit Saini</div>
-          <div class="pc-sb">Vetraj Pet Hospital | 15 Saal Experience</div>
-        </div>
-      </div>
-      <div class="pc-price">₹399 <span>/ consultation</span></div>
-      <div class="pc-list">
-        ✅ ${pName} ka detailed examination<br>
-        ✅ Exact diagnosis + treatment plan<br>
-        ✅ Medicine guidance<br>
-        ✅ Diet plan — ghar ka sahi khana<br>
-        ✅ Follow-up support included
-      </div>
-      <button class="pc-btn" onclick="bookNow()">📅 Abhi Book Karein — ₹399</button>
-      <div class="pc-trust">🔒 Secure Payment | Vetraj Pet Hospital</div>
-      <div class="pc-call">Seedha baat karni hai? 📞 <b>${HELPLINE}</b></div>
-    </div>`;
+  const msgs=$("msgs");const d=document.createElement("div");
+  d.innerHTML=`<div class="paycard">
+    <div class="pc-top"><div class="pc-av">👨‍⚕️</div><div><div class="pc-nm">${doc.name}</div><div class="pc-sb">Vetraj Pet Hospital | ${doc.exp} Saal Experience</div></div></div>
+    <div class="pc-alert"><span class="pnm">${oName} ji — ${pName} ka mamla serious hai.</span><br>Abhi consultation lein — aaj hi slot available hai.</div>
+    <div class="pc-price">₹399 <span>/ consultation</span></div>
+    <div class="pc-list">✅ <b>${pName}</b> ka detailed examination<br>✅ Exact diagnosis + treatment plan<br>✅ Medicine guidance<br>✅ Diet plan — ghar ka sahi khana<br>✅ Follow-up support</div>
+    <button class="pc-btn" onclick="bookNow()">📅 Abhi Book Karein — ₹399</button>
+    <div class="pc-trust">🔒 Secure Payment | Vetraj Pet Hospital</div>
+    <div class="pc-call">Seedha baat: 📞 <b>${HELPLINE}</b></div>
+  </div>`;
   msgs.appendChild(d);scrollChat();
 }
 
+function showVideoAsk(){
+  if(videoAsked)return;videoAsked=true;
+  docMsg(
+    `<span class="hi">${pName}</span> ki proper help ke liye mujhe ek **short video** chahiye.\n\nKya aap <span class="hi">${pName}</span> ki health ke liye **serious** hain?`,
+    [{t:"✅ Haan, Main Serious Hun",v:"__YES_VIDEO__",yes:true},{t:"Baad Mein",v:"__NO_VIDEO__",no:true}]
+  );
+}
+
 function showFoodChart(){
-  const msgs=$("msgs");
-  const d=document.createElement("div");
-  d.innerHTML=`
-    <div class="info-card">
-      <div class="info-h">🥗 ${pName} ke liye Customised Food Chart</div>
-      <div class="info-b">
-        ✅ Age aur breed ke hisaab se<br>
-        ✅ Ghar ka fresh khana — koi preservatives nahi<br>
-        ✅ Liver, kidney, skin — sab healthy<br>
-        ✅ Packet food se 10x better results
-      </div>
-      <div style="display:flex;flex-direction:column;gap:7px;">
-        <div class="prod-row" onclick="window.open('https://vetraj.com','_blank')">
-          <div class="prod-nm">📅 3 Mahine</div><div class="prod-pr" style="color:#92400e;">₹1,999</div>
-        </div>
-        <div class="prod-row" onclick="window.open('https://vetraj.com','_blank')">
-          <div class="prod-nm">📅 6 Mahine</div><div class="prod-pr" style="color:#92400e;">₹2,999</div>
-        </div>
-        <div class="prod-row" onclick="window.open('https://vetraj.com','_blank')">
-          <div class="prod-nm">📅 12 Mahine <span class="best">BEST</span></div><div class="prod-pr" style="color:#92400e;">₹4,999</div>
-        </div>
-      </div>
-    </div>`;
+  const msgs=$("msgs");const d=document.createElement("div");
+  d.innerHTML=`<div class="infocard ic-food">
+    <div class="ic-h">🥗 ${pName} ke liye Customised Food Chart</div>
+    <div class="ic-b">✅ Age+breed ke hisaab se fresh ghar ka khana<br>✅ Packet food se 10x better health</div>
+    <div class="ic-row" onclick="window.open('https://vetraj.com','_blank')"><div class="ic-nm">📅 3 Mahine</div><div class="ic-pr">₹1,999</div></div>
+    <div class="ic-row" onclick="window.open('https://vetraj.com','_blank')"><div class="ic-nm">📅 6 Mahine</div><div class="ic-pr">₹2,999</div></div>
+    <div class="ic-row" onclick="window.open('https://vetraj.com','_blank')"><div class="ic-nm">📅 12 Mahine <span class="ic-best">BEST</span></div><div class="ic-pr">₹4,999</div></div>
+  </div>`;
   msgs.appendChild(d);scrollChat();
 }
 
 function showParenting(){
-  const msgs=$("msgs");
-  const d=document.createElement("div");
-  d.innerHTML=`
-    <div class="info-card">
-      <div class="info-h">📚 Pet Parenting Mastery Program</div>
-      <div class="info-b">
-        ✅ ${pType === 'dog' ? 'Dog' : 'Cat'} ki complete dekhbhal sikhein<br>
-        ✅ Food, health, grooming, behaviour — sab kuch<br>
-        ✅ Dr. Mohit Saini ki 15 saal ki expertise<br>
-        ✅ LMS access — kabhi bhi, kahin bhi
-      </div>
-      <button class="info-btn" onclick="window.open('https://vetraj.com','_blank')">🎓 Abhi Join Karein — ₹2,999</button>
-    </div>`;
+  const msgs=$("msgs");const d=document.createElement("div");
+  d.innerHTML=`<div class="infocard ic-parent">
+    <div class="ic-h">📚 Pet Parenting Mastery Program</div>
+    <div class="ic-b">✅ ${pType==='dog'?'Dog':'Cat'} ki complete dekhbhal<br>✅ Food, health, grooming, behaviour<br>✅ LMS access — kabhi bhi</div>
+    <div class="ic-row" onclick="window.open('https://vetraj.com','_blank')"><div class="ic-nm">🎓 Complete Course</div><div class="ic-pr">₹2,999</div></div>
+  </div>`;
   msgs.appendChild(d);scrollChat();
 }
 
 function showSOS(){
-  const msgs=$("msgs");
-  const d=document.createElement("div");
-  d.innerHTML=`
-    <div class="soscard">
-      <div class="sos-ttl">🚨 EMERGENCY — TURANT ACTION LO!</div>
-      <div class="sos-body">
-        <b>${pName}</b> ki condition <b>bahut serious</b> lag rahi hai.<br><br>
-        ⚡ <b>Abhi turant nearest hospital le jaiye</b><br>
-        📍 vetraj.com/contact — address milega<br>
-        🚗 Raste mein call karein
-      </div>
-      <button class="sos-btn" onclick="window.open('tel:${HELPLINE}')">📞 ${HELPLINE} — Abhi Call Karein</button>
-    </div>`;
+  const msgs=$("msgs");const d=document.createElement("div");
+  d.innerHTML=`<div class="soscard"><div class="sos-t">🚨 EMERGENCY — TURANT ACTION LO!</div><div class="sos-b"><b>${pName}</b> ki condition bahut serious lag rahi hai.<br><br>⚡ Abhi turant nearest hospital le jaiye<br>📍 vetraj.com/contact</div><button class="sos-btn" onclick="window.open('tel:${HELPLINE}')">📞 ${HELPLINE} — Abhi Call Karein</button></div>`;
   msgs.appendChild(d);scrollChat();
 }
 
 function bookNow(){
   window.open(RAZORPAY,"_blank");
-  docMsg(`Bahut badhiya! 🎉\n\nPayment ke baad hamare telecaller <span class="hi">${oName}</span> ji ko call karenge aur <span class="hi">${pName}</span> ke liye Dr. Mohit Saini ke saath appointment fix karenge.\n\nKoi bhi sawaal? 📞 <b>${HELPLINE}</b> pe call karein. 🙏`);
+  docMsg(`Bahut badhiya! 🎉\n\n<span class="hi">${oName}</span> ji — payment ke baad call karenge aur <span class="hi">${pName}</span> ke liye appointment fix karenge. 📞 <b>${HELPLINE}</b> 🙏`);
 }
 
-// ━━━ PROCESS ━━━
+// PROCESS
 async function process(text,fromVoice=false){
   if(busy)return;
-  busy=true; $("sb").disabled=true; msgN++;
+  busy=true;$("sb").disabled=true;
   document.querySelectorAll(".copts").forEach(q=>q.remove());
 
-  // Special flows
-  if(text.includes("food chart chahiye")){
-    userMsg(text);
-    showTyping();
-    await new Promise(r=>setTimeout(r,1000));
-    rmTyping();
-    docMsg(`<span class="hi">${pName}</span> ke liye customised food chart — bahut badhiya soch! 🥗\n\nGhar ka sahi khana se <span class="hi">${pName}</span> ki health aur lifespan dono behtar hogi.`);
-    setTimeout(()=>showFoodChart(),500);
-    busy=false; $("sb").disabled=false; return;
+  // SPECIAL ACTIONS
+  if(text==="__HEALTH_CHECKUP__"){
+    chatMode="health";hcN=0;hist=[];
+    userMsg("🏥 Health Checkup");
+    showTyping();await sleep(800);rmTyping();
+    docMsg(`Bilkul! <span class="hi">${pName}</span> ka health checkup karte hain.\n\nMain kuch sawaal poochunga — answers se proper analysis karunga.`);
+    await sleep(600);
+    await apiCall(`${pName} ka health checkup shuru karo. Pehla sawaal poochho.`,"health");
+    busy=false;$("sb").disabled=false;return;
   }
-  if(text.includes("parenting sikhni hai")){
-    userMsg(text);
-    showTyping();
-    await new Promise(r=>setTimeout(r,1000));
-    rmTyping();
-    docMsg(`Pet Parenting — bilkul sahi decision! 📚\n\n<span class="hi">${pName}</span> ko best life dene ke liye yeh knowledge bahut zaroori hai.`);
-    setTimeout(()=>showParenting(),500);
-    busy=false; $("sb").disabled=false; return;
+  if(text==="__FOOD_CHART__"){
+    userMsg("🥗 Food Chart Chahiye");
+    showTyping();await sleep(800);rmTyping();
+    docMsg(`<span class="hi">${pName}</span> ke liye customised food chart — bahut badhiya! 🥗`);
+    setTimeout(()=>showFoodChart(),400);
+    busy=false;$("sb").disabled=false;return;
   }
-
-  const isEmerg=/seizure|fits|blood.vomit|saans.band|behosh|mar.raha|unconscious|emergency|bahut.serious/i.test(text);
-  if(isEmerg){
-    userMsg(text); showSOS();
-    busy=false; $("sb").disabled=false; return;
+  if(text==="__PET_PARENTING__"){
+    userMsg("📚 Pet Parenting Sikhni Hai");
+    showTyping();await sleep(800);rmTyping();
+    docMsg(`<span class="hi">${pName}</span> ki best dekhbhal ke liye — sahi decision! 📚`);
+    setTimeout(()=>showParenting(),400);
+    busy=false;$("sb").disabled=false;return;
+  }
+  if(text==="__EMERGENCY__"){
+    userMsg("🚨 Emergency!");showSOS();
+    busy=false;$("sb").disabled=false;return;
+  }
+  if(text==="__YES_VIDEO__"){
+    userMsg("✅ Haan, Main Serious Hun");
+    showTyping();await sleep(900);rmTyping();
+    docMsg(`${oName} ji — yeh sun ke bahut accha laga! 🙏\n\n<span class="hi">${pName}</span> ke liye abhi slot available hai — aaj hi book karein.`);
+    setTimeout(()=>showPay(),600);
+    busy=false;$("sb").disabled=false;return;
+  }
+  if(text==="__NO_VIDEO__"){
+    userMsg("Baad Mein");
+    showTyping();await sleep(800);rmTyping();
+    docMsg(`Koi baat nahi — jab bhi zaruurat ho 📞 <b>${HELPLINE}</b> pe call karein. Main yahaan hun.`);
+    busy=false;$("sb").disabled=false;return;
+  }
+  if(/seizure|fits|blood.vomit|saans.band|behosh|mar.raha|unconscious/i.test(text)){
+    userMsg(text);showSOS();busy=false;$("sb").disabled=false;return;
   }
 
   userMsg(text);
-  hist.push({role:"user",content:text});
-  showTyping();
 
-  await new Promise(r=>setTimeout(r,800+Math.random()*1000));
+  if(chatMode==="health"){
+    hcN++;
+    hist.push({role:"user",content:text});
+    showTyping();await sleep(700+Math.random()*800);
+    // After 8 questions in health mode — show video ask
+    if(hcN>=8&&!videoAsked){
+      rmTyping();
+      showVideoAsk();
+      busy=false;$("sb").disabled=false;return;
+    }
+    await apiCall(text,"health");
+  } else {
+    msgN++;
+    hist.push({role:"user",content:text});
+    showTyping();await sleep(700+Math.random()*900);
+    if(msgN>=8&&!videoAsked&&!payDone){
+      rmTyping();showVideoAsk();
+      busy=false;$("sb").disabled=false;return;
+    }
+    await apiCall(text,"consult");
+  }
+}
 
+async function apiCall(text,mode){
   let reply="";
   try{
     const res=await fetch(`${BACKEND}/chat`,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        messages:hist,
-        context:{ownerName:oName,ownerPhone:oPhone,petName:pName,petType:pType,petAge:pAge,petBreed:pBreed,msgCount:msgN}
-      })
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({messages:hist,sessionId:SID,mode:mode,
+        context:{ownerName:oName,ownerPhone:oPhone,petName:pName,petType:pType,petAge:pAge,petBreed:pBreed,msgCount:msgN}})
     });
     if(!res.ok)throw new Error("err");
     const data=await res.json();
     reply=data.reply||"Ek second — dobara try karein 🙏";
   }catch(e){
     try{
-      await new Promise(r=>setTimeout(r,2000));
-      const r2=await fetch(`${BACKEND}/chat`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:hist,context:{ownerName:oName,petName:pName,petType:pType,petAge:pAge,msgCount:msgN}})});
-      const d2=await r2.json();
-      reply=d2.reply||"Thoda wait karke dobara bhejein 🙏";
-    }catch(e2){reply="Network slow hai — dobara try karein 🙏";}
+      await sleep(2000);
+      const r2=await fetch(`${BACKEND}/chat`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:hist,sessionId:SID,mode:mode,context:{ownerName:oName,petName:pName,petType:pType,petAge:pAge,msgCount:msgN}})});
+      const d2=await r2.json();reply=d2.reply||"Dobara try karein 🙏";
+    }catch(e2){reply="Network slow — dobara bhejein 🙏";}
   }
-
   hist.push({role:"assistant",content:reply});
-  rmTyping();
-  docMsg(reply);
-
-  if(msgN>=4&&!payDone)setTimeout(()=>showPay(),800);
-
-  if(fromVoice||mode==="voice")speak(reply);
+  rmTyping();docMsg(reply);
+  if(mode==="consult"&&fromVoice||mode==="consult"&&window._voice)speak(reply);
   else{busy=false;$("sb").disabled=false;}
 }
 
-function send(){
-  const inp=$("inp");const text=inp.value.trim();
-  if(!text||busy)return;
-  inp.value="";inp.style.height="auto";
-  process(text,false);
-}
-function qr(text){if(!busy)process(text,mode==="voice");}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
-// ━━━ MODE ━━━
+function send(){const inp=$("inp");const t=inp.value.trim();if(!t||busy)return;inp.value="";inp.style.height="auto";process(t,false);}
+function qr(t){if(!busy)process(t,mode==="voice");}
+
 function setM(m){
   mode=m;
-  if(m==="text"){
-    $("ta").style.display="flex";$("va").classList.add("hide");
-    $("tb").classList.add("on");$("vb").classList.remove("on");
-    if(listening)stopMic();
-  }else{
-    $("ta").style.display="none";$("va").classList.remove("hide");
-    $("tb").classList.remove("on");$("vb").classList.add("on");
-    initRec();toast("🎙️ Mic dabao aur bolein");
-  }
+  if(m==="text"){$("ta").style.display="flex";$("va").classList.add("hide");$("tb").classList.add("on");$("vb").classList.remove("on");if(listening)stopMic();}
+  else{$("ta").style.display="none";$("va").classList.remove("hide");$("tb").classList.remove("on");$("vb").classList.add("on");initRec();toast("🎙️ Mic dabao aur bolein");}
 }
 
-// ━━━ VOICE ━━━
 function initRec(){
   if(rec)return;
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -642,7 +577,7 @@ function initRec(){
   rec.onerror=(e)=>{stopMic();const m={"no-speech":"Awaaz nahi aayi","not-allowed":"Mic permission do"};$("mlbl").textContent=m[e.error]||"Error";};
   rec.onend=()=>{if(listening)stopMic();};
 }
-function togMic(){if(busy&&!listening){toast("Dr. Rohit typing...");return;}if(speaking){window.speechSynthesis.cancel();speaking=false;}listening?stopMic():startMic();}
+function togMic(){if(busy&&!listening){toast("Doctor typing...");return;}if(speaking){window.speechSynthesis.cancel();speaking=false;}listening?stopMic():startMic();}
 function startMic(){if(!rec)initRec();if(!rec)return;try{rec.start();}catch(e){rec=null;initRec();setTimeout(()=>{try{rec.start();}catch(e2){}},200);}}
 function stopMic(){listening=false;try{if(rec)rec.stop();}catch(e){}$("mic").className="mic idle";$("mic").textContent="🎙️";$("mlbl").textContent="Mic dabao aur bolein";$("mlbl").className="mlbl";$("vt").style.display="none";}
 
@@ -651,12 +586,11 @@ function speak(text){
   const clean=text.replace(/<[^>]*>/g,"").replace(/[💊🥣💧🐾🌡️✅🚫💉⚠️👁️🚨💩🤢🤧😴🎉🙏🩺🥗🎓📅⭐📞🐕🐈]/g,"").replace(/\n/g," ").trim();
   if(!clean){busy=false;$("sb").disabled=false;return;}
   window.speechSynthesis.cancel();
-  const utt=new SpeechSynthesisUtterance(clean);
-  utt.rate=0.88;utt.pitch=1;utt.volume=1;
+  const utt=new SpeechSynthesisUtterance(clean);utt.rate=0.88;utt.pitch=1;utt.volume=1;
   if(!voices.length)voices=window.speechSynthesis.getVoices();
   const hv=voices.find(v=>v.lang==="hi-IN")||voices.find(v=>v.lang.startsWith("hi"))||voices.find(v=>v.lang.includes("IN"));
   if(hv)utt.voice=hv;else utt.lang="hi-IN";
-  utt.onstart=()=>{speaking=true;$("spkbar").style.display="flex";$("mic").className="mic process";$("mic").textContent="🔊";$("mlbl").textContent="Dr. Rohit bol raha hai...";};
+  utt.onstart=()=>{speaking=true;$("spkbar").style.display="flex";$("mic").className="mic process";$("mic").textContent="🔊";$("mlbl").textContent="Doctor bol raha hai...";};
   utt.onend=utt.onerror=()=>{speaking=false;busy=false;$("sb").disabled=false;$("spkbar").style.display="none";if(mode==="voice"){$("mic").className="mic idle";$("mic").textContent="🎙️";$("mlbl").textContent="Jawab ke baad phir mic dabao";}};
   window.speechSynthesis.speak(utt);
 }
