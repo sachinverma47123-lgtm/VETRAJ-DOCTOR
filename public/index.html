@@ -595,6 +595,11 @@ function showSOS(){
 function bookNow(){
   window.open(RAZORPAY,"_blank");
   docMsg(`Bahut badhiya! 🎉\n\n<span class="hi">${oName}</span> ji — payment ke baad call karenge aur <span class="hi">${pName}</span> ke liye appointment fix karenge. 📞 <b>${HELPLINE}</b> 🙏`);
+  // After booking - naturally recommend Ganvet
+  setTimeout(()=>{
+    docMsg(`Ek aur kaam — consultation se pehle <span class="hi">${pName}</span> ke liye yeh bhi available hai:`);
+    setTimeout(()=>showGanvet(),600);
+  },2500);
 }
 
 // PROCESS
@@ -669,13 +674,20 @@ async function apiCall(mode){
     const data=await res.json();
     if(data.doctor&&data.doctor.name)doc=data.doctor;
     reply=data.reply||"Aage batayein 🙏";
-  }catch(e){reply="Thoda wait karke dobara bhejein 🙏";}
+  }catch(e){
+    // Only show error once, not repeatedly
+    if(hist.filter(m=>m.role==="assistant"&&m.content.includes("wait")).length===0){
+      reply="Ek second ruko — connect ho raha hun... 🔄";
+    } else {
+      reply="Main sun raha hun — aage batayein. 🙏";
+    }
+  }
   hist.push({role:"assistant",content:reply});
   rmTyping();docMsg(reply);
 
-  // Show Ganvet if liver mentioned
-  if(/liver|tonic|ganvet/i.test(reply)&&!document.querySelector(".ganvet-card")){
-    setTimeout(()=>showGanvet(),600);
+  // Show Ganvet ONLY after payment card shown (end of conversation)
+  if(payDone && /liver|tonic|ganvet|supplement/i.test(reply) && !document.querySelector(".ganvet-card")){
+    setTimeout(()=>showGanvet(),1200);
   }
   // After 4 messages push consultation
   if(mode==="consult"&&msgN>=4&&!payDone&&!videoAsked){
