@@ -751,11 +751,17 @@ function showSOS(){
 }
 
 function bookNow(){
-  window.open(RAZORPAY,"_blank");
-  docMsg(`Bahut badhiya! 🎉\n\n<span class="hi">${oName}</span> ji — payment ke baad call karenge aur <span class="hi">${pName}</span> ke liye appointment fix karenge. 📞 <b>${HELPLINE}</b> 🙏`);
-  // After booking - naturally recommend Ganvet
+  // Pass panel data to booking page
+  const params = new URLSearchParams({
+    name: oName||'',
+    phone: oPhone||'',
+    pet: pName||'',
+    problem: ''
+  });
+  window.open(`/booking.html?${params.toString()}`, '_blank');
+  docMsg(`Bahut badhiya! 🎉\n\n<span class="hi">${oName}</span> ji — booking page mein date aur time select karein aur ₹399 pay karein.\n\nSawaal? 📞 <b>${HELPLINE}</b> 🙏`);
   setTimeout(()=>{
-    docMsg(`Ek aur kaam — consultation se pehle <span class="hi">${pName}</span> ke liye yeh bhi available hai:`);
+    docMsg(`Consultation se pehle <span class="hi">${pName}</span> ke liye yeh bhi available hai:`);
     setTimeout(()=>showGanvet(),600);
   },2500);
 }
