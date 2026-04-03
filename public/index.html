@@ -38,7 +38,11 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
 .ti{font-size:10px;color:#93c5fd;white-space:nowrap;font-weight:600;}
 
 /* SCREENS */
-.screen{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 13px 30px;}
+.screen{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 13px 30px;scroll-behavior:smooth;}
+/* Mobile keyboard fix */
+@supports(height: 100dvh){
+  body{height:100dvh;}
+}
 .card{background:var(--white);border-radius:16px;padding:18px 15px;box-shadow:0 4px 20px rgba(0,0,0,.1);border:1.5px solid #e0f2fe;}
 
 /* WELCOME */
@@ -255,6 +259,7 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
     <div class="f">
       <input class="inp" id="oname" type="text" placeholder="Apna naam likhein..."
         maxlength="50" autocomplete="off"
+        onfocus="onInputFocus('qb-name')"
         onkeydown="if(event.key==='Enter'){event.preventDefault();focusNext('oname','ophone','qb-phone');}">
     </div>
 
@@ -265,6 +270,7 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
     <div class="f">
       <input class="inp" id="ophone" type="tel" placeholder="10 digit number"
         maxlength="10" inputmode="numeric" autocomplete="off"
+        onfocus="onInputFocus('qb-phone')"
         onkeydown="if(event.key==='Enter'){event.preventDefault();goS2();}">
     </div>
 
@@ -287,6 +293,7 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
     <div class="f">
       <input class="inp" id="pname" type="text" placeholder="Jaise: Tommy, Moti, Sheru, Kitty..."
         maxlength="30" autocomplete="off"
+        onfocus="onInputFocus('qb-pname')"
         onkeydown="if(event.key==='Enter'){event.preventDefault();scrollToEl('qb-type');}">
     </div>
 
@@ -316,8 +323,13 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
       <div class="qb-l">🧬 Breed (Optional)</div>
       <div class="qb-t">Pet ki <span class="hl">Breed</span>?</div>
     </div>
-    <div class="f">
-      <input class="inp" id="pbreed" type="text" placeholder="Jaise: Labrador, Persian, Desi...">
+    <div class="f" style="position:relative;">
+      <input class="inp" id="pbreed" type="text" 
+        placeholder="Jaise: lab, gsd, golden, persian..."
+        onfocus="onInputFocus('qb-breed');showBreedSugg()"
+        oninput="breedInput(this)"
+        autocomplete="off">
+      <div id="breed-sugg" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid var(--blue);border-radius:11px;z-index:100;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.15);"></div>
     </div>
 
     <button class="btn-m" onclick="startChat()">🩺 <span id="s2-btn">Dr. Rohit Saini</span> Se Baat Shuru Karein</button>
@@ -386,21 +398,162 @@ function fmt(t){
   return t;
 }
 
-// Auto-scroll to next question
+// Mobile keyboard scroll fix — question stays visible when keyboard opens
 function scrollToEl(id){
   setTimeout(()=>{
-    const el=$(id);
+    const el=document.getElementById(id);
     if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
-  },150);
+  },100);
 }
 
-// Focus next input with scroll
 function focusNext(currentId, nextId, scrollToId){
-  const val=$(currentId).value.trim();
+  const val=document.getElementById(currentId).value.trim();
   if(val){
+    document.getElementById(nextId).focus();
     scrollToEl(scrollToId);
-    setTimeout(()=>$(nextId).focus(),300);
   }
+}
+
+// BREED DATABASE — short codes + popular breeds
+const BREEDS = {
+  // Dogs
+  "lab":"Labrador Retriever","labra":"Labrador Retriever","labrador":"Labrador Retriever",
+  "gsd":"German Shepherd","gs":"German Shepherd","german shepherd":"German Shepherd","german":"German Shepherd",
+  "golden":"Golden Retriever","golden ret":"Golden Retriever","goldie":"Golden Retriever",
+  "husky":"Siberian Husky","sibe":"Siberian Husky",
+  "pom":"Pomeranian","pomer":"Pomeranian",
+  "beagle":"Beagle",
+  "pug":"Pug",
+  "rottweiler":"Rottweiler","rott":"Rottweiler","rottie":"Rottweiler",
+  "doberman":"Doberman Pinscher","dobe":"Doberman Pinscher",
+  "boxer":"Boxer",
+  "bulldog":"Bulldog","bull":"Bulldog",
+  "cocker":"Cocker Spaniel","cocker spaniel":"Cocker Spaniel",
+  "dalmatian":"Dalmatian","dal":"Dalmatian",
+  "shih tzu":"Shih Tzu","shih":"Shih Tzu","shihtzu":"Shih Tzu",
+  "maltese":"Maltese",
+  "indie":"Indian Pariah Dog (Desi)","desi":"Indian Pariah Dog (Desi)","indian":"Indian Pariah Dog (Desi)","pariah":"Indian Pariah Dog (Desi)",
+  "spitz":"Indian Spitz","indian spitz":"Indian Spitz",
+  "rajapalayam":"Rajapalayam","raja":"Rajapalayam",
+  "mudhol":"Mudhol Hound",
+  "chippiparai":"Chippiparai",
+  "great dane":"Great Dane","dane":"Great Dane",
+  "saint":"Saint Bernard","st bernard":"Saint Bernard","saint bernard":"Saint Bernard",
+  "samoyed":"Samoyed","samo":"Samoyed",
+  "chow":"Chow Chow","chowchow":"Chow Chow",
+  "akita":"Akita",
+  "shiba":"Shiba Inu","shiba inu":"Shiba Inu",
+  "border":"Border Collie","border collie":"Border Collie",
+  "lhasa":"Lhasa Apso","lhasa apso":"Lhasa Apso",
+  "miniature":"Miniature Pinscher","minpin":"Miniature Pinscher","min pin":"Miniature Pinscher",
+  "dachshund":"Dachshund","daxi":"Dachshund","doxy":"Dachshund",
+  "poodle":"Poodle",
+  "yorkshire":"Yorkshire Terrier","yorkie":"Yorkshire Terrier","york":"Yorkshire Terrier",
+  "bichon":"Bichon Frise",
+  // Cats
+  "persian":"Persian Cat","persian cat":"Persian Cat",
+  "siamese":"Siamese Cat","siamese cat":"Siamese Cat",
+  "maine":"Maine Coon","maine coon":"Maine Coon",
+  "ragdoll":"Ragdoll Cat","ragdoll cat":"Ragdoll Cat",
+  "bengal":"Bengal Cat","bengal cat":"Bengal Cat",
+  "british":"British Shorthair","british short":"British Shorthair",
+  "scottish":"Scottish Fold","scottish fold":"Scottish Fold",
+  "bombay":"Bombay Cat","bombay cat":"Bombay Cat",
+  "himalayan":"Himalayan Cat",
+  "abyssinian":"Abyssinian Cat","aby":"Abyssinian Cat",
+  "desi cat":"Indian Desi Cat","indie cat":"Indian Desi Cat","street cat":"Indian Desi Cat"
+};
+
+function breedInput(inp){
+  const val = inp.value.trim().toLowerCase();
+  const sugg = document.getElementById('breed-sugg');
+  
+  // Auto-expand short code
+  if(BREEDS[val]){
+    // Show suggestion to confirm
+  }
+  
+  if(!val){sugg.style.display='none';return;}
+  
+  // Find matches
+  const matches = [];
+  // Exact key match first
+  if(BREEDS[val]) matches.push(BREEDS[val]);
+  // Partial matches
+  Object.entries(BREEDS).forEach(([k,v])=>{
+    if(k.startsWith(val) && !matches.includes(v)) matches.push(v);
+  });
+  // Value partial matches
+  Object.values(BREEDS).forEach(v=>{
+    if(v.toLowerCase().includes(val) && !matches.includes(v)) matches.push(v);
+  });
+  
+  const unique = [...new Set(matches)].slice(0,6);
+  if(!unique.length){sugg.style.display='none';return;}
+  
+  sugg.innerHTML = unique.map(b=>
+    `<div onclick="selectBreed('${b}')" style="padding:10px 14px;font-size:13px;font-weight:600;color:#0f172a;border-bottom:1px solid #f1f5f9;cursor:pointer;">${b}</div>`
+  ).join('');
+  sugg.style.display='block';
+}
+
+function showBreedSugg(){
+  const val = document.getElementById('pbreed').value.trim().toLowerCase();
+  if(!val) return;
+  breedInput(document.getElementById('pbreed'));
+}
+
+function selectBreed(name){
+  document.getElementById('pbreed').value = name;
+  document.getElementById('breed-sugg').style.display='none';
+  scrollToEl('qb-breed');
+}
+
+// Close suggestions on outside click
+document.addEventListener('click',(e)=>{
+  if(e.target.id!=='pbreed') document.getElementById('breed-sugg').style.display='none';
+});
+
+// MOBILE KEYBOARD FIX — question visible rahe keyboard ke upar
+function onInputFocus(questionId){
+  setTimeout(()=>{
+    const qb = document.getElementById(questionId);
+    if(!qb) return;
+    const screen = qb.closest('.screen');
+    if(!screen) return;
+    // Scroll so question box is at top of visible area
+    const qbTop = qb.offsetTop - 10;
+    screen.scrollTo({top: qbTop, behavior:'smooth'});
+  }, 350);
+}
+
+// visualViewport — jab keyboard khule toh active input ka question scroll karke dikhao
+if(window.visualViewport){
+  let lastHeight = window.visualViewport.height;
+  window.visualViewport.addEventListener('resize', ()=>{
+    const newHeight = window.visualViewport.height;
+    const keyboardOpen = newHeight < lastHeight - 100;
+    lastHeight = newHeight;
+    
+    if(keyboardOpen){
+      const active = document.activeElement;
+      if(!active) return;
+      // Find the qb (question box) just before this input
+      const qb = active.closest('.f')?.previousElementSibling || 
+                 active.previousElementSibling;
+      if(!qb) return;
+      const screen = qb.closest('.screen');
+      if(!screen) return;
+      setTimeout(()=>{
+        screen.scrollTo({top: qb.offsetTop - 10, behavior:'smooth'});
+      }, 150);
+    }
+    
+    // Chat input — scroll to bottom
+    if(document.activeElement === document.getElementById('inp')){
+      setTimeout(()=>scrollChat(), 300);
+    }
+  });
 }
 
 // Keep Render server awake — ping every 4 minutes
