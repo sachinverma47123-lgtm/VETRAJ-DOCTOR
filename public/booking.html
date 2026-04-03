@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vetraj — Consultation Book Karein</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --navy:#0a1628;--blue:#1a5a8a;--blue2:#2980b9;--cyan:#00d4e8;
+  --green:#16a34a;--green2:#22c55e;--red:#dc2626;--gold:#f59e0b;
+  --bg:#f0f9ff;--white:#fff;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;
+}
+html,body{min-height:100%;background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,var(--navy),var(--blue));padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.3);}
+.hdr-logo{width:38px;height:38px;background:#fff;border-radius:50%;overflow:hidden;flex-shrink:0;}
+.hdr-logo img{width:100%;height:100%;object-fit:cover;}
+.hdr-title{flex:1;}
+.hdr-title h1{font-size:13px;font-weight:800;color:#fff;}
+.hdr-title p{font-size:10px;color:rgba(255,255,255,.6);}
+.hdr-badge{background:linear-gradient(135deg,#b45309,var(--gold));color:#fff;font-size:10px;font-weight:800;padding:5px 10px;border-radius:20px;text-align:center;line-height:1.3;}
+.hdr-badge s{opacity:.7;font-weight:500;}
+
+/* URGENCY BANNER */
+.urgency{background:linear-gradient(135deg,#7f1d1d,var(--red));padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.urg-left{display:flex;align-items:center;gap:7px;}
+.urg-dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:blink 1s infinite;flex-shrink:0;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.urg-txt{font-size:12px;font-weight:700;color:#fff;line-height:1.4;}
+.urg-sub{font-size:10px;color:rgba(255,255,255,.8);}
+.timer-box{background:rgba(0,0,0,.3);border-radius:8px;padding:6px 10px;text-align:center;flex-shrink:0;}
+.timer-num{font-size:16px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:1px;}
+.timer-lbl{font-size:9px;color:rgba(255,255,255,.7);font-weight:600;}
+
+/* HERO */
+.hero{background:linear-gradient(160deg,var(--navy) 0%,var(--blue) 70%,#1a6b9a 100%);padding:20px 16px 18px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;top:-50px;right:-50px;width:220px;height:220px;background:radial-gradient(circle,rgba(0,212,232,.12),transparent 70%);}
+.hero::after{content:'';position:absolute;bottom:-40px;left:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(0,212,232,.08),transparent 70%);}
+.price-wrap{position:relative;z-index:1;margin-bottom:8px;}
+.price-old{font-size:16px;color:rgba(255,255,255,.5);text-decoration:line-through;font-weight:500;}
+.price-new{font-size:50px;font-weight:900;color:#fff;line-height:1;}
+.price-new sup{font-size:24px;vertical-align:top;margin-top:10px;}
+.price-type{font-size:12px;color:rgba(255,255,255,.7);margin-bottom:12px;}
+.slots-left{display:inline-flex;align-items:center;gap:6px;background:rgba(220,38,38,.25);border:1.5px solid rgba(255,100,100,.5);border-radius:20px;padding:5px 14px;margin-bottom:14px;}
+.slots-left span{font-size:11px;font-weight:700;color:#fca5a5;}
+.hero-feats{display:flex;justify-content:center;gap:14px;position:relative;z-index:1;}
+.hf{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.hf-ico{font-size:20px;}
+.hf-txt{font-size:10px;color:rgba(255,255,255,.75);font-weight:600;}
+
+/* SECTIONS */
+.main{padding:14px;}
+.sec-title{font-size:12px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.sec-title::after{content:'';flex:1;height:2px;background:linear-gradient(90deg,var(--cyan),transparent);}
+
+/* DATES */
+.dates-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:18px;}
+.dates-scroll::-webkit-scrollbar{display:none;}
+.date-card{flex-shrink:0;width:60px;background:#fff;border:2.5px solid var(--border);border-radius:14px;padding:9px 6px;text-align:center;cursor:pointer;transition:all .18s;}
+.date-card.on{background:var(--navy);border-color:var(--navy);}
+.date-card.on .dc-day,.date-card.on .dc-month{color:rgba(255,255,255,.65);}
+.date-card.on .dc-num{color:#fff;}
+.dc-day{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:2px;}
+.dc-num{font-size:22px;font-weight:800;color:var(--navy);line-height:1;}
+.dc-month{font-size:9px;color:var(--muted);font-weight:600;}
+.date-card.today .dc-day{color:var(--green);font-weight:800;}
+
+/* SLOTS */
+.slots-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;}
+.slot{background:#fff;border:2px solid var(--border);border-radius:11px;padding:9px 5px;text-align:center;cursor:pointer;transition:all .18s;}
+.slot.on{background:var(--navy);border-color:var(--navy);}
+.slot.on .st,.slot.on .sp{color:#fff;}
+.slot.on .sa{color:#4ade80;}
+.slot.past{opacity:.35;pointer-events:none;background:#f8fafc;}
+.st{font-size:14px;font-weight:700;color:var(--navy);}
+.sp{font-size:10px;color:var(--muted);font-weight:600;}
+.sa{font-size:9px;font-weight:700;color:var(--green);margin-top:2px;}
+.slot.past .sa{color:var(--muted);}
+
+/* FORM */
+.form-card{background:#fff;border-radius:14px;padding:14px;border:1.5px solid var(--border);box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:16px;}
+.field{margin-bottom:11px;}
+.field:last-child{margin-bottom:0;}
+.field label{font-size:10px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;}
+.field input,.field textarea{width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:10px;font-family:'Poppins',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;-webkit-appearance:none;background:#f8fafc;}
+.field input:focus,.field textarea:focus{border-color:var(--blue);background:#fff;}
+.field textarea{resize:none;height:65px;line-height:1.5;}
+.field input::placeholder,.field textarea::placeholder{color:#94a3b8;}
+.autofill-tag{display:inline-block;background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;margin-left:5px;}
+
+/* INCLUDES */
+.includes{background:#fff;border-radius:13px;padding:13px;border:1.5px solid #e0f2fe;margin-bottom:16px;}
+.inc-item{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid #f1f5f9;font-size:12.5px;font-weight:500;}
+.inc-item:last-child{border-bottom:none;padding-bottom:0;}
+.inc-item:first-child{padding-top:0;}
+.inc-ico{font-size:17px;flex-shrink:0;}
+
+/* SUMMARY */
+.summary{background:linear-gradient(135deg,var(--navy),var(--blue));border-radius:14px;padding:14px;margin-bottom:80px;}
+.sum-h{font-size:12px;font-weight:700;color:rgba(255,255,255,.7);margin-bottom:10px;}
+.sum-row{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:8px;color:#fff;}
+.sum-row:last-child{margin-bottom:0;border-top:1px solid rgba(255,255,255,.15);padding-top:10px;margin-top:4px;}
+.sum-lbl{opacity:.75;}
+.sum-val{font-weight:700;}
+.sum-val.big{font-size:20px;font-weight:900;color:#fbbf24;}
+.sum-val.old{text-decoration:line-through;opacity:.5;font-size:11px;}
+
+/* PAY BTN */
+.pay-bar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid var(--border);padding:10px 14px 14px;z-index:50;}
+.pay-btn{width:100%;padding:15px;background:linear-gradient(135deg,#15803d,var(--green2));color:#fff;border:none;border-radius:14px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 5px 18px rgba(22,163,74,.45);display:flex;align-items:center;justify-content:center;gap:8px;}
+.pay-btn:active{transform:scale(.98);}
+.pay-sub{text-align:center;font-size:10px;color:var(--muted);margin-top:5px;display:flex;justify-content:center;gap:8px;}
+
+/* SUCCESS */
+.success-overlay{position:fixed;inset:0;background:rgba(10,22,40,.97);z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;padding:20px;text-align:center;overflow-y:auto;}
+.success-overlay.show{display:flex;}
+.suc-ico{font-size:60px;margin-bottom:14px;animation:pop .5s ease;}
+@keyframes pop{0%{transform:scale(0)}80%{transform:scale(1.1)}100%{transform:scale(1)}}
+.suc-h{font-size:22px;font-weight:800;color:#fff;margin-bottom:8px;}
+.suc-b{font-size:13px;color:rgba(255,255,255,.75);line-height:1.7;margin-bottom:20px;max-width:300px;}
+.suc-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:14px;width:100%;max-width:320px;margin-bottom:18px;}
+.suc-row{display:flex;justify-content:space-between;font-size:12.5px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08);}
+.suc-row:last-child{border-bottom:none;}
+.suc-lbl{color:rgba(255,255,255,.6);}
+.suc-val{font-weight:700;color:#fff;}
+.suc-btn{background:linear-gradient(135deg,var(--green),var(--green2));color:#fff;border:none;padding:13px 28px;border-radius:12px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;width:100%;max-width:320px;}
+
+/* TOAST */
+.toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:9px 18px;border-radius:22px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-logo"><img src="/vetraj_logo.png" alt="Vetraj"></div>
+  <div class="hdr-title">
+    <h1>VETRAJ Pet Hospital</h1>
+    <p>Video Consultation — 20 Min</p>
+  </div>
+  <div class="hdr-badge"><s>₹999</s><br>₹399</div>
+</div>
+
+<!-- URGENCY BANNER -->
+<div class="urgency">
+  <div class="urg-left">
+    <div class="urg-dot"></div>
+    <div>
+      <div class="urg-txt">⚡ Sirf 2 Slots Baaki — Aaj Ke Liye!</div>
+      <div class="urg-sub">Offer khatam hone par price ₹999 ho jaegi</div>
+    </div>
+  </div>
+  <div class="timer-box">
+    <div class="timer-num" id="timer">--:--:--</div>
+    <div class="timer-lbl">Baaki Samay</div>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="price-wrap">
+    <div class="price-old">₹999 ki jagah</div>
+    <div class="price-new"><sup>₹</sup>399</div>
+    <div class="price-type">20 Min Video Consultation</div>
+  </div>
+  <div class="slots-left">
+    <span>🔴 Aaj ke liye sirf <b>2 slots</b> baaki — abhi book karein!</span>
+  </div>
+  <div class="hero-feats">
+    <div class="hf"><div class="hf-ico">🎥</div><div class="hf-txt">Video Call</div></div>
+    <div class="hf"><div class="hf-ico">👨‍⚕️</div><div class="hf-txt">Expert Vet</div></div>
+    <div class="hf"><div class="hf-ico">📋</div><div class="hf-txt">Full Report</div></div>
+    <div class="hf"><div class="hf-ico">🔄</div><div class="hf-txt">Follow-up</div></div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- DATES -->
+  <div class="sec-title">📅 Date Chunein</div>
+  <div class="dates-scroll" id="dates-scroll"></div>
+
+  <!-- SLOTS -->
+  <div class="sec-title">🕐 Time Slot Chunein <span style="font-size:10px;font-weight:600;color:var(--muted);text-transform:none;letter-spacing:0;">(10AM–6PM, 20 min each)</span></div>
+  <div class="slots-grid" id="slots-grid"></div>
+
+  <!-- FORM -->
+  <div class="sec-title">👤 Aapki Details</div>
+  <div class="form-card">
+    <div class="field">
+      <label>Aapka Naam * <span class="autofill-tag">Auto</span></label>
+      <input type="text" id="f-name" placeholder="Apna naam..." maxlength="50">
+    </div>
+    <div class="field">
+      <label>WhatsApp Number * <span class="autofill-tag">Auto</span></label>
+      <input type="tel" id="f-phone" placeholder="10 digit..." maxlength="10" inputmode="numeric">
+    </div>
+    <div class="field">
+      <label>Pet Ka Naam * <span class="autofill-tag">Auto</span></label>
+      <input type="text" id="f-pet" placeholder="Pet ka naam..." maxlength="30">
+    </div>
+    <div class="field">
+      <label>Pet Ki Problem <span class="autofill-tag">Auto</span></label>
+      <textarea id="f-problem" placeholder="Kya problem ho rahi hai..."></textarea>
+    </div>
+  </div>
+
+  <!-- INCLUDES -->
+  <div class="sec-title">✅ Is Mein Kya Milega</div>
+  <div class="includes">
+    <div class="inc-item"><div class="inc-ico">🎥</div>20 min live video consultation</div>
+    <div class="inc-item"><div class="inc-ico">🔬</div>Pet ki video + symptoms ka detailed analysis</div>
+    <div class="inc-item"><div class="inc-ico">📊</div>Exact diagnosis + step-by-step treatment plan</div>
+    <div class="inc-item"><div class="inc-ico">💊</div>Safe medicine guidance (no harmful drugs)</div>
+    <div class="inc-item"><div class="inc-ico">🥗</div>Customised ghar ka khana diet plan</div>
+    <div class="inc-item"><div class="inc-ico">🔄</div>48 ghante WhatsApp follow-up support</div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="sec-title">📋 Booking Summary</div>
+  <div class="summary">
+    <div class="sum-h">Aapki Booking Details</div>
+    <div class="sum-row"><span class="sum-lbl">Date</span><span class="sum-val" id="sum-date">—</span></div>
+    <div class="sum-row"><span class="sum-lbl">Time</span><span class="sum-val" id="sum-time">—</span></div>
+    <div class="sum-row"><span class="sum-lbl">Duration</span><span class="sum-val">20 Minutes</span></div>
+    <div class="sum-row"><span class="sum-lbl">Type</span><span class="sum-val">Video Consultation</span></div>
+    <div class="sum-row"><span class="sum-lbl">Original</span><span class="sum-val old">₹999</span></div>
+    <div class="sum-row"><span class="sum-lbl">Aaj Ka Price</span><span class="sum-val big">₹399</span></div>
+  </div>
+
+</div>
+
+<!-- PAY BAR -->
+<div class="pay-bar">
+  <button class="pay-btn" onclick="proceedToPay()">
+    🔒 Abhi Book Karein — ₹399
+  </button>
+  <div class="pay-sub">
+    <span>🔒 Secure</span>
+    <span>📞 9568606006</span>
+    <span>vetraj.com</span>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div class="success-overlay" id="success">
+  <div class="suc-ico">🎉</div>
+  <div class="suc-h">Booking Confirm!</div>
+  <div class="suc-b">Aapka slot book ho gaya! Hamare doctor <b>30 minute</b> mein WhatsApp karenge.<br><br>Video ready rakhein — consultation mein kaam aayegi.</div>
+  <div class="suc-card" id="suc-details"></div>
+  <button class="suc-btn" onclick="goBack()">← Wapas Jaao</button>
+</div>
+
+<div class="toast" id="toast-el"></div>
+
+<script>
+const RAZORPAY = "https://rzp.io/l/vetraj399";
+let selDate=null, selSlot=null;
+
+// Auto-fill from URL params (sent from panel)
+function autoFill(){
+  const p = new URLSearchParams(window.location.search);
+  if(p.get('name')) document.getElementById('f-name').value = p.get('name');
+  if(p.get('phone')) document.getElementById('f-phone').value = p.get('phone');
+  if(p.get('pet')) document.getElementById('f-pet').value = p.get('pet');
+  if(p.get('problem')) document.getElementById('f-problem').value = p.get('problem');
+}
+
+// Countdown timer — end of day
+function startTimer(){
+  function update(){
+    const now = new Date();
+    const end = new Date();
+    end.setHours(23,59,59,0);
+    const diff = end - now;
+    if(diff<=0){document.getElementById('timer').textContent='00:00:00';return;}
+    const h = String(Math.floor(diff/3600000)).padStart(2,'0');
+    const m = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+    const s = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+    document.getElementById('timer').textContent = `${h}:${m}:${s}`;
+  }
+  update();
+  setInterval(update,1000);
+}
+
+// Generate dates
+function genDates(){
+  const c = document.getElementById('dates-scroll');
+  const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const now = new Date();
+  for(let i=0;i<7;i++){
+    const d = new Date(now);d.setDate(now.getDate()+i);
+    const el=document.createElement('div');
+    el.className='date-card'+(i===0?' today':'');
+    el.innerHTML=`<div class="dc-day">${i===0?'Aaj':days[d.getDay()]}</div><div class="dc-num">${d.getDate()}</div><div class="dc-month">${months[d.getMonth()]}</div>`;
+    el.onclick=()=>selectDate(el,d,i);
+    c.appendChild(el);
+    if(i===0) selectDate(el,d,0);
+  }
+}
+
+function selectDate(el,d,idx){
+  document.querySelectorAll('.date-card').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');selDate=d;
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('sum-date').textContent=`${d.getDate()} ${months[d.getMonth()]}`;
+  genSlots(idx);
+}
+
+// Slots: 10AM to 6PM, 20 min intervals
+function genSlots(dayIdx){
+  const c=document.getElementById('slots-grid');
+  c.innerHTML='';selSlot=null;
+  document.getElementById('sum-time').textContent='—';
+  
+  const slotTimes=[
+    '10:00 AM','10:20 AM','10:40 AM',
+    '11:00 AM','11:20 AM','11:40 AM',
+    '12:00 PM','12:20 PM','12:40 PM',
+    '1:00 PM','1:20 PM','1:40 PM',
+    '2:00 PM','2:20 PM','2:40 PM',
+    '3:00 PM','3:20 PM','3:40 PM',
+    '4:00 PM','4:20 PM','4:40 PM',
+    '5:00 PM','5:20 PM','5:40 PM',
+    '6:00 PM'
+  ];
+  
+  const now=new Date();
+  const nowMins=now.getHours()*60+now.getMinutes();
+  
+  // Randomly mark some as booked (realistic feel)
+  const bookedIdxs = [2,5,8,10,14,18,20];
+  
+  slotTimes.forEach((time,i)=>{
+    // Parse slot time to minutes
+    const [t,period]=time.split(' ');
+    const [h,m]=t.split(':').map(Number);
+    let hour24=h;
+    if(period==='PM'&&h!==12) hour24=h+12;
+    if(period==='AM'&&h===12) hour24=0;
+    const slotMins=hour24*60+m;
+    
+    const isPast=dayIdx===0&&slotMins<=nowMins+30;
+    const isBooked=bookedIdxs.includes(i);
+    const avail=!isPast&&!isBooked;
+    
+    const el=document.createElement('div');
+    const [tpart,ppart]=time.split(' ');
+    el.className='slot'+(isPast||isBooked?' past':'');
+    el.innerHTML=`<div class="st">${tpart}</div><div class="sp">${ppart}</div><div class="sa">${isPast?'Past':isBooked?'Booked':'Available'}</div>`;
+    if(avail) el.onclick=()=>selectSlot(el,time);
+    c.appendChild(el);
+  });
+}
+
+function selectSlot(el,time){
+  document.querySelectorAll('.slot').forEach(s=>s.classList.remove('on'));
+  el.classList.add('on');selSlot=time;
+  document.getElementById('sum-time').textContent=time;
+}
+
+function toast(msg){
+  const t=document.getElementById('toast-el');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function proceedToPay(){
+  const name=document.getElementById('f-name').value.trim();
+  const phone=document.getElementById('f-phone').value.trim();
+  const pet=document.getElementById('f-pet').value.trim();
+  if(!name){toast('⚠️ Apna naam daalo');document.getElementById('f-name').focus();return;}
+  if(phone.length<10){toast('⚠️ Sahi number daalo');document.getElementById('f-phone').focus();return;}
+  if(!pet){toast('⚠️ Pet ka naam daalo');document.getElementById('f-pet').focus();return;}
+  if(!selDate){toast('⚠️ Date select karein');return;}
+  if(!selSlot){toast('⚠️ Time slot select karein');return;}
+  
+  window.open(RAZORPAY,'_blank');
+  
+  const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('suc-details').innerHTML=`
+    <div class="suc-row"><span class="suc-lbl">Naam</span><span class="suc-val">${name}</span></div>
+    <div class="suc-row"><span class="suc-lbl">WhatsApp</span><span class="suc-val">${phone}</span></div>
+    <div class="suc-row"><span class="suc-lbl">Pet</span><span class="suc-val">${pet}</span></div>
+    <div class="suc-row"><span class="suc-lbl">Date</span><span class="suc-val">${selDate.getDate()} ${months[selDate.getMonth()]}</span></div>
+    <div class="suc-row"><span class="suc-lbl">Time</span><span class="suc-val">${selSlot}</span></div>
+    <div class="suc-row"><span class="suc-lbl">Duration</span><span class="suc-val">20 Minutes</span></div>
+    <div class="suc-row"><span class="suc-lbl">Amount</span><span class="suc-val" style="color:#4ade80;">₹399 ✅</span></div>`;
+  
+  document.getElementById('success').classList.add('show');
+}
+
+function goBack(){
+  if(window.history.length>1) window.history.back();
+  else window.location.href='/';
+}
+
+// Init
+autoFill();
+genDates();
+startTimer();
+</script>
+</body>
+</html>
