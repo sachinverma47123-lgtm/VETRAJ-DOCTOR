@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vetraj — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --navy:#0a1628;--blue:#1a5a8a;--blue2:#2980b9;--cyan:#00d4e8;
+  --green:#16a34a;--red:#dc2626;--gold:#f59e0b;--purple:#7c3aed;
+  --pink:#db2777;--teal:#0891b2;
+  --bg:#f0f4f8;--white:#fff;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;
+}
+body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);min-height:100vh;}
+
+/* LOGIN */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--navy),var(--blue));padding:20px;}
+.lc{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:340px;}
+.lc-logo{text-align:center;margin-bottom:16px;font-size:36px;}
+.lc-h{font-size:18px;font-weight:800;color:var(--navy);text-align:center;margin-bottom:4px;}
+.lc-r{font-size:11px;color:var(--muted);text-align:center;margin-bottom:16px;}
+.lc-tabs{display:flex;background:#f1f5f9;border-radius:10px;padding:3px;margin-bottom:16px;}
+.lc-tab{flex:1;padding:8px;text-align:center;font-size:12px;font-weight:700;border-radius:8px;cursor:pointer;color:var(--muted);}
+.lc-tab.on{background:var(--navy);color:#fff;}
+.fi{margin-bottom:12px;}
+.fi label{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:4px;}
+.fi input{width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:9px;font-family:'Poppins',sans-serif;font-size:14px;outline:none;}
+.fi input:focus{border-color:var(--blue);}
+.lbtn{width:100%;padding:13px;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border:none;border-radius:11px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px;}
+.lerr{background:#fee2e2;color:var(--red);font-size:11px;font-weight:600;padding:7px 12px;border-radius:8px;text-align:center;margin-top:8px;display:none;}
+
+/* LAYOUT */
+.app{display:none;min-height:100vh;flex-direction:column;}
+.app.show{display:flex;}
+
+/* TOPBAR */
+.topbar{background:linear-gradient(135deg,var(--navy),var(--blue));padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.tb-logo{width:32px;height:32px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.tb-mid{flex:1;}
+.tb-h{font-size:13px;font-weight:800;color:#fff;}
+.tb-s{font-size:10px;color:rgba(255,255,255,.6);}
+.tb-role{background:rgba(255,255,255,.15);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;}
+.tb-logout{background:rgba(255,255,255,.1);color:#fff;border:none;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;}
+
+/* NAV */
+.nav{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;}
+.nav::-webkit-scrollbar{display:none;}
+.nv{padding:11px 14px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;display:flex;align-items:center;gap:4px;}
+.nv.on{color:var(--blue);border-bottom-color:var(--blue);}
+
+/* CONTENT */
+.pg{display:none;padding:14px;}
+.pg.on{display:block;}
+
+/* STAT GRID */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.sc{background:#fff;border-radius:13px;padding:13px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid var(--blue);}
+.sc.g{border-left-color:var(--green);}
+.sc.r{border-left-color:var(--red);}
+.sc.o{border-left-color:var(--gold);}
+.sc.p{border-left-color:var(--purple);}
+.sc.t{border-left-color:var(--teal);}
+.sc.pk{border-left-color:var(--pink);}
+.sc-n{font-size:26px;font-weight:900;color:var(--navy);}
+.sc-l{font-size:11px;color:var(--muted);font-weight:600;margin-top:2px;}
+
+/* TABLE */
+.tw{background:#fff;border-radius:13px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow:hidden;margin-bottom:14px;}
+.th{padding:11px 13px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);gap:8px;flex-wrap:wrap;gap:6px;}
+.th-t{font-size:13px;font-weight:800;color:var(--navy);}
+.si{padding:7px 12px;border:1.5px solid var(--border);border-radius:20px;font-size:12px;font-family:'Poppins',sans-serif;outline:none;flex:1;min-width:120px;max-width:180px;}
+.si:focus{border-color:var(--blue);}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{padding:8px 11px;background:#f8fafc;font-weight:700;color:var(--navy);text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+.tbl td{padding:9px 11px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:#f8faff;}
+.bw{font-weight:700;}
+.bc{font-weight:700;color:var(--blue);}
+.gm{color:var(--muted);font-size:11px;}
+.bdg{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;}
+.bdg.new{background:#dbeafe;color:#1e40af;}
+.bdg.booked{background:#dcfce7;color:#15803d;}
+.bdg.done{background:#e0e7ff;color:#4338ca;}
+.bdg.refund{background:#fee2e2;color:var(--red);}
+.bdg.pending{background:#fef3c7;color:#92400e;}
+.bdg.called{background:#f0fdf4;color:var(--green);}
+.ab{background:var(--navy);color:#fff;border:none;padding:4px 9px;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;margin-right:3px;margin-bottom:2px;}
+.ab.bl{background:var(--blue);}
+.ab.gr{background:var(--green);}
+.ab.rd{background:var(--red);}
+.ab.pp{background:var(--purple);}
+.ab.go{background:var(--gold);color:#1c1917;}
+
+/* SECTION HEADERS */
+.sec-h{font-size:13px;font-weight:800;color:var(--navy);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.add-btn{background:var(--green);color:#fff;border:none;padding:7px 14px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;display:flex;align-items:center;gap:4px;}
+
+/* DOCTOR CARDS */
+.dg{display:grid;gap:10px;}
+.dcard{background:#fff;border-radius:13px;padding:13px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;gap:11px;align-items:flex-start;}
+.dav{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--navy),var(--blue2));display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.di{flex:1;}
+.dnm{font-size:14px;font-weight:800;color:var(--navy);}
+.dex{font-size:11px;color:var(--muted);}
+.dsp{font-size:11px;color:var(--teal);font-weight:600;margin-top:1px;}
+.dsl{font-size:11px;color:var(--green);font-weight:700;margin-top:2px;}
+.dbtns{display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+.dbtn{font-size:10px;font-weight:700;padding:5px 10px;border-radius:8px;border:none;cursor:pointer;font-family:'Poppins',sans-serif;white-space:nowrap;}
+.dbtn.edit{background:#eff6ff;color:var(--blue);}
+.dbtn.del{background:#fee2e2;color:var(--red);}
+.dbtn.view{background:#dcfce7;color:var(--green);}
+
+/* TALLY CALLER */
+.tc-card{background:#fff;border-radius:13px;padding:13px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:10px;}
+.tc-h{font-size:13px;font-weight:800;color:var(--navy);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+.tc-stat{display:flex;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
+.tc-s{background:#f8fafc;border-radius:9px;padding:8px 12px;flex:1;min-width:80px;}
+.tc-sn{font-size:20px;font-weight:900;color:var(--navy);}
+.tc-sl{font-size:10px;color:var(--muted);font-weight:600;}
+
+/* WHATSAPP */
+.wa-card{background:linear-gradient(135deg,#065f46,#059669);border-radius:13px;padding:14px;color:#fff;margin-bottom:12px;}
+.wa-h{font-size:14px;font-weight:800;margin-bottom:4px;}
+.wa-b{font-size:12px;opacity:.85;line-height:1.6;margin-bottom:12px;}
+.wa-inp{width:100%;padding:10px 12px;border-radius:9px;border:none;font-family:'Poppins',sans-serif;font-size:13px;outline:none;margin-bottom:8px;}
+.wa-ta{width:100%;padding:10px 12px;border-radius:9px;border:none;font-family:'Poppins',sans-serif;font-size:13px;outline:none;resize:none;height:80px;margin-bottom:8px;}
+.wa-btn{background:#fff;color:#065f46;border:none;padding:10px 20px;border-radius:9px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.wa-coming{background:rgba(255,255,255,.15);border-radius:9px;padding:10px 13px;font-size:12px;margin-bottom:8px;}
+
+/* DAILY STATS */
+.daily-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f1f5f9;}
+.daily-row:last-child{border-bottom:none;}
+.daily-date{font-size:12px;font-weight:700;color:var(--navy);min-width:80px;}
+.daily-bar-wrap{flex:1;background:#f1f5f9;border-radius:6px;height:8px;overflow:hidden;}
+.daily-bar{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:6px;}
+.daily-cnt{font-size:12px;font-weight:700;color:var(--navy);min-width:40px;text-align:right;}
+
+/* MODAL */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+.mbg.show{display:flex;}
+.mc{background:#fff;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;}
+.mc-h{font-size:16px;font-weight:800;color:var(--navy);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;}
+.mc-x{background:#f1f5f9;border:none;width:28px;height:28px;border-radius:50%;font-size:13px;cursor:pointer;}
+.mc-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border:none;border-radius:11px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:10px;}
+.mc-item{display:flex;align-items:center;gap:10px;padding:10px;border:2px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer;}
+.mc-item.on{border-color:var(--blue);background:#eff6ff;}
+.mc-nm{font-size:13px;font-weight:700;color:var(--navy);}
+.mc-sl{font-size:11px;color:var(--green);}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:9px 18px;border-radius:22px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+
+/* EMPTY */
+.empty{text-align:center;padding:28px;color:var(--muted);}
+.empty-i{font-size:36px;margin-bottom:8px;}
+
+/* RESPONSIVE */
+@media(max-width:400px){.sg{grid-template-columns:1fr 1fr;}.tbl{font-size:11px;}.tbl td,.tbl th{padding:7px 8px;}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-page" id="login-page">
+  <div class="lc">
+    <div class="lc-logo">🐾</div>
+    <div class="lc-h">Vetraj Dashboard</div>
+    <div class="lc-r">Authorized users only</div>
+    <div class="lc-tabs">
+      <div class="lc-tab on" onclick="setRole(this,'admin')">👑 Admin</div>
+      <div class="lc-tab" onclick="setRole(this,'caller')">📞 Tally Caller</div>
+      <div class="lc-tab" onclick="setRole(this,'doctor')">👨‍⚕️ Doctor</div>
+    </div>
+    <div class="fi"><label>Username</label><input id="lu" type="text" placeholder="Username..."></div>
+    <div class="fi"><label>Password</label><input id="lp" type="password" placeholder="Password..." onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="lbtn" onclick="doLogin()">🔐 Login</button>
+    <div class="lerr" id="lerr">❌ Galat credentials</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="tb-logo">🐾</div>
+    <div class="tb-mid">
+      <div class="tb-h">Vetraj Dashboard</div>
+      <div class="tb-s" id="tb-time">—</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div class="tb-role" id="tb-role">Admin</div>
+      <button class="tb-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="nav" id="main-nav">
+    <div class="nv on" onclick="showPg('overview')">📊 Overview</div>
+    <div class="nv" onclick="showPg('leads')">📋 Leads</div>
+    <div class="nv" onclick="showPg('appointments')">📅 Appointments</div>
+    <div class="nv" onclick="showPg('doctors')">👨‍⚕️ Doctors</div>
+    <div class="nv" onclick="showPg('caller')">📞 Caller Panel</div>
+    <div class="nv" onclick="showPg('orders')">🛒 Orders</div>
+    <div class="nv" onclick="showPg('products')">📦 Products</div>
+    <div class="nv" onclick="showPg('whatsapp')">💬 WhatsApp</div>
+    <div class="nv" onclick="showPg('daily')">📈 Daily Stats</div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="pg on" id="pg-overview">
+    <div class="sg">
+      <div class="sc"><div class="sc-n" id="ov-leads">0</div><div class="sc-l">Total Leads</div></div>
+      <div class="sc g"><div class="sc-n" id="ov-today">0</div><div class="sc-l">Aaj Ke Leads</div></div>
+      <div class="sc o"><div class="sc-n" id="ov-appts">0</div><div class="sc-l">Total Appointments</div></div>
+      <div class="sc p"><div class="sc-n" id="ov-done">0</div><div class="sc-l">Completed</div></div>
+      <div class="sc t"><div class="sc-n" id="ov-rev">₹0</div><div class="sc-l">Revenue</div></div>
+      <div class="sc r"><div class="sc-n" id="ov-refund">₹0</div><div class="sc-l">Refunds</div></div>
+    </div>
+    <div class="tw">
+      <div class="th"><div class="th-t">🕐 Recent Leads</div><div style="display:flex;gap:6px;flex-wrap:wrap;"><button class="add-btn" style="background:var(--purple);" onclick="autoDistribute()">⚡ Auto Distribute</button><button class="add-btn" onclick="refreshData()">🔄 Refresh</button></div></div>
+      <div style="overflow-x:auto;"><table class="tbl"><thead><tr><th>Owner</th><th>Pet</th><th>Phone</th><th>Date</th><th>Status</th></tr></thead><tbody id="ov-tbody"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- LEADS -->
+  <div class="pg" id="pg-leads">
+    <div class="th" style="background:#fff;border-radius:13px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+      <div class="th-t">All Leads</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <input class="si" id="srch" placeholder="🔍 Search..." oninput="filterLeads()">
+        <button class="ab gr" onclick="downloadCSV()">⬇️ CSV</button>
+      </div>
+    </div>
+    <div class="tw">
+      <div style="overflow-x:auto;"><table class="tbl">
+        <thead><tr><th>#</th><th>Owner</th><th>Phone</th><th>Pet</th><th>Problem</th><th>Doctor</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="leads-tbody"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- APPOINTMENTS -->
+  <div class="pg" id="pg-appointments">
+    <div class="sg">
+      <div class="sc g"><div class="sc-n" id="ap-today">0</div><div class="sc-l">Aaj Ke</div></div>
+      <div class="sc"><div class="sc-n" id="ap-total">0</div><div class="sc-l">Total</div></div>
+      <div class="sc p"><div class="sc-n" id="ap-done">0</div><div class="sc-l">Complete</div></div>
+      <div class="sc r"><div class="sc-n" id="ap-refund">0</div><div class="sc-l">Refund</div></div>
+    </div>
+    <div class="tw">
+      <div class="th"><div class="th-t">All Appointments</div>
+        <select class="si" onchange="filterAppts(this.value)" style="max-width:130px;">
+          <option value="all">All Status</option>
+          <option value="booked">Booked</option>
+          <option value="done">Done</option>
+          <option value="pending">Pending</option>
+          <option value="refund">Refund</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto;"><table class="tbl">
+        <thead><tr><th>#</th><th>Owner</th><th>Pet</th><th>Date</th><th>Time</th><th>Doctor</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="appt-tbody"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- DOCTORS -->
+  <div class="pg" id="pg-doctors">
+    <div class="sec-h">
+      <span>All Doctors</span>
+      <button class="add-btn" onclick="openAddDoc()">+ Add Doctor</button>
+    </div>
+    <div class="dg" id="doc-grid"></div>
+  </div>
+
+  <!-- CALLER PANEL -->
+  <div class="pg" id="pg-caller">
+    <div class="tc-card">
+      <div class="tc-h">📞 Tally Caller Panel
+        <span style="font-size:11px;color:var(--muted);font-weight:500;" id="caller-date">—</span>
+      </div>
+      <div class="tc-stat">
+        <div class="tc-s"><div class="tc-sn" id="tc-total">0</div><div class="tc-sl">Total Leads</div></div>
+        <div class="tc-s"><div class="tc-sn" id="tc-called">0</div><div class="tc-sl">Called</div></div>
+        <div class="tc-s"><div class="tc-sn" id="tc-booked">0</div><div class="tc-sl">Booked</div></div>
+        <div class="tc-s"><div class="tc-sn" id="tc-pending">0</div><div class="tc-sl">Pending</div></div>
+      </div>
+    </div>
+    <div class="tw">
+      <div class="th"><div class="th-t">Leads — Call Karo</div></div>
+      <div style="overflow-x:auto;"><table class="tbl">
+        <thead><tr><th>#</th><th>Owner</th><th>Phone</th><th>Pet</th><th>Problem</th><th>Call Status</th><th>Action</th></tr></thead>
+        <tbody id="caller-tbody"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- ORDERS PAGE -->
+  <div class="pg" id="pg-orders">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:14px;font-weight:800;color:var(--navy);">🛒 Product Orders</div>
+      <div style="display:flex;gap:6px;">
+        <button class="add-btn" onclick="window.open('/products.html','_blank')">🏪 Store</button>
+        <button class="add-btn" style="background:var(--green);" onclick="exportOrders()">⬇️ CSV</button>
+        <button class="add-btn" onclick="loadOrders()">🔄 Refresh</button>
+      </div>
+    </div>
+    <div class="sg">
+      <div class="sc"><div class="sc-n" id="ord-total">0</div><div class="sc-l">Total Inquiries</div></div>
+      <div class="sc g"><div class="sc-n" id="ord-today">0</div><div class="sc-l">Aaj Ki</div></div>
+      <div class="sc o"><div class="sc-n" id="ord-rev">₹0</div><div class="sc-l">Potential Revenue</div></div>
+      <div class="sc p"><div class="sc-n" id="ord-prod">—</div><div class="sc-l">Top Product</div></div>
+    </div>
+    <div class="tw">
+      <div class="th"><div class="th-t">Recent Product Inquiries</div></div>
+      <div style="overflow-x:auto;"><table class="tbl">
+        <thead><tr><th>#Order</th><th>Product</th><th>Customer</th><th>Phone</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="orders-tbody"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- PRODUCTS MANAGEMENT -->
+  <div class="pg" id="pg-products">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:14px;font-weight:800;color:var(--navy);">📦 Products</div>
+      <div style="display:flex;gap:6px;">
+        <button class="add-btn" style="background:var(--purple);" onclick="showCatMgmt()">🏷️ Categories</button>
+        <button class="add-btn" onclick="window.open('/products.html','_blank')">🏪 Store</button>
+        <button class="add-btn" style="background:var(--green);" onclick="openProdForm(null)">+ Add</button>
+      </div>
+    </div>
+
+    <!-- CATEGORY MANAGEMENT -->
+    <div id="cat-mgmt" style="display:none;background:#fff;border-radius:13px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:10px;">🏷️ Categories Manage Karein</div>
+      <div id="cat-list" style="margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;">
+        <input id="new-cat-emoji" type="text" placeholder="🐾" style="width:50px;padding:9px;border:2px solid var(--border);border-radius:9px;font-size:16px;text-align:center;outline:none;font-family:'Poppins',sans-serif;">
+        <input id="new-cat-name" type="text" placeholder="Category naam..." style="flex:1;padding:9px 12px;border:2px solid var(--border);border-radius:9px;font-size:13px;font-family:'Poppins',sans-serif;outline:none;">
+        <button onclick="addCategory()" style="background:var(--green);color:#fff;border:none;padding:9px 14px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">+ Add</button>
+      </div>
+    </div>
+
+    <div id="prod-mgmt-list" style="margin-bottom:14px;"></div>
+
+    <!-- PRODUCT FORM -->
+    <div id="prod-form-wrap" style="display:none;background:#fff;border-radius:13px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+      <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:12px;" id="pf-title">➕ New Product</div>
+
+      <div style="border:2px dashed var(--border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;margin-bottom:12px;" onclick="document.getElementById('pf-img-file').click()">
+        <div id="pf-img-txt">📸 Photo upload karein (tap here)</div>
+        <img id="pf-img-preview" style="max-width:100%;max-height:130px;border-radius:8px;margin-top:8px;display:none;">
+        <input type="file" id="pf-img-file" accept="image/*" style="display:none" onchange="handlePfImg(this)">
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;" id="pf-emoji-wrap">
+        ${['🍃','💊','🧫','✨','💎','💧','🌿','🐕'].map(e=>`<span onclick="pfSelEmoji(this,'${e}')" style="font-size:20px;cursor:pointer;padding:5px 8px;border-radius:8px;border:2px solid var(--border);">${e}</span>`).join('')}
+      </div>
+
+      <div style="display:grid;gap:10px;">
+        <div><label style="font-size:10px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px;">NAAM *</label><input id="pf-name" type="text" placeholder="Product naam..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;-webkit-user-select:text;user-select:text;"></div>
+        <div><label style="font-size:10px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px;">CATEGORY</label>
+          <select id="pf-cat" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-family:'Poppins',sans-serif;font-size:14px;outline:none;">
+          </select>
+        </div>
+        <div><label style="font-size:10px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px;">DESCRIPTION</label><textarea id="pf-desc" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:13px;font-family:'Poppins',sans-serif;resize:none;height:65px;outline:none;" placeholder="Product ke baare mein..."></textarea></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+        <div><label style="font-size:10px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px;">MRP (₹)*</label><input id="pf-mrp" type="number" placeholder="399" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;"></div>
+        <div><label style="font-size:10px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px;">SALE PRICE (₹)*</label><input id="pf-price" type="number" placeholder="299" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;"></div>
+        <div><label style="font-size:10px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px;">STOCK</label><input id="pf-stock" type="number" placeholder="50" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;"></div>
+        <div><label style="font-size:10px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px;">EXPIRY</label><input id="pf-expiry" type="month" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;"></div>
+      </div>
+
+      <div style="margin-top:10px;"><label style="font-size:10px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px;">OFFER TAG</label><input id="pf-offer" type="text" placeholder="e.g. 30% Off, Buy 2 Get 1" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;"></div>
+      <div style="margin-top:10px;"><label style="font-size:10px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px;">BENEFITS (ek ek line)</label><textarea id="pf-benefits" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:13px;font-family:'Poppins',sans-serif;resize:none;height:65px;outline:none;" placeholder="Liver protect karta hai&#10;Sugar free&#10;Natural formula"></textarea></div>
+      <div style="margin-top:10px;"><label style="font-size:10px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px;">TAGS (comma se)</label><input id="pf-tags" type="text" placeholder="Sugar Free, 100ml, Dogs & Cats" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;"></div>
+      <div style="margin-top:10px;"><label style="font-size:10px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px;">PURCHASE LINK</label><input id="pf-link" type="url" placeholder="https://vetraj.com/product" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;"></div>
+
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button onclick="saveProdFromDash()" style="flex:2;padding:13px;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border:none;border-radius:11px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">✅ Save</button>
+        <button onclick="document.getElementById('prod-form-wrap').style.display='none'" style="flex:1;padding:12px;background:#f1f5f9;color:var(--navy);border:none;border-radius:11px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="pg" id="pg-whatsapp">
+    <div class="wa-card">
+      <div class="wa-h">💬 WhatsApp API Integration</div>
+      <div class="wa-coming">🔧 Coming Soon — Razorpay payment ke baad WhatsApp API activate hoga. Provision ready hai.</div>
+      <div class="wa-b">API connect hone ke baad:<br>✅ Auto confirmation message<br>✅ Appointment reminders<br>✅ Follow-up drip campaigns<br>✅ Bulk broadcast</div>
+    </div>
+
+    <div class="sec-h" style="margin-bottom:10px;">📢 Campaign Builder</div>
+    <div class="tw">
+      <div class="th"><div class="th-t">Drip Campaigns</div><button class="add-btn" onclick="openCampaign()">+ New Campaign</button></div>
+      <div id="campaign-list">
+        <div class="empty"><div class="empty-i">📱</div><div style="font-size:13px;font-weight:600;">WhatsApp API connect hone ke baad campaigns yahan dikhenge</div></div>
+      </div>
+    </div>
+
+    <div class="sec-h" style="margin-bottom:10px;">📤 Manual Message</div>
+    <div class="tw" style="padding:14px;">
+      <div class="fi"><label>Phone Number</label><input id="wa-phone" type="tel" placeholder="10 digit number..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-family:'Poppins',sans-serif;font-size:14px;outline:none;"></div>
+      <div class="fi"><label>Message</label><textarea id="wa-msg" placeholder="Message likhein..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-family:'Poppins',sans-serif;font-size:13px;outline:none;resize:none;height:80px;"></textarea></div>
+      <button class="ab gr" style="padding:10px 20px;font-size:12px;" onclick="sendWA()">📤 WhatsApp Pe Bhejo</button>
+    </div>
+  </div>
+
+  <!-- DAILY STATS -->
+  <div class="pg" id="pg-daily">
+    <div class="sg">
+      <div class="sc"><div class="sc-n" id="dy-total">0</div><div class="sc-l">Total Leads</div></div>
+      <div class="sc g"><div class="sc-n" id="dy-rev">₹0</div><div class="sc-l">Total Revenue</div></div>
+      <div class="sc o"><div class="sc-n" id="dy-conv">0%</div><div class="sc-l">Conversion</div></div>
+      <div class="sc r"><div class="sc-n" id="dy-refund-amt">₹0</div><div class="sc-l">Total Refunds</div></div>
+    </div>
+
+    <!-- EXCEL EXPORTS -->
+    <div style="background:#fff;border-radius:13px;padding:13px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:14px;">
+      <div class="sec-h" style="margin-bottom:10px;">⬇️ Excel Export</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button class="ab gr" style="padding:10px;font-size:11px;" onclick="exportLeads()">📋 All Leads CSV</button>
+        <button class="ab bl" style="padding:10px;font-size:11px;" onclick="exportAppts('all')">📅 All Appointments</button>
+        <button class="ab pp" style="padding:10px;font-size:11px;" onclick="exportAppts('done')">✅ Done Appointments</button>
+        <button class="ab rd" style="padding:10px;font-size:11px;" onclick="exportAppts('refund')">💰 Refunds CSV</button>
+        <button class="ab go" style="padding:10px;font-size:11px;" onclick="exportRevenue()">📈 Revenue Report</button>
+        <button class="ab" style="padding:10px;font-size:11px;background:var(--teal);" onclick="exportRx()">💊 Prescriptions</button>
+      </div>
+    </div>
+
+    <div class="tw">
+      <div class="th"><div class="th-t">📈 Daily Breakdown</div></div>
+      <div id="daily-chart" style="padding:12px;"></div>
+    </div>
+    <div class="tw">
+      <div class="th"><div class="th-t">💰 Revenue Tracker</div></div>
+      <div style="overflow-x:auto;"><table class="tbl">
+        <thead><tr><th>Date</th><th>Leads</th><th>Appointments</th><th>Revenue</th><th>Refunds</th><th>Net</th></tr></thead>
+        <tbody id="rev-tbody"></tbody>
+      </table></div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ASSIGN MODAL -->
+<div class="mbg" id="assign-modal">
+  <div class="mc">
+    <div class="mc-h"><span>👨‍⚕️ Doctor Assign</span><button class="mc-x" onclick="closeModal('assign-modal')">✕</button></div>
+    <div id="assign-doc-list"></div>
+    <button class="mc-btn" onclick="confirmAssign()">✅ Assign Karein</button>
+  </div>
+</div>
+
+<!-- ADD DOCTOR MODAL -->
+<div class="mbg" id="add-doc-modal">
+  <div class="mc">
+    <div class="mc-h"><span id="add-doc-title">👨‍⚕️ New Doctor Add Karein</span><button class="mc-x" onclick="closeModal('add-doc-modal')">✕</button></div>
+    <div class="fi"><label>Doctor Ka Naam *</label><input id="doc-name-inp" type="text" placeholder="Dr. Naam..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;"></div>
+    <div class="fi"><label>Experience (Saal) *</label><input id="doc-exp-inp" type="number" min="1" max="50" placeholder="10" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;"></div>
+    <div class="fi"><label>Type</label>
+      <select id="doc-type-inp" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-family:'Poppins',sans-serif;font-size:14px;outline:none;">
+        <option value="vet">Veterinary Doctor</option>
+        <option value="nutrition">Nutrition Expert</option>
+      </select>
+    </div>
+    <div class="fi"><label>Specialization</label><input id="doc-spec-inp" type="text" placeholder="e.g. Dog & Cat Specialist" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;"></div>
+    <div class="fi"><label>Phone (Optional)</label><input id="doc-phone-inp" type="tel" placeholder="Doctor ka phone..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;"></div>
+    <button class="mc-btn" onclick="saveDoctor()">✅ Save Karein</button>
+  </div>
+</div>
+
+<!-- REFUND MODAL -->
+<div class="mbg" id="refund-modal">
+  <div class="mc">
+    <div class="mc-h"><span>💰 Refund Process</span><button class="mc-x" onclick="closeModal('refund-modal')">✕</button></div>
+    <div id="refund-info" style="background:#fee2e2;border-radius:10px;padding:12px;margin-bottom:12px;font-size:13px;"></div>
+    <div class="fi"><label>Refund Reason</label>
+      <select id="refund-reason" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-family:'Poppins',sans-serif;font-size:14px;outline:none;">
+        <option>Doctor unavailable</option>
+        <option>Patient cancelled</option>
+        <option>Technical issue</option>
+        <option>Duplicate booking</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <button class="mc-btn" style="background:linear-gradient(135deg,var(--red),#ef4444);" onclick="confirmRefund()">💰 Refund Process Karein</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BACKEND = window.location.origin;
+
+// ━━━━ CREDENTIALS ━━━━
+const CREDS = {
+  admin:  {user:'vetraj',     pass:'vetraj@2024',  role:'admin'},
+  caller: {user:'caller',     pass:'caller@2024',  role:'caller'},
+  doctor: {user:'doc',        pass:'doc@2024',      role:'doctor'},
+};
+
+let currentRole = 'admin';
+let leads = [], appointments = [], doctors = [];
+let selLeadIdx = null, selDocName = null, selApptIdx = null, editDocIdx = null;
+
+// ━━━━ DOCTORS DATA ━━━━
+const DEFAULT_DOCTORS = [
+  {name:"Dr. Rohit Saini",exp:10,spec:"Dog & Cat Specialist",phone:""},
+  {name:"Dr. Tanmay",exp:9,spec:"Small Animal Vet",phone:""},
+  {name:"Dr. Aman",exp:8,spec:"General Veterinary",phone:""},
+  {name:"Dr. Vineet Pal",exp:12,spec:"Dog Specialist",phone:""},
+  {name:"Dr. Neeraj Batra",exp:11,spec:"Cat & Dog Vet",phone:""},
+  {name:"Dr. Neeraj Singhal",exp:14,spec:"Senior Vet",phone:""},
+  {name:"Dr. Rajan Gangwar",exp:13,spec:"Dog Specialist",phone:""},
+  {name:"Dr. Gurpreet Singh",exp:10,spec:"General Vet",phone:""},
+  {name:"Dr. Amit Saini",exp:9,spec:"Small Animal",phone:""},
+  {name:"Dr. Sushant Agrawal",exp:15,spec:"Senior Specialist",phone:""},
+  {name:"Dr. Sanjeet Singh",exp:11,spec:"Dog & Cat Vet",phone:""},
+  {name:"Dr. Harsh Sharma",exp:8,spec:"General Vet",phone:""},
+  {name:"Dr. Rajesh Saini",exp:20,spec:"Senior Vet",phone:""},
+  {name:"Dr. Mohit Saini",exp:25,spec:"Founder & Chief Vet",phone:"9568606006"},
+  {name:"Dr. Nishant Singh",exp:12,spec:"Dog Specialist",phone:""},
+  {name:"Dr. David",exp:9,spec:"Small Animal Vet",phone:""},
+];
+
+// ━━━━ LOGIN ━━━━
+let loginRole = 'admin';
+function setRole(el, role){
+  loginRole = role;
+  document.querySelectorAll('.lc-tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+}
+
+function doLogin(){
+  const u = document.getElementById('lu').value.trim();
+  const p = document.getElementById('lp').value.trim();
+  const cred = CREDS[loginRole];
+  if(cred && u === cred.user && p === cred.pass){
+    currentRole = cred.role;
+    document.getElementById('login-page').style.display='none';
+    document.getElementById('app').classList.add('show');
+    document.getElementById('tb-role').textContent = currentRole==='admin'?'👑 Admin':currentRole==='caller'?'📞 Caller':'👨‍⚕️ Doctor';
+    setupNav();
+    initApp();
+  } else {
+    document.getElementById('lerr').style.display='block';
+  }
+}
+
+function doLogout(){
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('login-page').style.display='flex';
+  document.getElementById('lu').value='';
+  document.getElementById('lp').value='';
+}
+
+function setupNav(){
+  // Caller sees only caller panel
+  if(currentRole==='caller'){
+    document.querySelectorAll('.nv').forEach(n=>n.style.display='none');
+    document.querySelector('[onclick="showPg(\'caller\')"]').style.display='flex';
+    showPg('caller');
+  } else if(currentRole==='doctor'){
+    document.querySelectorAll('.nv').forEach(n=>n.style.display='none');
+    document.querySelector('[onclick="showPg(\'appointments\')"]').style.display='flex';
+    showPg('appointments');
+  }
+}
+
+// ━━━━ INIT ━━━━
+function initApp(){
+  doctors = JSON.parse(localStorage.getItem('vetraj_doctors')||'null') || DEFAULT_DOCTORS;
+  updateTime();
+  setInterval(updateTime, 30000);
+  loadData();
+  loadDashProducts();
+  loadOrders();
+  // Init categories
+  updateCatDropdown();
+}
+
+function updateTime(){
+  document.getElementById('tb-time').textContent = new Date().toLocaleString('en-IN',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('caller-date').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+}
+
+// ━━━━ DATA ━━━━
+async function loadData(){
+  // Load leads
+  try{
+    const r = await fetch(`${BACKEND}/download-leads?key=vetraj2024`);
+    if(r.ok){ const csv=await r.text(); leads=parseCSV(csv); }
+  }catch(e){ leads=[]; }
+
+  // Load appointments
+  try{
+    const r = await fetch(`${BACKEND}/get-appointments?key=vetraj2024`);
+    if(r.ok){ const d=await r.json(); appointments=d.appointments||[]; }
+  }catch(e){ appointments=JSON.parse(localStorage.getItem('vetraj_appointments')||'[]'); }
+
+  // Load doctors from server
+  try{
+    const r = await fetch(`${BACKEND}/get-doctors`);
+    if(r.ok){ const d=await r.json(); if(d.doctors&&d.doctors.length>0){ doctors=d.doctors; localStorage.setItem('vetraj_doctors',JSON.stringify(doctors)); } }
+  }catch(e){}
+
+  renderAll();
+}
+
+function parseCSV(csv){
+  const lines=csv.trim().split('\n');
+  if(lines.length<2) return [];
+  const hdrs=lines[0].split(',');
+  return lines.slice(1).map((line,i)=>{
+    const vals=line.split(',');
+    const o={id:i+1,callStatus:'pending'};
+    hdrs.forEach((h,j)=>o[h.trim()]=(vals[j]||'').trim());
+    return o;
+  });
+}
+
+function renderAll(){
+  renderOverview();
+  renderLeads(leads);
+  renderAppointments(appointments);
+  renderDoctors();
+  renderCaller();
+  renderDaily();
+}
+
+// ━━━━ OVERVIEW ━━━━
+function renderOverview(){
+  const today=new Date().toLocaleDateString('en-IN');
+  const todayLeads=leads.filter(l=>l.Date===today);
+  const done=appointments.filter(a=>a.status==='done');
+  const refunds=appointments.filter(a=>a.status==='refund');
+  document.getElementById('ov-leads').textContent=leads.length;
+  document.getElementById('ov-today').textContent=todayLeads.length;
+  document.getElementById('ov-appts').textContent=appointments.length;
+  document.getElementById('ov-done').textContent=done.length;
+  document.getElementById('ov-rev').textContent='₹'+(done.length*399).toLocaleString('en-IN');
+  document.getElementById('ov-refund').textContent='₹'+(refunds.length*399).toLocaleString('en-IN');
+
+  const tbody=document.getElementById('ov-tbody');
+  const recent=[...leads].slice(-8).reverse();
+  tbody.innerHTML=recent.map(l=>`<tr>
+    <td class="bw">${l.Owner||l['Owner Name']||'—'}</td>
+    <td class="bc">${l.Pet||l['Pet Name']||'—'}</td>
+    <td class="gm"><a href="tel:${l.Phone}" style="color:var(--blue);">📞 ${l.Phone||'—'}</a></td>
+    <td class="gm">${l.Date||'—'}</td>
+    <td><span class="bdg new">New</span></td>
+  </tr>`).join('');
+}
+
+// ━━━━ LEADS ━━━━
+function renderLeads(data){
+  const tbody=document.getElementById('leads-tbody');
+  if(!data.length){
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px;color:#94a3b8;">Koi lead nahi abhi</td></tr>';
+    return;
+  }
+  tbody.innerHTML=data.map((l,i)=>`<tr>
+    <td class="gm">${i+1}</td>
+    <td class="bw">${l.Owner||l['Owner Name']||'—'}</td>
+    <td><a href="tel:${l.Phone}" style="color:var(--blue);font-weight:600;">📞 ${l.Phone||'—'}</a></td>
+    <td class="bc">${l.Pet||l['Pet Name']||'—'} <span class="gm">(${l.Type||''})</span></td>
+    <td style="max-width:100px;font-size:11px;color:#64748b;">${(l.Problem||'—').substring(0,35)}${(l.Problem||'').length>35?'...':''}</td>
+    <td style="font-size:11px;">${l.Doctor||'<span style="color:#94a3b8;">Unassigned</span>'}</td>
+    <td class="gm">${l.Date||'—'}</td>
+    <td><span class="bdg new">New</span></td>
+    <td>
+      <button class="ab bl" onclick="openAssign(${i})">Assign</button>
+      <button class="ab gr" onclick="callNum('${l.Phone}')">📞</button>
+    </td>
+  </tr>`).join('');
+}
+
+function filterLeads(){
+  const q=document.getElementById('srch').value.toLowerCase();
+  renderLeads(leads.filter(l=>(l.Owner||'').toLowerCase().includes(q)||(l['Owner Name']||'').toLowerCase().includes(q)||(l.Phone||'').includes(q)||(l.Pet||l['Pet Name']||'').toLowerCase().includes(q)));
+}
+
+function downloadCSV(){ window.open(`${BACKEND}/download-leads?key=vetraj2024`,'_blank'); }
+
+// ━━━━ APPOINTMENTS ━━━━
+function renderAppointments(data){
+  data=data||appointments;
+  const today=new Date().toLocaleDateString('en-IN');
+  const todayA=data.filter(a=>a.date===today);
+  const done=data.filter(a=>a.status==='done');
+  const refunds=data.filter(a=>a.status==='refund');
+  const pending=data.filter(a=>a.status!=='done'&&a.status!=='refund');
+  document.getElementById('ap-today').textContent=todayA.length;
+  document.getElementById('ap-total').textContent=data.length;
+  document.getElementById('ap-done').textContent=done.length;
+  document.getElementById('ap-refund').textContent=refunds.length;
+
+  const tbody=document.getElementById('appt-tbody');
+  if(!data.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px;color:#94a3b8;">Koi appointment nahi</td></tr>';return;}
+  tbody.innerHTML=data.map((a,i)=>`<tr>
+    <td class="gm">${i+1}</td>
+    <td class="bw">${a.owner||'—'}</td>
+    <td class="bc">${a.pet||'—'}</td>
+    <td class="gm">${a.date||'—'}</td>
+    <td style="font-weight:700;">${a.time||'TBD'}</td>
+    <td style="font-size:11px;">${a.doctor||'<span style="color:#94a3b8;">Unassigned</span>'}</td>
+    <td><span class="bdg ${a.status==='done'?'done':a.status==='refund'?'refund':a.status==='booked'?'booked':'pending'}">${a.status==='done'?'Done':a.status==='refund'?'Refund':a.status==='booked'?'Booked':'Pending'}</span></td>
+    <td>
+      ${a.status!=='done'&&a.status!=='refund'?`<button class="ab pp" onclick="markDone(${i})">✓ Done</button>`:''}
+      ${a.status!=='refund'?`<button class="ab rd" onclick="openRefund(${i})">Refund</button>`:''}
+      <button class="ab bl" onclick="openAssignAppt(${i})">Assign</button>
+      <button class="ab gr" onclick="callNum('${a.phone}')">📞</button>
+    </td>
+  </tr>`).join('');
+}
+
+function filterAppts(status){
+  if(status==='all') renderAppointments(appointments);
+  else renderAppointments(appointments.filter(a=>a.status===status));
+}
+
+async function markDone(i){
+  appointments[i].status='done';
+  await updateApptServer(appointments[i]);
+  renderAppointments();
+  renderOverview();
+  toast('✅ Consultation complete!');
+}
+
+async function updateApptServer(appt){
+  try{
+    await fetch(`${BACKEND}/update-appointment?key=vetraj2024`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:appt.id,status:appt.status,doctor:appt.doctor})
+    });
+  }catch(e){}
+  localStorage.setItem('vetraj_appointments',JSON.stringify(appointments));
+}
+
+// Refund
+function openRefund(i){
+  selApptIdx=i;
+  const a=appointments[i];
+  document.getElementById('refund-info').innerHTML=`<b>${a.owner}</b> — ${a.pet}<br>Date: ${a.date} ${a.time}<br><b style="color:var(--red);">Amount: ₹399</b>`;
+  document.getElementById('refund-modal').classList.add('show');
+}
+
+async function confirmRefund(){
+  if(selApptIdx===null) return;
+  appointments[selApptIdx].status='refund';
+  await updateApptServer(appointments[selApptIdx]);
+  renderAppointments();
+  renderOverview();
+  closeModal('refund-modal');
+  toast('💰 Refund process ho gaya!');
+}
+
+// ━━━━ DOCTORS ━━━━
+function renderDoctors(){
+  const grid=document.getElementById('doc-grid');
+  grid.innerHTML=doctors.map((d,i)=>{
+    const myA=appointments.filter(a=>a.doctor===d.name&&a.status!=='done'&&a.status!=='refund');
+    return `<div class="dcard">
+      <div class="dav">👨‍⚕️</div>
+      <div class="di">
+        <div class="dnm">${d.name}</div>
+        <div class="dex">${d.exp} Saal Experience</div>
+        <div class="dsp">${d.spec||'General Vet'}</div>
+        ${d.phone?`<div class="gm">📞 ${d.phone}</div>`:''}
+        <div class="dsl">${myA.length} Active Consultations</div>
+      </div>
+      <div class="dbtns">
+        <button class="dbtn edit" onclick="editDoc(${i})">✏️ Edit</button>
+        <button class="dbtn view" onclick="viewDocAppts('${d.name}')">👁 View</button>
+        ${i>=DEFAULT_DOCTORS.length?`<button class="dbtn del" onclick="delDoc(${i})">🗑 Del</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openAddDoc(){
+  editDocIdx=null;
+  document.getElementById('add-doc-title').textContent='👨‍⚕️ New Doctor Add';
+  document.getElementById('doc-name-inp').value='';
+  document.getElementById('doc-exp-inp').value='';
+  document.getElementById('doc-spec-inp').value='';
+  document.getElementById('doc-phone-inp').value='';
+  document.getElementById('add-doc-modal').classList.add('show');
+}
+
+function editDoc(i){
+  editDocIdx=i;
+  const d=doctors[i];
+  document.getElementById('add-doc-title').textContent='✏️ Doctor Edit Karein';
+  document.getElementById('doc-name-inp').value=d.name;
+  document.getElementById('doc-exp-inp').value=d.exp;
+  document.getElementById('doc-spec-inp').value=d.spec||'';
+  document.getElementById('doc-phone-inp').value=d.phone||'';
+  document.getElementById('add-doc-modal').classList.add('show');
+}
+
+function saveDoctor(){
+  const name=document.getElementById('doc-name-inp').value.trim();
+  const exp=parseInt(document.getElementById('doc-exp-inp').value)||8;
+  const type=document.getElementById('doc-type-inp').value||'vet';
+  const spec=document.getElementById('doc-spec-inp').value.trim()||'General Vet';
+  const phone=document.getElementById('doc-phone-inp').value.trim();
+  if(!name){toast('⚠️ Naam zaroori hai');return;}
+  const docData = editDocIdx!==null ? {...doctors[editDocIdx],name,exp,type,spec,phone} : {name,exp,type,spec,phone};
+  fetch(`${BACKEND}/save-doctor?key=vetraj2024`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(docData)})
+    .then(()=>{toast(editDocIdx!==null?'✅ Doctor update ho gaya!':'✅ Doctor add ho gaya!');loadData();})
+    .catch(()=>{});
+  if(editDocIdx!==null){doctors[editDocIdx]={...doctors[editDocIdx],name,exp,type,spec,phone};}
+  else{doctors.push({name,exp,type,spec,phone,available:true,id:Date.now()});}
+  localStorage.setItem('vetraj_doctors',JSON.stringify(doctors));
+  closeModal('add-doc-modal');
+  renderDoctors();
+}
+
+function delDoc(i){
+  if(!confirm('Yeh doctor delete karein?')) return;
+  doctors.splice(i,1);
+  localStorage.setItem('vetraj_doctors',JSON.stringify(doctors));
+  renderDoctors();
+  toast('🗑 Doctor remove ho gaya');
+}
+
+function viewDocAppts(name){
+  const myA=appointments.filter(a=>a.doctor===name);
+  if(!myA.length){toast(`${name} ke paas koi appointment nahi`);return;}
+  alert(`${name} — Appointments (${myA.length}):\n\n${myA.map(a=>`${a.date} ${a.time} — ${a.owner||'—'} (${a.pet||'—'}) [${a.status}]`).join('\n')}`);
+}
+
+// ━━━━ ASSIGN ━━━━
+function openAssign(leadIdx){
+  selLeadIdx=leadIdx; selDocName=null;
+  buildDocList();
+  document.getElementById('assign-modal').classList.add('show');
+}
+
+function openAssignAppt(i){
+  selApptIdx=i; selLeadIdx=null; selDocName=null;
+  buildDocList();
+  document.getElementById('assign-modal').classList.add('show');
+}
+
+function buildDocList(){
+  const list=document.getElementById('assign-doc-list');
+  list.innerHTML=doctors.map(d=>{
+    const cnt=appointments.filter(a=>a.doctor===d.name&&a.status!=='done').length;
+    return `<div class="mc-item" onclick="selDoc(this,'${d.name}')">
+      <div style="flex:1;">
+        <div class="mc-nm">${d.name}</div>
+        <div class="mc-sl">${cnt} active · ${d.exp} saal · ${d.spec||'Vet'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selDoc(el,name){
+  document.querySelectorAll('.mc-item').forEach(d=>d.classList.remove('on'));
+  el.classList.add('on'); selDocName=name;
+}
+
+async function confirmAssign(){
+  if(!selDocName){toast('⚠️ Doctor select karein');return;}
+  if(selLeadIdx!==null){
+    const l=leads[selLeadIdx];
+    const newA={owner:l.Owner||l['Owner Name']||'',phone:l.Phone||'',pet:l.Pet||l['Pet Name']||'',date:l.Date||new Date().toLocaleDateString('en-IN'),time:'TBD',doctor:selDocName,status:'booked'};
+    try{await fetch(`${BACKEND}/save-appointment`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(newA)});}catch(e){}
+    await loadData();
+  } else if(selApptIdx!==null){
+    appointments[selApptIdx].doctor=selDocName;
+    await updateApptServer(appointments[selApptIdx]);
+    renderAppointments();
+  }
+  closeModal('assign-modal');
+  toast(`✅ ${selDocName} ko assign ho gaya!`);
+}
+
+// ━━━━ CALLER PANEL ━━━━
+function renderCaller(){
+  const called=leads.filter(l=>l.callStatus==='called');
+  const booked=leads.filter(l=>l.callStatus==='booked');
+  const pending=leads.filter(l=>l.callStatus==='pending'||!l.callStatus);
+  document.getElementById('tc-total').textContent=leads.length;
+  document.getElementById('tc-called').textContent=called.length;
+  document.getElementById('tc-booked').textContent=booked.length;
+  document.getElementById('tc-pending').textContent=pending.length;
+  const tbody=document.getElementById('caller-tbody');
+  if(!leads.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8;">Koi lead nahi</td></tr>';return;}
+  tbody.innerHTML=leads.map((l,i)=>`<tr>
+    <td class="gm">${i+1}</td>
+    <td class="bw">${l.Owner||l['Owner Name']||'—'}</td>
+    <td><a href="tel:${l.Phone}" style="color:var(--blue);font-weight:700;">📞 ${l.Phone||'—'}</a></td>
+    <td class="bc">${l.Pet||l['Pet Name']||'—'}</td>
+    <td style="font-size:11px;max-width:100px;">${(l.Problem||'—').substring(0,30)}...</td>
+    <td><span class="bdg ${l.callStatus==='called'?'called':l.callStatus==='booked'?'booked':'pending'}">${l.callStatus==='called'?'Called':l.callStatus==='booked'?'Booked':'Pending'}</span></td>
+    <td>
+      <button class="ab gr" onclick="markCalled(${i})">✓ Called</button>
+      <button class="ab bl" onclick="markCallerBooked(${i})">✓ Booked</button>
+      <button class="ab go" onclick="callNum('${l.Phone}')">📞 Call</button>
+    </td>
+  </tr>`).join('');
+}
+
+function markCalled(i){ leads[i].callStatus='called'; renderCaller(); toast('✅ Called mark ho gaya'); }
+function markCallerBooked(i){ leads[i].callStatus='booked'; renderCaller(); toast('✅ Booked mark ho gaya'); }
+
+// ━━━━ DAILY STATS ━━━━
+function renderDaily(){
+  const rev=appointments.filter(a=>a.status==='done').length*399;
+  const refunds=appointments.filter(a=>a.status==='refund').length*399;
+  const conv=leads.length?Math.round((appointments.length/leads.length)*100):0;
+  document.getElementById('dy-total').textContent=leads.length;
+  document.getElementById('dy-rev').textContent='₹'+rev.toLocaleString('en-IN');
+  document.getElementById('dy-conv').textContent=conv+'%';
+  document.getElementById('dy-refund-amt').textContent='₹'+refunds.toLocaleString('en-IN');
+
+  // Group by date
+  const byDate={};
+  leads.forEach(l=>{const d=l.Date||'Unknown';byDate[d]=(byDate[d]||0)+1;});
+  const maxV=Math.max(...Object.values(byDate),1);
+  document.getElementById('daily-chart').innerHTML=Object.entries(byDate).slice(-7).reverse().map(([d,c])=>`
+    <div class="daily-row">
+      <div class="daily-date">${d}</div>
+      <div class="daily-bar-wrap"><div class="daily-bar" style="width:${(c/maxV)*100}%"></div></div>
+      <div class="daily-cnt">${c} leads</div>
+    </div>`).join('') || '<div class="empty"><div class="empty-i">📊</div><div>Data nahi abhi</div></div>';
+
+  // Revenue by date
+  const apptByDate={};
+  appointments.forEach(a=>{const d=a.date||'Unknown';if(!apptByDate[d])apptByDate[d]={booked:0,done:0,refund:0};apptByDate[d][a.status]=(apptByDate[d][a.status]||0)+1;});
+  const leadDates=Object.keys(byDate).slice(-7).reverse();
+  document.getElementById('rev-tbody').innerHTML=leadDates.map(d=>{
+    const lc=byDate[d]||0;
+    const ad=apptByDate[d]||{};
+    const rv=(ad.done||0)*399;
+    const rf=(ad.refund||0)*399;
+    return `<tr>
+      <td class="bw">${d}</td>
+      <td>${lc}</td>
+      <td>${(ad.booked||0)+(ad.done||0)}</td>
+      <td style="color:var(--green);font-weight:700;">₹${rv.toLocaleString('en-IN')}</td>
+      <td style="color:var(--red);">₹${rf.toLocaleString('en-IN')}</td>
+      <td style="font-weight:800;">₹${(rv-rf).toLocaleString('en-IN')}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center;padding:16px;color:#94a3b8;">Data nahi</td></tr>';
+}
+
+// ━━━━ WHATSAPP ━━━━
+function sendWA(){
+  const phone=document.getElementById('wa-phone').value.trim();
+  const msg=encodeURIComponent(document.getElementById('wa-msg').value.trim());
+  if(!phone||!msg){toast('⚠️ Phone aur message daalo');return;}
+  window.open(`https://wa.me/91${phone}?text=${msg}`,'_blank');
+  toast('📤 WhatsApp khul gaya!');
+}
+
+function openCampaign(){ toast('💬 WhatsApp API connect hone ke baad available hoga'); }
+
+// ━━━━ CATEGORY MANAGEMENT ━━━━
+const DEFAULT_CATS = [
+  {id:'liver',emoji:'🍃',name:'Liver Support'},
+  {id:'deworming',emoji:'💊',name:'Deworming'},
+  {id:'digestive',emoji:'🧫',name:'Digestive'},
+  {id:'skin',emoji:'✨',name:'Skin Care'},
+  {id:'vitamins',emoji:'💎',name:'Vitamins'},
+  {id:'other',emoji:'🐾',name:'Other'},
+];
+
+function getCategories(){
+  const saved = localStorage.getItem('vetraj_categories');
+  return saved ? JSON.parse(saved) : DEFAULT_CATS;
+}
+
+function saveCategories(cats){
+  localStorage.setItem('vetraj_categories', JSON.stringify(cats));
+  // Update server too
+  fetch(`${BACKEND}/save-categories?key=vetraj2024`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({categories:cats})
+  }).catch(()=>{});
+}
+
+function showCatMgmt(){
+  const el = document.getElementById('cat-mgmt');
+  el.style.display = el.style.display==='none' ? 'block' : 'none';
+  renderCatList();
+}
+
+function renderCatList(){
+  const cats = getCategories();
+  const list = document.getElementById('cat-list');
+  list.innerHTML = cats.map((c,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#f8fafc;border-radius:8px;margin-bottom:6px;">
+      <span style="font-size:18px;">${c.emoji}</span>
+      <span style="flex:1;font-size:13px;font-weight:600;color:var(--navy);">${c.name}</span>
+      <span style="font-size:11px;color:var(--muted);font-family:monospace;">${c.id}</span>
+      ${i >= DEFAULT_CATS.length ? `<button onclick="deleteCat(${i})" style="background:#fee2e2;color:var(--red);border:none;padding:4px 9px;border-radius:7px;font-size:10px;font-weight:700;cursor:pointer;">🗑</button>` : '<span style="font-size:10px;color:var(--muted);">Default</span>'}
+    </div>`).join('');
+  updateCatDropdown();
+}
+
+function addCategory(){
+  const emoji = document.getElementById('new-cat-emoji').value.trim() || '🐾';
+  const name = document.getElementById('new-cat-name').value.trim();
+  if(!name){toast('⚠️ Category naam daalo');return;}
+  const id = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const cats = getCategories();
+  if(cats.find(c=>c.id===id)){toast('⚠️ Yeh category pehle se hai');return;}
+  cats.push({id,emoji,name});
+  saveCategories(cats);
+  document.getElementById('new-cat-emoji').value='';
+  document.getElementById('new-cat-name').value='';
+  renderCatList();
+  toast(`✅ Category "${name}" add ho gayi!`);
+}
+
+function deleteCat(i){
+  const cats = getCategories();
+  if(i < DEFAULT_CATS.length){toast('⚠️ Default category delete nahi ho sakti');return;}
+  if(!confirm(`"${cats[i].name}" delete karein?`)) return;
+  cats.splice(i,1);
+  saveCategories(cats);
+  renderCatList();
+  toast('🗑 Category remove ho gayi');
+}
+
+function updateCatDropdown(){
+  const sel = document.getElementById('pf-cat');
+  if(!sel) return;
+  const cats = getCategories();
+  const current = sel.value;
+  sel.innerHTML = cats.map(c=>`<option value="${c.id}">${c.emoji} ${c.name}</option>`).join('');
+  if(current) sel.value = current;
+}
+
+// ━━━━ PRODUCTS MANAGEMENT ━━━━
+let dashProds = [], editProdId = null, pfImg = '', pfEmoji = '🍃';
+
+async function updateOrderStatus(orderId, status){
+  try{
+    await fetch(`${BACKEND}/update-order-status?key=vetraj2024`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({orderId,status})
+    });
+    toast(`✅ Status update: ${status}`);
+  }catch(e){toast('❌ Update nahi ho paya');}
+}
+
+function printLabel(orderId){
+  if(!orderId||orderId==='undefined'){toast('⚠️ Order ID nahi mila');return;}
+  window.open(`${BACKEND}/generate-label/${orderId}?key=vetraj2024`,'_blank');
+}
+
+function exportOrders(){
+  window.open(`${BACKEND}/export/orders?key=vetraj2024`,'_blank');
+}
+  try{
+    const r = await fetch(`${BACKEND}/get-products`);
+    if(r.ok){ const d=await r.json(); dashProds=d.products||[]; }
+  }catch(e){ dashProds=[]; }
+  renderProdMgmt();
+}
+
+function renderProdMgmt(){
+  const list = document.getElementById('prod-mgmt-list');
+  if(!list) return;
+  if(!dashProds.length){
+    list.innerHTML='<div style="text-align:center;padding:20px;color:#94a3b8;">Koi product nahi — Add karein!</div>';
+    return;
+  }
+  list.innerHTML = `<div style="background:#fff;border-radius:13px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead><tr style="background:#f8fafc;">
+        <th style="padding:8px 11px;text-align:left;font-size:10px;color:var(--navy);font-weight:700;">Product</th>
+        <th style="padding:8px 11px;text-align:left;font-size:10px;color:var(--navy);font-weight:700;">Price</th>
+        <th style="padding:8px 11px;text-align:left;font-size:10px;color:var(--navy);font-weight:700;">Stock</th>
+        <th style="padding:8px 11px;text-align:left;font-size:10px;color:var(--navy);font-weight:700;">Action</th>
+      </tr></thead>
+      <tbody>
+        ${dashProds.map((p,i)=>`<tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:9px 11px;"><div style="font-weight:700;color:var(--navy);font-size:12px;">${p.emoji||'🐾'} ${p.name}</div><div style="font-size:10px;color:var(--muted);">${p.category}</div></td>
+          <td style="padding:9px 11px;"><div style="font-weight:700;color:var(--navy);">₹${p.price}</div><div style="font-size:10px;color:var(--muted);text-decoration:line-through;">₹${p.mrp}</div></td>
+          <td style="padding:9px 11px;"><span style="font-weight:700;color:${(p.stock||0)<10?'var(--red)':'var(--green)'};">${p.stock||0}</span></td>
+          <td style="padding:9px 11px;">
+            <button class="ab bl" onclick="openProdForm(${i})">✏️</button>
+            <button class="ab rd" onclick="delDashProd(${i})">🗑</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function openProdForm(idx){
+  editProdId = idx !== null ? dashProds[idx]?.id : null;
+  pfImg = ''; pfEmoji = '🍃';
+  document.getElementById('pf-title').textContent = idx !== null ? '✏️ Product Edit' : '➕ New Product';
+  document.getElementById('pf-img-preview').style.display = 'none';
+  document.getElementById('pf-img-txt').textContent = '📸 Photo upload karein (tap here)';
+
+  // Update category dropdown with current categories
+  updateCatDropdown();
+
+  if(idx !== null){
+    const p = dashProds[idx];
+    document.getElementById('pf-name').value = p.name||'';
+    document.getElementById('pf-cat').value = p.category||'liver';
+    document.getElementById('pf-desc').value = p.desc||'';
+    document.getElementById('pf-mrp').value = p.mrp||'';
+    document.getElementById('pf-price').value = p.price||'';
+    document.getElementById('pf-stock').value = p.stock||'';
+    document.getElementById('pf-expiry').value = p.expiry||'';
+    document.getElementById('pf-offer').value = p.offer||'';
+    document.getElementById('pf-benefits').value = (p.benefits||[]).join('\n');
+    document.getElementById('pf-tags').value = (p.tags||[]).join(', ');
+    document.getElementById('pf-link').value = p.link||'';
+    pfEmoji = p.emoji||'🍃';
+    if(p.img){ pfImg=p.img; document.getElementById('pf-img-preview').src=p.img; document.getElementById('pf-img-preview').style.display='block'; document.getElementById('pf-img-txt').textContent='✅ Photo ready'; }
+  } else {
+    ['pf-name','pf-desc','pf-mrp','pf-price','pf-stock','pf-expiry','pf-offer','pf-benefits','pf-tags','pf-link'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    document.getElementById('pf-cat').value='liver';
+  }
+  document.getElementById('prod-form-wrap').style.display='block';
+  document.getElementById('prod-form-wrap').scrollIntoView({behavior:'smooth'});
+}
+
+function handlePfImg(input){
+  const file = input.files[0];
+  if(!file) return;
+  if(file.size > 2*1024*1024){ toast('⚠️ Photo 2MB se kam honi chahiye'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    pfImg = e.target.result;
+    document.getElementById('pf-img-preview').src = pfImg;
+    document.getElementById('pf-img-preview').style.display = 'block';
+    document.getElementById('pf-img-txt').textContent = '✅ Photo ready!';
+  };
+  reader.readAsDataURL(file);
+}
+
+function pfSelEmoji(el, emoji){
+  pfEmoji = emoji;
+  document.querySelectorAll('#pf-emoji-wrap span').forEach(e=>e.style.borderColor='var(--border)');
+  el.style.borderColor='var(--green)';
+}
+
+async function saveProdFromDash(){
+  const name = document.getElementById('pf-name').value.trim();
+  if(!name){ toast('⚠️ Naam zaroori hai'); return; }
+  const mrp = parseFloat(document.getElementById('pf-mrp').value)||0;
+  const price = parseFloat(document.getElementById('pf-price').value)||0;
+  if(!mrp||!price){ toast('⚠️ MRP aur Sale Price daalo'); return; }
+
+  const prod = {
+    id: editProdId || Date.now(),
+    name,
+    emoji: pfEmoji || '🐾',
+    img: pfImg || '',
+    category: document.getElementById('pf-cat').value,
+    desc: document.getElementById('pf-desc').value.trim(),
+    mrp, price,
+    stock: parseInt(document.getElementById('pf-stock').value)||0,
+    expiry: document.getElementById('pf-expiry').value || '',
+    offer: document.getElementById('pf-offer').value.trim() || '',
+    badge: 'rec',
+    rating: 4.8,
+    reviews: 0,
+    benefits: document.getElementById('pf-benefits').value.split('\n').map(b=>b.trim()).filter(Boolean),
+    tags: document.getElementById('pf-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
+    link: document.getElementById('pf-link').value.trim() || '',
+    recs: [],
+    createdAt: new Date().toISOString()
+  };
+
+  try{
+    const r = await fetch(`${BACKEND}/save-product?key=vetraj2024`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(prod)
+    });
+    const d = await r.json();
+    if(d.success){
+      await loadDashProducts();
+      document.getElementById('prod-form-wrap').style.display='none';
+      toast(editProdId ? '✅ Product update ho gaya!' : '✅ Nayi product add ho gayi!');
+    } else {
+      toast('❌ Server error — dobara try karein');
+    }
+  }catch(e){
+    toast('❌ Connection issue — check karein');
+    console.error(e);
+  }
+}
+
+async function delDashProd(idx){
+  if(!confirm('Yeh product delete karein?')) return;
+  const p = dashProds[idx];
+  try{
+    await fetch(`${BACKEND}/delete-product?key=vetraj2024`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:p.id})});
+    await loadDashProducts();
+    toast('🗑 Product remove ho gaya');
+  }catch(e){ toast('❌ Delete nahi ho paya'); }
+}
+async function loadOrders(){
+  try{
+    const r = await fetch(`${BACKEND}/get-orders?key=vetraj2024`);
+    if(r.ok){
+      const d = await r.json();
+      renderOrders(d.orders||[]);
+    }
+  }catch(e){ renderOrders([]); }
+}
+
+function renderOrders(orders){
+  const today = new Date().toLocaleDateString('en-IN');
+  const todayOrds = orders.filter(o => {
+    const d = new Date(o.createdAt||o.serverTime||o.time||Date.now());
+    return d.toLocaleDateString('en-IN') === today;
+  });
+  const rev = orders.reduce((s,o)=>s+(o.total||o.price||0),0);
+  const prodCounts = {};
+  orders.forEach(o=>{ prodCounts[o.productName]=(prodCounts[o.productName]||0)+1; });
+  const topProd = Object.entries(prodCounts).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('ord-total').textContent = orders.length;
+  document.getElementById('ord-today').textContent = todayOrds.length;
+  document.getElementById('ord-rev').textContent = '₹'+rev.toLocaleString('en-IN');
+  document.getElementById('ord-prod').textContent = topProd ? topProd[0].split(' ').slice(0,2).join(' ') : '—';
+
+  const tbody = document.getElementById('orders-tbody');
+  if(!orders.length){
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8;">Koi order nahi — store share karo!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = orders.slice(0,100).map((o,i)=>{
+    const statusColor = o.status==='delivered'?'var(--green)':o.status==='dispatched'?'var(--blue)':o.status==='cancelled'?'var(--red)':'var(--gold)';
+    return `<tr>
+      <td class="gm" style="font-size:11px;">#${o.orderId||i+1}</td>
+      <td class="bw">${o.productName||'—'}</td>
+      <td class="gm">${o.customer?.name||'—'}</td>
+      <td class="gm">${o.customer?.phone||'—'}</td>
+      <td style="font-weight:700;color:var(--green);">₹${o.total||o.price||0}</td>
+      <td>
+        <select onchange="updateOrderStatus('${o.orderId}',this.value)" style="font-size:10px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;font-family:'Poppins',sans-serif;color:${statusColor};">
+          <option value="confirmed" ${o.status==='confirmed'?'selected':''}>✅ Confirmed</option>
+          <option value="processing" ${o.status==='processing'?'selected':''}>⚙️ Processing</option>
+          <option value="dispatched" ${o.status==='dispatched'?'selected':''}>🚚 Dispatched</option>
+          <option value="delivered" ${o.status==='delivered'?'selected':''}>✅ Delivered</option>
+          <option value="cancelled" ${o.status==='cancelled'?'selected':''}>❌ Cancelled</option>
+        </select>
+      </td>
+      <td>
+        <button class="ab bl" onclick="printLabel('${o.orderId}')">🏷️ Label</button>
+        <button class="ab gr" onclick="window.open('https://wa.me/91${o.customer?.phone}','_blank')">📞</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+function callNum(phone){ window.open(`tel:${phone}`); }
+
+// ━━━━ AUTO DISTRIBUTE ━━━━
+async function autoDistribute(){
+  toast('🔄 Auto distributing...');
+  try{
+    const r = await fetch(`${BACKEND}/auto-distribute?key=vetraj2024`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    const d = await r.json();
+    if(d.success){ toast(`✅ ${d.distributed} appointments auto-distributed!`); await loadData(); }
+    else toast('⚠️ Koi unassigned appointment nahi');
+  }catch(e){toast('❌ Auto-distribute failed');}
+}
+
+// ━━━━ EXCEL EXPORTS ━━━━
+function exportLeads(){ window.open(`${BACKEND}/export/leads?key=vetraj2024`,'_blank'); }
+function exportAppts(status){ window.open(`${BACKEND}/export/appointments?key=vetraj2024&status=${status||'all'}`,'_blank'); }
+function exportRevenue(){ window.open(`${BACKEND}/export/revenue?key=vetraj2024`,'_blank'); }
+function exportRx(){ window.open(`${BACKEND}/export/prescriptions?key=vetraj2024`,'_blank'); }
+
+function showPg(name){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nv').forEach(n=>n.classList.remove('on'));
+  document.getElementById(`pg-${name}`).classList.add('on');
+  event.currentTarget?.classList.add('on');
+}
+
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+function refreshData(){ toast('🔄 Refresh ho raha hai...'); loadData(); }
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+</script>
+</body>
+</html>

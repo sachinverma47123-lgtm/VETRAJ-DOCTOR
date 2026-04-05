@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vetraj — Doctor Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{--navy:#0a1628;--blue:#1a5a8a;--cyan:#00d4e8;--green:#16a34a;--red:#dc2626;--gold:#f59e0b;--purple:#7c3aed;--teal:#0891b2;--bg:#f0f9ff;--white:#fff;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;}
+body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);}
+
+/* LOGIN */
+.lp{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--navy),var(--blue));padding:20px;}
+.lc{background:#fff;border-radius:20px;padding:28px 22px;width:100%;max-width:320px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.lc-top{text-align:center;margin-bottom:18px;}
+.lc-ico{font-size:40px;margin-bottom:8px;}
+.lc-h{font-size:18px;font-weight:800;color:var(--navy);}
+.lc-s{font-size:11px;color:var(--muted);margin-top:3px;}
+.fi{margin-bottom:12px;}
+.fi label{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:4px;}
+.fi input,.fi select,.fi textarea{width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:9px;font-family:'Poppins',sans-serif;font-size:14px;outline:none;transition:border-color .2s;background:#fff;}
+.fi input:focus,.fi select:focus{border-color:var(--blue);}
+.lbtn{width:100%;padding:13px;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border:none;border-radius:11px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+.lerr{background:#fee2e2;color:var(--red);font-size:11px;padding:7px 12px;border-radius:8px;text-align:center;margin-top:8px;display:none;}
+
+/* APP */
+.app{display:none;flex-direction:column;min-height:100vh;}
+.app.show{display:flex;}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,var(--navy),var(--blue));padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.hdr-av{width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.hdr-mid{flex:1;}
+.hdr-nm{font-size:13px;font-weight:800;color:#fff;}
+.hdr-sp{font-size:10px;color:rgba(255,255,255,.6);}
+.hdr-live{display:flex;align-items:center;gap:4px;}
+.hdr-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:blink 1.4s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.hdr-lt{font-size:10px;color:#4ade80;font-weight:600;}
+.hdr-out{background:rgba(255,255,255,.1);color:#fff;border:none;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;}
+
+/* TABS */
+.tabs{background:#fff;border-bottom:2px solid var(--border);display:flex;overflow-x:auto;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:1;padding:11px 8px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;text-align:center;border-bottom:3px solid transparent;white-space:nowrap;}
+.tab.on{color:var(--blue);border-bottom-color:var(--blue);}
+
+/* CONTENT */
+.pg{display:none;padding:14px;}
+.pg.on{display:block;}
+
+/* STATS */
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.sc{background:#fff;border-radius:12px;padding:11px;box-shadow:0 2px 8px rgba(0,0,0,.06);text-align:center;border-top:3px solid var(--blue);}
+.sc.g{border-top-color:var(--green);}
+.sc.o{border-top-color:var(--gold);}
+.sc.r{border-top-color:var(--red);}
+.sc-n{font-size:22px;font-weight:900;color:var(--navy);}
+.sc-l{font-size:10px;color:var(--muted);font-weight:600;}
+
+/* CONSULTATION CARD */
+.ccard{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.07);margin-bottom:10px;border-left:4px solid var(--blue);animation:fadeup .2s ease;}
+@keyframes fadeup{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.ccard.done-c{border-left-color:var(--green);opacity:.65;}
+.ccard.urgent{border-left-color:var(--red);}
+.cc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;}
+.cc-left .cc-nm{font-size:15px;font-weight:800;color:var(--navy);}
+.cc-left .cc-pet{font-size:12px;color:var(--blue);font-weight:600;margin-top:2px;}
+.cc-right{text-align:right;flex-shrink:0;}
+.cc-slot{font-size:13px;font-weight:800;color:var(--navy);}
+.cc-date{font-size:10px;color:var(--muted);}
+.cc-info{background:#f8fafc;border-radius:9px;padding:9px 11px;margin-bottom:9px;display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.ci{font-size:11px;}<br>.ci span{font-weight:700;color:var(--navy);}
+.cc-prob{font-size:12px;color:var(--text);line-height:1.6;background:#fffbeb;border-left:3px solid var(--gold);padding:8px 10px;border-radius:0 8px 8px 0;margin-bottom:9px;}
+.cc-media{background:#0f172a;border-radius:9px;padding:9px;margin-bottom:9px;display:flex;align-items:center;gap:8px;}
+.cc-media-ico{font-size:20px;}
+.cc-media-txt{font-size:12px;color:#94a3b8;}
+.cc-media a{color:var(--cyan);font-size:12px;font-weight:600;}
+.cc-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.cbtn{padding:8px 13px;border-radius:9px;border:none;font-family:'Poppins',sans-serif;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;}
+.cbtn.green{background:var(--green);color:#fff;}
+.cbtn.blue{background:var(--blue);color:#fff;}
+.cbtn.gold{background:var(--gold);color:#1c1917;}
+.cbtn.wa{background:#25d366;color:#fff;}
+.cbtn.purple{background:var(--purple);color:#fff;}
+
+/* WA COUNTDOWN */
+.wa-countdown{background:linear-gradient(135deg,#065f46,#059669);border-radius:10px;padding:10px 12px;margin-top:8px;display:none;align-items:center;gap:8px;}
+.wa-countdown.show{display:flex;}
+.wa-cd-ico{font-size:20px;}
+.wa-cd-txt{flex:1;font-size:12px;color:#fff;line-height:1.5;}
+.wa-cd-timer{background:rgba(0,0,0,.2);border-radius:8px;padding:5px 10px;font-size:16px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;}
+.wa-cd-cancel{background:rgba(255,255,255,.15);border:none;color:#fff;padding:5px 10px;border-radius:8px;font-family:'Poppins',sans-serif;font-size:11px;cursor:pointer;}
+
+/* MEDICINES LIST */
+.med-grid{display:flex;flex-direction:column;gap:8px;}
+.mcard{background:#fff;border-radius:13px;padding:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;gap:10px;align-items:flex-start;}
+.mcard-ico{font-size:22px;flex-shrink:0;margin-top:2px;}
+.mcard-info{flex:1;min-width:0;}
+.mcard-nm{font-size:13px;font-weight:800;color:var(--navy);}
+.mcard-cat{font-size:10px;color:var(--muted);margin-bottom:3px;}
+.mcard-details{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.mdet{font-size:11px;background:#f1f5f9;padding:2px 8px;border-radius:8px;font-weight:600;color:var(--navy);}
+.mdet.rec{background:#dcfce7;color:#15803d;}
+.mdet.exp-ok{background:#f0fdf4;color:var(--green);}
+.mdet.exp-soon{background:#fef3c7;color:#92400e;}
+.mdet.exp-bad{background:#fee2e2;color:var(--red);}
+.mdet.stk-ok{background:#dbeafe;color:#1e40af;}
+.mdet.stk-low{background:#fee2e2;color:var(--red);}
+.mcard-btns{display:flex;flex-direction:column;gap:4px;flex-shrink:0;}
+.mact{font-size:10px;font-weight:700;padding:5px 9px;border-radius:8px;border:none;cursor:pointer;font-family:'Poppins',sans-serif;}
+.mact.edit{background:#eff6ff;color:var(--blue);}
+.mact.del{background:#fee2e2;color:var(--red);}
+
+/* ADD MED BTN */
+.add-med-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--green),#22c55e);color:#fff;border:none;border-radius:12px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:6px;}
+
+/* MODAL */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+.mbg.show{display:flex;}
+.mc{background:#fff;border-radius:20px 20px 0 0;padding:18px;width:100%;max-height:92vh;overflow-y:auto;}
+.mc-h{font-size:15px;font-weight:800;color:var(--navy);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;}
+.mc-x{background:#f1f5f9;border:none;width:28px;height:28px;border-radius:50%;font-size:13px;cursor:pointer;}
+.rx-pat{background:#f8fafc;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;line-height:1.7;}
+.rx-pat strong{font-size:14px;color:var(--navy);}
+.rx-sec{font-size:11px;font-weight:700;text-transform:uppercase;color:var(--navy);letter-spacing:.5px;margin-bottom:8px;margin-top:12px;}
+.rx-med-item{display:flex;align-items:center;gap:10px;padding:10px;border:2px solid var(--border);border-radius:10px;margin-bottom:7px;cursor:pointer;transition:all .15s;}
+.rx-med-item.on{border-color:var(--blue);background:#eff6ff;}
+.rx-med-nm{font-size:13px;font-weight:700;color:var(--navy);flex:1;}
+.rx-med-cat{font-size:10px;color:var(--muted);}
+.rx-stk{font-size:11px;font-weight:700;}
+.rx-stk.ok{color:var(--green);}
+.rx-stk.low{color:var(--red);}
+.rx-notes{width:100%;padding:10px 12px;border:2px solid var(--border);border-radius:9px;font-family:'Poppins',sans-serif;font-size:13px;resize:none;height:75px;outline:none;margin-top:10px;}
+.rx-notes:focus{border-color:var(--blue);}
+.mc-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border:none;border-radius:11px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px;}
+.mc-btn.wa{background:linear-gradient(135deg,#065f46,#059669);}
+.mc-btn.auto{background:linear-gradient(135deg,var(--purple),#9333ea);}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:9px 18px;border-radius:22px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.3);}
+.toast.show{opacity:1;}
+.empty{text-align:center;padding:28px;color:var(--muted);}
+.empty-i{font-size:36px;margin-bottom:8px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="lp" id="lp">
+  <div class="lc">
+    <div class="lc-top">
+      <div class="lc-ico">👨‍⚕️</div>
+      <div class="lc-h">Doctor Panel</div>
+      <div class="lc-s">Vetraj Pet Hospital</div>
+    </div>
+    <div class="fi">
+      <label>Apna Naam Select Karein</label>
+      <select id="doc-select"><option value="">— Doctor select karein —</option></select>
+    </div>
+    <div class="fi">
+      <label>Password</label>
+      <input id="dp" type="password" placeholder="Password..." onkeydown="if(event.key==='Enter')docLogin()">
+    </div>
+    <button class="lbtn" onclick="docLogin()">🔐 Login</button>
+    <div class="lerr" id="lerr">❌ Galat password</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <div class="hdr">
+    <div class="hdr-av">👨‍⚕️</div>
+    <div class="hdr-mid">
+      <div class="hdr-nm" id="hdr-nm">Dr. —</div>
+      <div class="hdr-sp" id="hdr-sp">Vetraj Pet Hospital</div>
+    </div>
+    <div class="hdr-live"><div class="hdr-dot"></div><div class="hdr-lt">Live</div></div>
+    <button class="hdr-out" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" onclick="showTab('today')">📋 Aaj Ke</div>
+    <div class="tab" onclick="showTab('all')">📅 All</div>
+    <div class="tab" onclick="showTab('meds')">💊 Medicines</div>
+  </div>
+
+  <!-- TODAY / ALL CONSULTATIONS -->
+  <div class="pg on" id="pg-today">
+    <div class="sg">
+      <div class="sc"><div class="sc-n" id="st-today">0</div><div class="sc-l">Aaj Ke</div></div>
+      <div class="sc g"><div class="sc-n" id="st-done">0</div><div class="sc-l">Done</div></div>
+      <div class="sc o"><div class="sc-n" id="st-pend">0</div><div class="sc-l">Pending</div></div>
+    </div>
+    <div id="consult-today"></div>
+  </div>
+
+  <div class="pg" id="pg-all">
+    <div id="consult-all"></div>
+  </div>
+
+  <!-- MEDICINES -->
+  <div class="pg" id="pg-meds">
+    <button class="add-med-btn" onclick="openAddMed()">➕ Nayi Medicine Add Karein</button>
+    <div class="med-grid" id="med-list"></div>
+  </div>
+</div>
+
+<!-- PRESCRIPTION MODAL -->
+<div class="mbg" id="rx-modal">
+  <div class="mc">
+    <div class="mc-h"><span>💊 Prescription</span><button class="mc-x" onclick="closeModal('rx-modal')">✕</button></div>
+    <div class="rx-pat" id="rx-pat-info"></div>
+    <div class="rx-sec">Medicines Select Karein:</div>
+    <div id="rx-med-list"></div>
+    <textarea class="rx-notes" id="rx-notes" placeholder="Diet advice, precautions, follow-up date..."></textarea>
+    <button class="mc-btn" onclick="saveRx()">✅ Prescription Save Karein</button>
+    <button class="mc-btn wa" onclick="sendRxNow()">📤 Abhi WhatsApp Pe Bhejo</button>
+    <button class="mc-btn auto" onclick="scheduleRxWA()">⏱️ 10 Min Baad Auto-Send (WhatsApp)</button>
+  </div>
+</div>
+
+<!-- ADD/EDIT MEDICINE MODAL -->
+<div class="mbg" id="med-modal">
+  <div class="mc">
+    <div class="mc-h"><span id="med-modal-title">➕ New Medicine</span><button class="mc-x" onclick="closeModal('med-modal')">✕</button></div>
+    <div class="fi"><label>Medicine Ka Naam *</label><input id="med-nm" type="text" placeholder="Medicine naam..."></div>
+    <div class="fi"><label>Category *</label>
+      <select id="med-cat">
+        <option>Liver Support</option>
+        <option>Deworming</option>
+        <option>Digestive</option>
+        <option>Skin</option>
+        <option>Hydration</option>
+        <option>Vitamins</option>
+        <option>Antibiotic</option>
+        <option>Pain Relief</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div class="fi"><label>Price (₹) *</label><input id="med-price" type="number" min="0" placeholder="299"></div>
+      <div class="fi"><label>Stock (Units) *</label><input id="med-stock" type="number" min="0" placeholder="50"></div>
+    </div>
+    <div class="fi"><label>Expiry Date</label><input id="med-expiry" type="month" placeholder="2025-12"></div>
+    <div class="fi"><label>Description</label><input id="med-desc" type="text" placeholder="Short description..."></div>
+    <div class="fi" style="display:flex;align-items:center;gap:10px;">
+      <input type="checkbox" id="med-rec" style="width:auto;padding:0;border:none;">
+      <label for="med-rec" style="text-transform:none;font-size:13px;font-weight:600;">⭐ Recommended Medicine</label>
+    </div>
+    <button class="mc-btn" onclick="saveMed()">✅ Save Karein</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BACKEND = window.location.origin;
+const DOC_PASS = "doc@2024";
+let myDoc = null, appointments = [], medicines = [];
+let selApptIdx = null, selMeds = [], editMedIdx = null;
+let waTimers = {}; // {apptId: {timerId, secs}}
+
+// ━━━━ LOAD DOCTORS ━━━━
+async function loadDocSelect(){
+  try{
+    const r = await fetch(`${BACKEND}/get-doctors`);
+    const d = await r.json();
+    const sel = document.getElementById('doc-select');
+    (d.doctors||[]).forEach(doc=>{
+      const o = document.createElement('option');
+      o.value = doc.name;
+      o.textContent = `${doc.name} · ${doc.exp} saal · ${doc.spec||'Vet'}`;
+      sel.appendChild(o);
+    });
+  }catch(e){}
+}
+
+function docLogin(){
+  const name = document.getElementById('doc-select').value;
+  const pass = document.getElementById('dp').value;
+  if(!name){toast('⚠️ Doctor select karein');return;}
+  if(pass !== DOC_PASS){document.getElementById('lerr').style.display='block';return;}
+  myDoc = name;
+  document.getElementById('lp').style.display='none';
+  document.getElementById('app').classList.add('show');
+  document.getElementById('hdr-nm').textContent = name;
+  loadMyData();
+}
+
+function logout(){
+  // Cancel all pending WA timers
+  Object.values(waTimers).forEach(t=>clearInterval(t.timerId));
+  waTimers={};
+  document.getElementById('app').classList.remove('show');
+  document.getElementById('lp').style.display='flex';
+  myDoc=null;
+}
+
+// ━━━━ LOAD DATA ━━━━
+async function loadMyData(){
+  try{
+    const r = await fetch(`${BACKEND}/get-appointments?key=vetraj2024`);
+    const d = await r.json();
+    appointments = (d.appointments||[]).filter(a=>a.doctor===myDoc);
+  }catch(e){appointments=[];}
+  try{
+    const r = await fetch(`${BACKEND}/get-medicines`);
+    const d = await r.json();
+    medicines = d.medicines||[];
+  }catch(e){medicines=[];}
+  renderStats();
+  renderConsults('today');
+  renderConsults('all');
+  renderMeds();
+}
+
+function renderStats(){
+  const today = new Date().toLocaleDateString('en-IN');
+  const todayA = appointments.filter(a=>a.date===today);
+  const done = appointments.filter(a=>a.status==='done');
+  const pend = appointments.filter(a=>a.status!=='done'&&a.status!=='refund');
+  document.getElementById('st-today').textContent = todayA.length;
+  document.getElementById('st-done').textContent = done.length;
+  document.getElementById('st-pend').textContent = pend.length;
+}
+
+// ━━━━ TABS ━━━━
+function showTab(tab){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById(`pg-${tab}`).classList.add('on');
+  event.currentTarget.classList.add('on');
+}
+
+// ━━━━ CONSULTATIONS ━━━━
+function renderConsults(mode){
+  const today = new Date().toLocaleDateString('en-IN');
+  const data = mode==='today' ? appointments.filter(a=>a.date===today) : appointments;
+  const container = document.getElementById(`consult-${mode}`);
+
+  if(!data.length){
+    container.innerHTML=`<div class="empty"><div class="empty-i">📋</div><div style="font-size:13px;font-weight:600;">Koi consultation nahi</div></div>`;
+    return;
+  }
+
+  container.innerHTML = data.map((a,i)=>{
+    const isDone = a.status==='done';
+    const expiry = getExpiryStatus(a.petAge);
+    return `
+    <div class="ccard ${isDone?'done-c':''}" id="ccard-${a.id||i}">
+      <div class="cc-top">
+        <div class="cc-left">
+          <div class="cc-nm">${a.owner||'—'}</div>
+          <div class="cc-pet">🐾 ${a.pet||'—'}${a.petType?` (${a.petType})`:''}${a.petBreed?` · ${a.petBreed}`:''}</div>
+        </div>
+        <div class="cc-right">
+          <div class="cc-slot">⏰ ${a.time||'TBD'}</div>
+          <div class="cc-date">${a.date||'—'}</div>
+        </div>
+      </div>
+      <div class="cc-info">
+        <div class="ci">Age: <span>${a.petAge||'—'}</span></div>
+        <div class="ci">Type: <span>${a.petType||'—'}</span></div>
+        <div class="ci">Breed: <span>${a.petBreed||'Unknown'}</span></div>
+        <div class="ci">Status: <span>${isDone?'✅ Done':'🕐 Pending'}</span></div>
+      </div>
+      ${a.problem?`<div class="cc-prob">📋 <b>Problem:</b> ${a.problem}</div>`:''}
+      ${a.mediaUrl||a.videoUrl?`
+        <div class="cc-media">
+          <div class="cc-media-ico">📹</div>
+          <div>
+            <div class="cc-media-txt">Pet ki media uploaded hai</div>
+            <a href="${a.mediaUrl||a.videoUrl}" target="_blank">📎 Dekhen / Download</a>
+          </div>
+        </div>`:''}
+      <div class="cc-btns">
+        ${!isDone?`<button class="cbtn green" onclick="markDone(${i},${!!a.id})">✅ Done</button>`:''}
+        <button class="cbtn blue" onclick="window.open('tel:${a.phone}')">📞 Call</button>
+        <button class="cbtn gold" onclick="openRx(${i})">💊 Prescription</button>
+        <button class="cbtn wa" onclick="window.open('https://wa.me/91${a.phone}','_blank')">💬 WA</button>
+      </div>
+      <div class="wa-countdown" id="wa-cd-${a.id||i}">
+        <div class="wa-cd-ico">⏱️</div>
+        <div class="wa-cd-txt">WhatsApp auto-send hoga <b id="wa-cd-txt-${a.id||i}">10:00</b> mein</div>
+        <button class="wa-cd-cancel" onclick="cancelWA('${a.id||i}')">Cancel</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getExpiryStatus(age){ return ''; } // placeholder
+
+// ━━━━ DONE ━━━━
+async function markDone(i, hasId){
+  const a = appointments[i];
+  try{
+    await fetch(`${BACKEND}/update-appointment?key=vetraj2024`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:a.id,status:'done'})
+    });
+    appointments[i].status='done';
+    renderStats();
+    renderConsults('today');
+    renderConsults('all');
+    toast('✅ Consultation done mark ho gaya!');
+  }catch(e){toast('❌ Update nahi ho paya');}
+}
+
+// ━━━━ MEDICINES RENDER ━━━━
+function renderMeds(){
+  const list = document.getElementById('med-list');
+  if(!medicines.length){
+    list.innerHTML='<div class="empty"><div class="empty-i">💊</div><div style="font-size:13px;">Koi medicine nahi — Add karein</div></div>';
+    return;
+  }
+  list.innerHTML = medicines.map((m,i)=>{
+    const expStatus = getExpStatus(m.expiry);
+    const stkClass = m.stock>10?'stk-ok':'stk-low';
+    return `
+    <div class="mcard">
+      <div class="mcard-ico">💊</div>
+      <div class="mcard-info">
+        <div class="mcard-nm">${m.name}</div>
+        <div class="mcard-cat">${m.category}</div>
+        <div class="mcard-details">
+          <span class="mdet">₹${m.price}</span>
+          <span class="mdet ${stkClass}">${m.stock} units</span>
+          ${m.expiry?`<span class="mdet ${expStatus.cls}">Exp: ${m.expiry}</span>`:''}
+          ${m.recommended?'<span class="mdet rec">⭐ Recommended</span>':''}
+        </div>
+        ${m.desc?`<div style="font-size:11px;color:var(--muted);margin-top:4px;">${m.desc}</div>`:''}
+      </div>
+      <div class="mcard-btns">
+        <button class="mact edit" onclick="openEditMed(${i})">✏️ Edit</button>
+        <button class="mact del" onclick="deleteMed(${i})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getExpStatus(expiry){
+  if(!expiry) return {cls:''};
+  const exp = new Date(expiry+'-01');
+  const now = new Date();
+  const diff = (exp-now)/(1000*60*60*24*30);
+  if(diff<0) return {cls:'exp-bad'};
+  if(diff<3) return {cls:'exp-soon'};
+  return {cls:'exp-ok'};
+}
+
+// ━━━━ ADD/EDIT MEDICINE ━━━━
+function openAddMed(){
+  editMedIdx=null;
+  document.getElementById('med-modal-title').textContent='➕ New Medicine Add';
+  document.getElementById('med-nm').value='';
+  document.getElementById('med-cat').value='Liver Support';
+  document.getElementById('med-price').value='';
+  document.getElementById('med-stock').value='';
+  document.getElementById('med-expiry').value='';
+  document.getElementById('med-desc').value='';
+  document.getElementById('med-rec').checked=false;
+  document.getElementById('med-modal').classList.add('show');
+}
+
+function openEditMed(i){
+  editMedIdx=i;
+  const m=medicines[i];
+  document.getElementById('med-modal-title').textContent='✏️ Medicine Edit';
+  document.getElementById('med-nm').value=m.name||'';
+  document.getElementById('med-cat').value=m.category||'Other';
+  document.getElementById('med-price').value=m.price||'';
+  document.getElementById('med-stock').value=m.stock||'';
+  document.getElementById('med-expiry').value=m.expiry||'';
+  document.getElementById('med-desc').value=m.desc||'';
+  document.getElementById('med-rec').checked=m.recommended||false;
+  document.getElementById('med-modal').classList.add('show');
+}
+
+async function saveMed(){
+  const name=document.getElementById('med-nm').value.trim();
+  if(!name){toast('⚠️ Medicine naam zaroori hai');return;}
+  const med={
+    name,
+    category:document.getElementById('med-cat').value,
+    price:parseFloat(document.getElementById('med-price').value)||0,
+    stock:parseInt(document.getElementById('med-stock').value)||0,
+    expiry:document.getElementById('med-expiry').value,
+    desc:document.getElementById('med-desc').value,
+    recommended:document.getElementById('med-rec').checked,
+  };
+  if(editMedIdx!==null) med.id=medicines[editMedIdx].id;
+  try{
+    await fetch(`${BACKEND}/save-medicine?key=vetraj2024`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(med)
+    });
+    toast(editMedIdx!==null?'✅ Medicine update ho gayi!':'✅ Medicine add ho gayi!');
+    closeModal('med-modal');
+    await loadMyData();
+  }catch(e){toast('❌ Save nahi ho paya');}
+}
+
+async function deleteMed(i){
+  if(!confirm('Yeh medicine delete karein?')) return;
+  try{
+    await fetch(`${BACKEND}/save-medicine?key=vetraj2024`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({...medicines[i], deleted:true})
+    });
+    medicines.splice(i,1);
+    renderMeds();
+    toast('🗑 Medicine remove ho gayi');
+  }catch(e){toast('❌ Delete nahi ho paya');}
+}
+
+// ━━━━ PRESCRIPTION ━━━━
+function openRx(i){
+  selApptIdx=i; selMeds=[];
+  const a=appointments[i];
+  document.getElementById('rx-pat-info').innerHTML=`
+    <strong>${a.owner||'—'}</strong><br>
+    🐾 ${a.pet||'—'} ${a.petType?`(${a.petType})`:''}${a.petBreed?` · ${a.petBreed}`:''}<br>
+    Age: ${a.petAge||'—'} · 📞 ${a.phone||'—'}<br>
+    ${a.problem?`<b>Problem:</b> ${a.problem}`:''}`;
+
+  const list=document.getElementById('rx-med-list');
+  list.innerHTML=medicines.map((m,mi)=>`
+    <div class="rx-med-item" onclick="toggleMed(this,${mi})">
+      <div style="flex:1;">
+        <div class="rx-med-nm">${m.name} ${m.recommended?'⭐':''}</div>
+        <div class="rx-med-cat">${m.category} · ₹${m.price}${m.expiry?` · Exp: ${m.expiry}`:''}</div>
+      </div>
+      <span class="rx-stk ${m.stock>10?'ok':'low'}">${m.stock} units</span>
+    </div>`).join('');
+  document.getElementById('rx-notes').value='';
+  document.getElementById('rx-modal').classList.add('show');
+}
+
+function toggleMed(el,i){
+  el.classList.toggle('on');
+  const nm=medicines[i].name;
+  if(selMeds.includes(nm)) selMeds=selMeds.filter(x=>x!==nm);
+  else selMeds.push(nm);
+}
+
+function buildRxMessage(a){
+  const meds=selMeds.length?selMeds.map(m=>`• ${m}`).join('\n'):'• Doctor ke hisab se';
+  const notes=document.getElementById('rx-notes').value||'Follow-up ke liye call karein';
+  return `🏥 *Vetraj Pet Hospital*
+━━━━━━━━━━━━━━━━
+
+Namaskar *${a.owner}* ji! 🙏
+
+*${a.pet}* ke liye prescription:
+
+*🐾 Pet Details:*
+• Naam: ${a.pet}
+• Type: ${a.petType||'—'}
+• Breed: ${a.petBreed||'—'}
+• Age: ${a.petAge||'—'}
+
+*💊 Prescribed Medicines:*
+${meds}
+
+*📋 Doctor Ki Advice:*
+${notes}
+
+👨‍⚕️ *${myDoc}*
+📞 9568606006
+🌐 vetraj.com
+
+_Koi bhi sawaal ho to WhatsApp karein!_`;
+}
+
+async function saveRx(){
+  if(selApptIdx===null)return;
+  const a=appointments[selApptIdx];
+  const notes=document.getElementById('rx-notes').value;
+  const rx={owner:a.owner,pet:a.pet,phone:a.phone,doctor:myDoc,medicines:selMeds.join(', '),notes,date:new Date().toLocaleDateString('en-IN'),apptId:a.id};
+  try{
+    await fetch(`${BACKEND}/save-prescription`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(rx)});
+    toast('✅ Prescription save ho gayi!');
+    // Update stock
+    selMeds.forEach(async nm=>{
+      const m=medicines.find(x=>x.name===nm);
+      if(m&&m.id&&m.stock>0){
+        m.stock--;
+        await fetch(`${BACKEND}/update-stock?key=vetraj2024`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:m.id,stock:m.stock})});
+      }
+    });
+    renderMeds();
+  }catch(e){toast('❌ Save nahi ho paya');}
+}
+
+function sendRxNow(){
+  if(selApptIdx===null)return;
+  const a=appointments[selApptIdx];
+  const msg=buildRxMessage(a);
+  window.open(`https://wa.me/91${a.phone}?text=${encodeURIComponent(msg)}`,'_blank');
+  saveRx();
+  closeModal('rx-modal');
+  toast('📤 WhatsApp khul gaya!');
+}
+
+// ━━━━ AUTO-SEND WHATSAPP — 10 MIN TIMER ━━━━
+function scheduleRxWA(){
+  if(selApptIdx===null)return;
+  const a=appointments[selApptIdx];
+  const msg=buildRxMessage(a);
+  const key=a.id||selApptIdx;
+  const cdEl=document.getElementById(`wa-cd-${key}`);
+  const txtEl=document.getElementById(`wa-cd-txt-${key}`);
+
+  saveRx(); // Save prescription first
+  closeModal('rx-modal');
+  toast('⏱️ 10 min baad WhatsApp automatically send hoga!');
+
+  let secs=10*60; // 10 minutes
+  if(cdEl) cdEl.classList.add('show');
+
+  const timer=setInterval(()=>{
+    secs--;
+    if(txtEl){
+      const m=String(Math.floor(secs/60)).padStart(2,'0');
+      const s=String(secs%60).padStart(2,'0');
+      txtEl.textContent=`${m}:${s}`;
+    }
+    if(secs<=0){
+      clearInterval(timer);
+      delete waTimers[key];
+      if(cdEl) cdEl.classList.remove('show');
+      // Auto open WhatsApp
+      window.open(`https://wa.me/91${a.phone}?text=${encodeURIComponent(msg)}`,'_blank');
+      toast(`📤 ${a.owner} ji ko WhatsApp prescription bhej diya!`);
+    }
+  },1000);
+
+  waTimers[key]={timerId:timer,secs,phone:a.phone,msg};
+}
+
+function cancelWA(key){
+  if(waTimers[key]){
+    clearInterval(waTimers[key].timerId);
+    delete waTimers[key];
+  }
+  const cdEl=document.getElementById(`wa-cd-${key}`);
+  if(cdEl) cdEl.classList.remove('show');
+  toast('❌ Auto-send cancel ho gaya');
+}
+
+// ━━━━ HELPERS ━━━━
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+loadDocSelect();
+</script>
+</body>
+</html>
