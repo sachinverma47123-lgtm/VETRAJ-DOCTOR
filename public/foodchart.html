@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,6 +12,8 @@
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f8ff;}
     select,input,textarea,button{font-family:inherit;}
+    input,textarea{-webkit-user-select:text!important;user-select:text!important;touch-action:manipulation!important;}
+    input[type="text"],input[type="number"],input[type="tel"],input[type="email"],textarea{-webkit-appearance:none;appearance:none;}
     @media print{
       .no-print{display:none!important}
       body{margin:0;padding:0;background:white}
@@ -1429,11 +1432,17 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
         {/* City — always needed */}
         <div style={{marginBottom:12,position:"relative"}}>
           <Label text="City" req/>
-          <input value={form.city}
+          <input
+            value={form.city}
             onChange={e=>{set("city",e.target.value);setCSug(matchCity(e.target.value));setCOpen(true);}}
             onFocus={()=>setCOpen(true)}
             onBlur={()=>setTimeout(()=>setCOpen(false),200)}
-            placeholder="Apna shahar..." style={inp}
+            placeholder="Apna shahar..." 
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="words"
+            spellCheck="false"
+            style={{...inp,WebkitUserSelect:"text",userSelect:"text",touchAction:"manipulation"}}
             onFocusCapture={e=>e.target.style.borderColor=C.teal}
             onBlurCapture={e=>e.target.style.borderColor="#ddd"}/>
           {cOpen&&cSug.length>0&&(
@@ -1505,32 +1514,41 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
             <input
               value={form.ageVal}
               onChange={e=>{
-                const v=e.target.value.replace(/\D/g,"");
-                set("ageVal",v);
-                const u=form.ageUnit;
-                const d=u==="years"?Math.round(parseFloat(v||0)*365):u==="months"?Math.round(parseFloat(v||0)*30.4):parseInt(v||0);
-                set("ageDays",String(d||""));
+                const v = e.target.value;
+                set("ageVal", v);
+                const num = parseFloat(v) || 0;
+                const u = form.ageUnit;
+                const d = u==="years" ? Math.round(num*365) : u==="months" ? Math.round(num*30.4) : Math.round(num);
+                set("ageDays", d > 0 ? String(d) : "");
               }}
-              inputMode="numeric"
+              inputMode="decimal"
+              type="text"
+              pattern="[0-9]*"
               placeholder="e.g. 6"
-              style={{...inp,flex:1,WebkitUserSelect:"text",userSelect:"text",touchAction:"auto"}}
+              autoComplete="off"
+              style={{...inp, flex:1, WebkitUserSelect:"text", userSelect:"text", touchAction:"manipulation"}}
               onFocus={e=>e.target.style.borderColor=C.teal}
               onBlur={e=>e.target.style.borderColor="#ddd"}
             />
             <select value={form.ageUnit}
               onChange={e=>{
                 set("ageUnit",e.target.value);
-                const u=e.target.value;
-                const v=form.ageVal||"0";
-                const d=u==="years"?Math.round(parseFloat(v)*365):u==="months"?Math.round(parseFloat(v)*30.4):parseInt(v)||0;
-                set("ageDays",String(d));
+                const u = e.target.value;
+                const num = parseFloat(form.ageVal||"0") || 0;
+                const d = u==="years" ? Math.round(num*365) : u==="months" ? Math.round(num*30.4) : Math.round(num);
+                set("ageDays", String(d||""));
               }}
-              style={{...inp,width:"auto",minWidth:90,flex:"0 0 auto"}}>
+              style={{...inp, width:"auto", minWidth:90, flex:"0 0 auto"}}>
               <option value="months">Months</option>
               <option value="years">Years</option>
               <option value="days">Days</option>
             </select>
           </div>
+          {form.ageDays && parseInt(form.ageDays) > 0 && (
+            <div style={{fontSize:10, color:C.teal, marginTop:3}}>
+              ≈ {yrAge(form.ageDays)} yrs | {isAd(form.ageDays) ? "🐕 Adult" : "🐶 Puppy"}
+            </div>
+          )}
         </div>
 
         {/* Weight */}
@@ -1539,19 +1557,27 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
           <div style={{display:"flex",gap:8}}>
             <input
               value={form.weight}
-              onChange={e=>set("weight",e.target.value)}
-              inputMode="decimal" type="number" step="0.1"
-              placeholder="e.g. 12.5"
-              style={{...inp,flex:1,WebkitUserSelect:"text",userSelect:"text",touchAction:"auto"}}
+              onChange={e=>set("weight", e.target.value)}
+              inputMode="decimal"
+              type="text"
+              pattern="[0-9.]*"
+              placeholder={form.weightUnit==="g" ? "e.g. 450" : "e.g. 12.5"}
+              autoComplete="off"
+              style={{...inp, flex:1, WebkitUserSelect:"text", userSelect:"text", touchAction:"manipulation"}}
               onFocus={e=>e.target.style.borderColor=C.teal}
               onBlur={e=>e.target.style.borderColor="#ddd"}
             />
             <select value={form.weightUnit} onChange={e=>set("weightUnit",e.target.value)}
-              style={{...inp,width:"auto",minWidth:70,flex:"0 0 auto"}}>
+              style={{...inp, width:"auto", minWidth:70, flex:"0 0 auto"}}>
               <option value="kg">kg</option>
               <option value="g">gram</option>
             </select>
           </div>
+          {form.weight && form.weightUnit==="g" && parseFloat(form.weight) > 0 && (
+            <div style={{fontSize:10, color:C.teal, marginTop:3}}>
+              = {(parseFloat(form.weight)/1000).toFixed(2)} kg
+            </div>
+          )}
         </div>
 
         {/* Diet + Activity */}
