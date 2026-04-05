@@ -725,13 +725,28 @@ function showPay(){
 function showFoodChart(){
   const msgs=$("msgs");const d=document.createElement("div");
   d.innerHTML=`<div class="infocard ic-food">
-    <div class="ic-h">🥗 ${pName} ke liye Customised Food Chart</div>
-    <div class="ic-b">✅ Age+breed ke hisaab se fresh ghar ka khana<br>✅ Packet food se 10x better health</div>
-    <div class="ic-row" onclick="window.open('https://vetraj.com','_blank')"><div class="ic-nm">📅 3 Mahine</div><div class="ic-pr">₹1,999</div></div>
-    <div class="ic-row" onclick="window.open('https://vetraj.com','_blank')"><div class="ic-nm">📅 6 Mahine</div><div class="ic-pr">₹2,999</div></div>
-    <div class="ic-row" onclick="window.open('https://vetraj.com','_blank')"><div class="ic-nm">📅 12 Mahine <span class="ic-best">BEST</span></div><div class="ic-pr">₹4,999</div></div>
+    <div class="ic-h">🥗 ${pName} ke liye AI Food Chart</div>
+    <div class="ic-b">✅ ${pName} ki breed, age, weight ke hisaab se<br>✅ Ghar ka khana — fresh & healthy<br>✅ Vetraj products bhi recommend honge</div>
+    <div class="ic-row" onclick="openFoodChart('p199')" style="cursor:pointer;"><div class="ic-nm">⚡ 7 Day Quick Plan</div><div class="ic-pr">₹199</div></div>
+    <div class="ic-row" onclick="openFoodChart('p399')" style="cursor:pointer;"><div class="ic-nm">📅 30 Day Plan <span class="ic-best">Popular</span></div><div class="ic-pr">₹399</div></div>
+    <div class="ic-row" onclick="openFoodChart('p1999')" style="cursor:pointer;"><div class="ic-nm">📅 3 Month Expert</div><div class="ic-pr">₹1,999</div></div>
+    <div class="ic-row" onclick="openFoodChart('p2999')" style="cursor:pointer;"><div class="ic-nm">📅 6 Month Expert</div><div class="ic-pr">₹2,999</div></div>
   </div>`;
   msgs.appendChild(d);scrollChat();
+}
+
+function openFoodChart(planId){
+  // Pass pet data to food chart page via URL params
+  const params = new URLSearchParams({
+    ownerName: oName||'',
+    mobile: oPhone||'',
+    petName: pName||'',
+    petType: pType||'dog',
+    breed: pBreed||'',
+    ageDays: pAge||'365',
+    plan: planId||'p399'
+  });
+  window.open(`/foodchart.html?${params.toString()}`, '_blank');
 }
 
 function showParenting(){
