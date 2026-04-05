@@ -371,10 +371,21 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
 
 <script>
 const BACKEND = window.location.origin;
-const RAZORPAY = "https://rzp.io/l/vetraj399";
-const GANVET_LINK = "products.html?product=1"; // Vetraj Products Page
+const RAZORPAY_FALLBACK = "https://rzp.io/l/vetraj399";
+const GANVET_LINK = "products.html?product=1";
 const HELPLINE = "9568606006";
 const SID = Math.random().toString(36).substr(2,9);
+let rzpConfig = {keyId:"", configured:false, fallbackUrl:RAZORPAY_FALLBACK};
+
+// Load payment config
+fetch(`${BACKEND}/payment/config`).then(r=>r.json()).then(d=>{
+  rzpConfig = d;
+  if(d.configured && !window.Razorpay){
+    const s=document.createElement('script');
+    s.src='https://checkout.razorpay.com/v1/checkout.js';
+    document.head.appendChild(s);
+  }
+}).catch(()=>{});
 
 let oName="",oPhone="",pName="",pType="",pAge="",pBreed="";
 let doc={name:"Dr. Rohit Saini",exp:10};
