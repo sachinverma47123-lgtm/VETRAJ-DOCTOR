@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -819,7 +820,12 @@ const DevPanel = ({leads, onClose}) => (
 //  MAIN APP
 // ══════════════════════════════════════════════════════════
 function App() {
-  const [screen,  setScreen]  = useState("landing");
+  // Check URL params on init
+  const _urlP = new URLSearchParams(window.location.search);
+  const _hasData = _urlP.get('petName') || _urlP.get('ownerName');
+  const _hasPlan = _urlP.get('plan');
+
+  const [screen,  setScreen]  = useState(_hasData ? "form" : "landing");
   const [step,    setStep]    = useState(1);
   const [loading, setLoading] = useState(false);
   const [chart,   setChart]   = useState(null);
