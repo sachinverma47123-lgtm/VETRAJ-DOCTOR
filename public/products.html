@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vetraj Pet Store — Vet Approved Products</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{
+  --navy:#0a1628;--blue:#1a5a8a;--green:#16a34a;--red:#dc2626;
+  --gold:#f59e0b;--orange:#ea580c;--purple:#7c3aed;
+  --bg:#f0f4f8;--white:#fff;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;
+}
+body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);}
+input,textarea,select{font-family:'Poppins',sans-serif;-webkit-user-select:text;user-select:text;}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,var(--navy),var(--blue));padding:0;position:sticky;top:0;z-index:50;box-shadow:0 2px 16px rgba(0,0,0,.25);}
+.hdr-top{padding:10px 14px;display:flex;align-items:center;gap:10px;}
+.hdr-logo{width:36px;height:36px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.hdr-mid{flex:1;}
+.hdr-h{font-size:14px;font-weight:800;color:#fff;}
+.hdr-s{font-size:10px;color:rgba(255,255,255,.6);}
+.hdr-cart-btn{background:var(--gold);color:var(--navy);border:none;padding:7px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;display:flex;align-items:center;gap:4px;}
+.hdr-srch{padding:0 14px 10px;display:flex;gap:8px;}
+.hdr-srch input{flex:1;padding:9px 14px;border:none;border-radius:10px;font-size:13px;font-family:'Poppins',sans-serif;outline:none;}
+.hdr-srch-btn{background:var(--gold);border:none;padding:9px 14px;border-radius:10px;font-size:14px;cursor:pointer;}
+
+/* CATS */
+.cats{display:flex;gap:8px;padding:10px 14px;overflow-x:auto;background:#fff;border-bottom:1px solid var(--border);}
+.cats::-webkit-scrollbar{display:none;}
+.cat-btn{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;border:2px solid var(--border);color:var(--muted);background:#fff;font-family:'Poppins',sans-serif;}
+.cat-btn.on{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+/* DEAL BANNER */
+.deal-banner{background:linear-gradient(90deg,#b91c1c,var(--red),#ef4444);padding:8px 14px;display:flex;align-items:center;gap:8px;}
+.deal-txt{font-size:12px;font-weight:700;color:#fff;flex:1;}
+.deal-timer{background:#fff;color:var(--red);font-size:11px;font-weight:800;padding:3px 10px;border-radius:10px;font-variant-numeric:tabular-nums;}
+
+/* TRUST BAR */
+.trust{display:flex;gap:0;background:#fff;border-bottom:1px solid var(--border);}
+.trust-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px;font-size:9px;font-weight:600;color:var(--muted);border-right:1px solid var(--border);text-align:center;gap:2px;}
+.trust-item:last-child{border-right:none;}
+.trust-ico{font-size:16px;}
+
+/* SECTION */
+.sec{padding:14px 14px 0;}
+.sec-h{font-size:14px;font-weight:800;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+
+/* PRODUCT GRID */
+.p-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px 14px;}
+
+/* PRODUCT CARD */
+.pcard{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.07);transition:transform .15s;cursor:pointer;}
+.pcard:active{transform:scale(.97);}
+.pcard-img{height:140px;display:flex;align-items:center;justify-content:center;position:relative;}
+.pcard-img img{width:100%;height:100%;object-fit:cover;}
+.pcard-emoji{font-size:56px;}
+.pcard-badge{position:absolute;top:8px;left:8px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;}
+.badge-hot{background:var(--red);color:#fff;}
+.badge-new{background:var(--green);color:#fff;}
+.badge-sale{background:var(--gold);color:var(--navy);}
+.badge-rec{background:var(--blue);color:#fff;}
+.pcard-off-tag{position:absolute;top:8px;right:8px;background:var(--green);color:#fff;font-size:10px;font-weight:800;padding:3px 7px;border-radius:8px;}
+.pcard-body{padding:10px;}
+.pcard-brand{font-size:10px;color:var(--blue);font-weight:700;text-transform:uppercase;}
+.pcard-name{font-size:12px;font-weight:800;color:var(--navy);line-height:1.3;margin:2px 0 4px;}
+.pcard-rat{display:flex;align-items:center;gap:4px;margin-bottom:4px;}
+.pcard-stars{color:var(--gold);font-size:11px;}
+.pcard-rcnt{font-size:10px;color:var(--muted);}
+.pcard-price-row{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;}
+.pcard-sp{font-size:15px;font-weight:900;color:var(--navy);}
+.pcard-mrp{font-size:11px;color:var(--muted);text-decoration:line-through;}
+.pcard-gst{font-size:10px;color:var(--muted);}
+.pcard-del{font-size:10px;color:var(--green);font-weight:600;margin-top:2px;}
+.pcard-buy{width:100%;padding:8px;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border:none;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;margin-top:7px;font-family:'Poppins',sans-serif;}
+
+/* DETAIL PAGE */
+.det{display:none;position:fixed;inset:0;background:#fff;z-index:100;overflow-y:auto;}
+.det.show{display:block;}
+.det-hdr{background:linear-gradient(135deg,var(--navy),var(--blue));padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;}
+.det-back{background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;}
+.det-ht{font-size:13px;font-weight:800;color:#fff;flex:1;}
+.det-img-wrap{position:relative;}
+.det-img-main{width:100%;height:260px;object-fit:cover;}
+.det-img-emoji{height:260px;background:linear-gradient(135deg,#e0f2fe,#bfdbfe);display:flex;align-items:center;justify-content:center;font-size:96px;}
+.det-off-pill{position:absolute;top:12px;right:12px;background:var(--red);color:#fff;font-size:12px;font-weight:800;padding:5px 12px;border-radius:20px;}
+.det-body{padding:14px;}
+.det-brand{font-size:11px;color:var(--blue);font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.det-name{font-size:20px;font-weight:900;color:var(--navy);margin:4px 0 6px;}
+.det-rat{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.det-stars{color:var(--gold);font-size:14px;}
+.det-rcnt{font-size:12px;color:var(--muted);}
+
+/* PRICE BOX */
+.price-box{background:#f0fdf4;border:2px solid #86efac;border-radius:13px;padding:14px;margin-bottom:14px;}
+.pb-mrp{font-size:12px;color:var(--muted);}
+.pb-mrp span{text-decoration:line-through;}
+.pb-sp{font-size:32px;font-weight:900;color:var(--navy);line-height:1.1;}
+.pb-save{display:flex;align-items:center;gap:8px;margin-top:4px;}
+.pb-off{background:var(--green);color:#fff;font-size:11px;font-weight:700;padding:3px 9px;border-radius:8px;}
+.pb-saved{font-size:12px;color:var(--green);font-weight:600;}
+.pb-gst{font-size:11px;color:var(--muted);margin-top:6px;padding-top:6px;border-top:1px solid #dcfce7;}
+
+/* DELIVERY BOX */
+.del-box{background:#f8fafc;border-radius:12px;padding:12px;margin-bottom:14px;}
+.del-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.del-row:last-child{margin-bottom:0;}
+.del-ico{font-size:18px;flex-shrink:0;}
+.del-txt{font-size:12px;color:var(--text);}
+.del-txt strong{color:var(--navy);}
+.del-inp{display:flex;gap:8px;margin-top:8px;}
+.del-pin{flex:1;padding:9px 12px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;}
+.del-pin:focus{border-color:var(--blue);}
+.del-check-btn{background:var(--navy);color:#fff;border:none;padding:9px 14px;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;}
+.del-result{font-size:12px;color:var(--green);font-weight:600;margin-top:6px;display:none;}
+
+/* TAGS */
+.det-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.det-tag{background:#eff6ff;color:var(--blue);font-size:11px;font-weight:600;padding:4px 10px;border-radius:10px;}
+
+/* SECTIONS */
+.det-sec-h{font-size:14px;font-weight:800;color:var(--navy);margin:14px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:6px;}
+.ben-row{display:flex;gap:10px;margin-bottom:8px;}
+.ben-ico{font-size:18px;flex-shrink:0;}
+.ben-txt{font-size:12px;color:var(--text);line-height:1.5;}
+.inf-row{display:flex;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px;}
+.inf-lbl{color:var(--muted);font-weight:600;min-width:120px;}
+.inf-val{color:var(--text);}
+
+/* RECS */
+.rec-item{display:flex;align-items:center;gap:10px;padding:10px;background:#f8fafc;border-radius:10px;margin-bottom:8px;cursor:pointer;}
+.rec-img{width:50px;height:50px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px;background:linear-gradient(135deg,#e0f2fe,#bfdbfe);flex-shrink:0;overflow:hidden;}
+.rec-img img{width:100%;height:100%;object-fit:cover;border-radius:8px;}
+.rec-nm{font-size:12px;font-weight:700;color:var(--navy);}
+.rec-why{font-size:10px;color:var(--green);font-weight:600;}
+.rec-pr{font-size:13px;font-weight:800;color:var(--navy);}
+.rec-add{background:var(--navy);color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;}
+
+/* BUY BAR */
+.det-spacer{height:100px;}
+.buy-bar{position:sticky;bottom:0;background:#fff;border-top:2px solid var(--border);padding:12px 16px;box-shadow:0 -4px 14px rgba(0,0,0,.08);}
+.buy-bar-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.buy-bar-price{font-size:18px;font-weight:900;color:var(--navy);}
+.buy-bar-gst{font-size:10px;color:var(--muted);}
+.buy-bar-btns{display:flex;gap:8px;}
+.buy-wa{flex:1;padding:13px;background:#25d366;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;}
+.buy-now{flex:2;padding:13px;background:linear-gradient(135deg,var(--orange),var(--red));color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;}
+.buy-cart{flex:2;padding:13px;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;}
+
+/* ORDER MODAL */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+.mbg.show{display:flex;}
+.mc{background:#fff;border-radius:20px 20px 0 0;padding:18px;width:100%;max-height:92vh;overflow-y:auto;}
+.mc-h{font-size:16px;font-weight:800;color:var(--navy);margin-bottom:14px;display:flex;justify-content:space-between;}
+.mc-x{background:#f1f5f9;border:none;width:28px;height:28px;border-radius:50%;font-size:13px;cursor:pointer;}
+.ord-prod-preview{display:flex;gap:10px;background:#f8fafc;border-radius:10px;padding:10px;margin-bottom:14px;}
+.ord-prod-img{width:50px;height:50px;border-radius:8px;background:linear-gradient(135deg,#e0f2fe,#bfdbfe);display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden;flex-shrink:0;}
+.ord-prod-img img{width:100%;height:100%;object-fit:cover;border-radius:8px;}
+.ord-prod-nm{font-size:13px;font-weight:700;color:var(--navy);}
+.ord-prod-pr{font-size:14px;font-weight:900;color:var(--green);}
+.fi{margin-bottom:12px;}
+.fi label{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:4px;letter-spacing:.5px;}
+.fi input,.fi select,.fi textarea{width:100%;padding:11px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;transition:border-color .2s;background:#fff;-webkit-user-select:text;user-select:text;}
+.fi input:focus,.fi select:focus{border-color:var(--blue);}
+.fi-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.qty-sel{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.qty-btn{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);background:#fff;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.qty-val{font-size:18px;font-weight:800;color:var(--navy);min-width:30px;text-align:center;}
+.order-summary{background:#f0fdf4;border-radius:10px;padding:12px;margin-bottom:12px;}
+.os-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;}
+.os-total{display:flex;justify-content:space-between;font-size:14px;font-weight:800;color:var(--navy);padding-top:8px;border-top:2px solid #dcfce7;margin-top:4px;}
+.place-order-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--orange),var(--red));color:#fff;border:none;border-radius:12px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:700;cursor:pointer;}
+.wa-order-btn{width:100%;padding:13px;background:#25d366;color:#fff;border:none;border-radius:12px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px;}
+
+/* SUCCESS PAGE */
+.success-page{display:none;position:fixed;inset:0;background:#fff;z-index:300;overflow-y:auto;}
+.success-page.show{display:block;}
+.success-body{padding:20px;text-align:center;}
+.success-ico{font-size:72px;margin-bottom:12px;}
+.success-h{font-size:22px;font-weight:900;color:var(--green);margin-bottom:6px;}
+.success-s{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
+.order-id-box{background:#f0fdf4;border:2px solid #86efac;border-radius:12px;padding:12px;margin-bottom:16px;}
+.order-id-lbl{font-size:11px;color:var(--muted);font-weight:600;}
+.order-id-val{font-size:20px;font-weight:900;color:var(--navy);}
+.track-steps{text-align:left;margin-bottom:16px;}
+.ts{display:flex;gap:12px;margin-bottom:10px;align-items:flex-start;}
+.ts-dot{width:24px;height:24px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:700;flex-shrink:0;}
+.ts-dot.pending{background:#e2e8f0;color:var(--muted);}
+.ts-txt{font-size:12px;color:var(--text);line-height:1.5;}
+.ts-txt strong{color:var(--navy);display:block;}
+.success-btns{display:flex;flex-direction:column;gap:8px;}
+.suc-btn{padding:13px;border:none;border-radius:12px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+.suc-btn.primary{background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;}
+.suc-btn.wa{background:#25d366;color:#fff;}
+.suc-btn.sec{background:#f1f5f9;color:var(--navy);}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:9px 18px;border-radius:22px;font-size:13px;z-index:999;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- MAIN PAGE -->
+<div id="main-page">
+  <div class="hdr">
+    <div class="hdr-top">
+      <div class="hdr-logo">🐾</div>
+      <div class="hdr-mid">
+        <div class="hdr-h">Vetraj Pet Store</div>
+        <div class="hdr-s">Vet Approved • 100% Genuine</div>
+      </div>
+      <button class="hdr-cart-btn" onclick="goWA()">💬 Help</button>
+    </div>
+    <div class="hdr-srch">
+      <input type="text" placeholder="🔍 Products search karein..." oninput="filterProds(this.value)">
+      <button class="hdr-srch-btn">🔍</button>
+    </div>
+  </div>
+
+  <div class="cats" id="cats">
+    <button class="cat-btn on" onclick="filterCat(this,'all')">🐾 All</button>
+    <button class="cat-btn" onclick="filterCat(this,'liver')">🍃 Liver</button>
+    <button class="cat-btn" onclick="filterCat(this,'deworming')">💊 Deworming</button>
+    <button class="cat-btn" onclick="filterCat(this,'digestive')">🧫 Digestive</button>
+    <button class="cat-btn" onclick="filterCat(this,'skin')">✨ Skin</button>
+    <button class="cat-btn" onclick="filterCat(this,'vitamins')">💎 Vitamins</button>
+  </div>
+
+  <div class="deal-banner">
+    <div class="deal-txt">🔥 Aaj Ka Deal — Free Delivery ₹500+ Orders!</div>
+    <div class="deal-timer" id="deal-timer">23:59:59</div>
+  </div>
+
+  <div class="trust">
+    <div class="trust-item"><div class="trust-ico">🚚</div>Fast Delivery</div>
+    <div class="trust-item"><div class="trust-ico">✅</div>100% Genuine</div>
+    <div class="trust-item"><div class="trust-ico">🏥</div>Vet Approved</div>
+    <div class="trust-item"><div class="trust-ico">↩️</div>Easy Return</div>
+  </div>
+
+  <div class="sec"><div class="sec-h">🛒 All Products</div></div>
+  <div class="p-grid" id="prod-grid"></div>
+  <div style="height:20px;"></div>
+</div>
+
+<!-- DETAIL PAGE -->
+<div class="det" id="det-page">
+  <div class="det-hdr">
+    <button class="det-back" onclick="closeDet()">←</button>
+    <div class="det-ht" id="det-ht">—</div>
+  </div>
+  <div id="det-img-wrap"></div>
+  <div class="det-body">
+    <div class="det-brand">Vetraj Pet Hospital</div>
+    <div class="det-name" id="det-name">—</div>
+    <div class="det-rat">
+      <span class="det-stars" id="det-stars">⭐⭐⭐⭐⭐</span>
+      <span class="det-rcnt" id="det-rcnt">—</span>
+    </div>
+
+    <!-- PRICE BOX -->
+    <div class="price-box">
+      <div class="pb-mrp">MRP: <span id="det-mrp">—</span></div>
+      <div class="pb-sp" id="det-sp">—</div>
+      <div class="pb-save">
+        <span class="pb-off" id="det-off-pill">—</span>
+        <span class="pb-saved" id="det-saved">—</span>
+      </div>
+      <div class="pb-gst" id="det-gst-txt">—</div>
+    </div>
+
+    <!-- DELIVERY CHECK -->
+    <div class="del-box">
+      <div class="del-row"><div class="del-ico">🚚</div><div class="del-txt"><strong>Free Delivery</strong> — ₹500+ orders pe</div></div>
+      <div class="del-row"><div class="del-ico">📦</div><div class="del-txt"><strong>Delivery Check</strong> karein apne area ke liye</div></div>
+      <div class="del-inp">
+        <input class="del-pin" type="number" id="pin-inp" placeholder="PIN Code daalo..." maxlength="6">
+        <button class="del-check-btn" onclick="checkDelivery()">Check</button>
+      </div>
+      <div class="del-result" id="del-result">✅ Delivery available — 3-5 business days</div>
+    </div>
+
+    <div class="det-tags" id="det-tags"></div>
+
+    <div class="det-sec-h">✅ Benefits</div>
+    <div id="det-benefits"></div>
+
+    <div class="det-sec-h">📋 Product Details</div>
+    <div id="det-info"></div>
+
+    <div class="det-sec-h">🔁 Frequently Bought Together</div>
+    <div id="det-recs"></div>
+  </div>
+  <div class="det-spacer"></div>
+  <div class="buy-bar">
+    <div class="buy-bar-top">
+      <div>
+        <div class="buy-bar-price" id="buy-bar-price">—</div>
+        <div class="buy-bar-gst" id="buy-bar-gst">incl. GST</div>
+      </div>
+    </div>
+    <div class="buy-bar-btns">
+      <button class="buy-wa" onclick="buyWA()">💬 WA</button>
+      <button class="buy-cart" onclick="openOrder('cart')">🛒 Cart</button>
+      <button class="buy-now" onclick="openOrder('now')">⚡ Buy Now</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER MODAL -->
+<div class="mbg" id="order-modal">
+  <div class="mc">
+    <div class="mc-h">
+      <span>📦 Order Details</span>
+      <button class="mc-x" onclick="closeModal()">✕</button>
+    </div>
+    <div class="ord-prod-preview" id="ord-prod-preview"></div>
+
+    <!-- QTY -->
+    <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:6px;">QUANTITY</div>
+    <div class="qty-sel">
+      <button class="qty-btn" onclick="changeQty(-1)">−</button>
+      <div class="qty-val" id="qty-val">1</div>
+      <button class="qty-btn" onclick="changeQty(1)">+</button>
+      <div style="font-size:12px;color:var(--muted);">units</div>
+    </div>
+
+    <div class="fi"><label>Aapka Naam *</label><input id="ord-name" type="text" placeholder="Poora naam..."></div>
+    <div class="fi"><label>Phone / WhatsApp *</label><input id="ord-phone" type="tel" placeholder="10 digit number..."></div>
+    <div class="fi"><label>Delivery Address *</label><textarea id="ord-addr" style="height:70px;resize:none;" placeholder="Ghar ka address, gali, landmark..."></textarea></div>
+    <div class="fi-row">
+      <div class="fi"><label>City *</label><input id="ord-city" type="text" placeholder="City..."></div>
+      <div class="fi"><label>PIN Code *</label><input id="ord-pin" type="number" placeholder="110001"></div>
+    </div>
+    <div class="fi"><label>State *</label>
+      <select id="ord-state">
+        <option value="">State select karein</option>
+        <option>Uttarakhand</option><option>Uttar Pradesh</option><option>Delhi</option>
+        <option>Haryana</option><option>Punjab</option><option>Himachal Pradesh</option>
+        <option>Rajasthan</option><option>Maharashtra</option><option>Gujarat</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <!-- ORDER SUMMARY -->
+    <div class="order-summary" id="order-summary"></div>
+
+    <button class="place-order-btn" onclick="placeOrder()">🛒 Order Place Karein</button>
+    <button class="wa-order-btn" onclick="waOrder()">💬 WhatsApp Pe Order Karein</button>
+  </div>
+</div>
+
+<!-- SUCCESS PAGE -->
+<div class="success-page" id="success-page">
+  <div class="det-hdr">
+    <button class="det-back" onclick="closeSuccess()">←</button>
+    <div class="det-ht">Order Confirmed!</div>
+  </div>
+  <div class="success-body">
+    <div class="success-ico">🎉</div>
+    <div class="success-h">Order Ho Gaya!</div>
+    <div class="success-s" id="suc-msg">Aapka order successfully place ho gaya hai.</div>
+    <div class="order-id-box">
+      <div class="order-id-lbl">Order ID</div>
+      <div class="order-id-val" id="suc-order-id">#VET-0000</div>
+    </div>
+    <div class="track-steps">
+      <div class="ts"><div class="ts-dot">✓</div><div class="ts-txt"><strong>Order Confirmed</strong>Aapka order receive ho gaya</div></div>
+      <div class="ts"><div class="ts-dot">✓</div><div class="ts-txt"><strong>Processing</strong>Hamara team pack kar raha hai</div></div>
+      <div class="ts"><div class="ts-dot pending">3</div><div class="ts-txt"><strong>Dispatched</strong>Delivery partner ko diya jaayega</div></div>
+      <div class="ts"><div class="ts-dot pending">4</div><div class="ts-txt"><strong>Delivered</strong>3-5 business days mein</div></div>
+    </div>
+    <div class="success-btns">
+      <button class="suc-btn wa" onclick="trackWA()">📲 WhatsApp Pe Track Karein</button>
+      <button class="suc-btn primary" onclick="closeSuccess()">🛒 Shopping Jaari Rakhein</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const WA = "919568606006";
+const BACKEND = window.location.origin;
+const GST_RATE = 18; // 18% GST
+
+const DEFAULT_PRODUCTS = [
+  {id:1,name:"Ganvet Liver Tonic",emoji:"🍃",img:"",category:"liver",mrp:399,price:299,stock:50,expiry:"2026-12",offer:"Bestseller",badge:"hot",rating:4.8,reviews:1247,desc:"Sugar-free liver tonic — dogs & cats ke liye sabse trusted liver support",tags:["Sugar Free","Dogs & Cats","Daily Use","100ml"],benefits:["Liver cells ko damage se bachata hai","Immunity badhata hai","Natural herbal formula","Appetite aur energy improve karta hai"],link:"",recs:[2,3,4]},
+  {id:2,name:"VAMKIL Deworming",emoji:"💊",img:"",category:"deworming",mrp:199,price:149,stock:40,expiry:"2026-10",offer:"Vet Recommended",badge:"rec",rating:4.7,reviews:892,desc:"30ml deworming suspension — sab tarah ke keede khatam safely",tags:["30ml","Dogs & Cats","Monthly Use","Safe for Puppies"],benefits:["Roundworms tapeworms sab khatam","Puppies ke liye bhi safe","24 ghante mein kaam shuru","Easy to give"],link:"",recs:[1,3,5]},
+  {id:3,name:"Vetraj Probiotic",emoji:"🧫",img:"",category:"digestive",mrp:299,price:199,stock:30,expiry:"2026-08",offer:"New Launch",badge:"new",rating:4.6,reviews:634,desc:"Gut health ke liye — loose motion constipation sab theek karta hai",tags:["Gut Health","30 Sachets","Daily Use","All Pets"],benefits:["Good bacteria badhata hai","Loose motion aur constipation fix","Immunity improve hoti hai","Appetite theek hota hai"],link:"",recs:[1,2,4]},
+  {id:4,name:"Vetraj Skin Care Kit",emoji:"✨",img:"",category:"skin",mrp:599,price:399,stock:20,expiry:"2026-12",offer:"33% Off",badge:"sale",rating:4.5,reviews:421,desc:"Complete skin care — khujali rashes dry skin sab ka solution",tags:["Shampoo + Serum","Anti-Itch","Coat Shine","All Breeds"],benefits:["Khujali turant kam hoti hai","Coat shiny aur healthy","Infections se bachata hai","No harsh chemicals"],link:"",recs:[1,3,5]},
+  {id:5,name:"Calcium & Multivitamin",emoji:"💎",img:"",category:"vitamins",mrp:349,price:249,stock:60,expiry:"2026-11",offer:"Popular",badge:"rec",rating:4.7,reviews:567,desc:"Complete nutrition — bones strong muscles healthy overall wellness",tags:["Calcium","60 Tablets","Puppies & Adults","Daily Use"],benefits:["Bones aur joints strong","Muscles healthy rehti hain","Brain development puppies ke liye","Daily energy maintain"],link:"",recs:[1,2,3]},
+  {id:6,name:"Vetraj ORS Hydration",emoji:"💧",img:"",category:"digestive",mrp:149,price:99,stock:100,expiry:"2026-09",offer:"Must Have",badge:"new",rating:4.6,reviews:312,desc:"Emergency hydration — loose motion ya ulti ke baad instant recovery",tags:["10 Sachets","Emergency Use","All Pets","Instant Relief"],benefits:["Dehydration turant theek","Electrolytes restore","Loose motion mein first help","Easy to give"],link:"",recs:[3,1,2]},
+];
+
+let products = DEFAULT_PRODUCTS;
+let currentProd = null;
+let qty = 1;
+let orderMode = 'now';
+
+// ━━━━ INIT ━━━━
+async function init() {
+  startDealTimer();
+
+  // Load categories first
+  try{
+    const r = await fetch(`${BACKEND}/get-categories`);
+    if(r.ok){
+      const d = await r.json();
+      if(d.categories && d.categories.length > 0){
+        buildCatButtons(d.categories);
+      }
+    }
+  }catch(e){}
+
+  // Load products
+  try {
+    const r = await fetch(`${BACKEND}/get-products`);
+    if(r.ok){
+      const d = await r.json();
+      if(d.products && d.products.length > 0) products = d.products;
+    }
+  } catch(e) {}
+
+  renderProds(products);
+  const urlP = new URLSearchParams(window.location.search);
+  const pid = urlP.get('product');
+  if(pid) setTimeout(() => openDet(parseInt(pid)), 200);
+}
+
+function buildCatButtons(cats) {
+  const catsEl = document.getElementById('cats');
+  catsEl.innerHTML = '<button class="cat-btn on" onclick="filterCat(this,\'all\')">🐾 All</button>' +
+    cats.map(c=>`<button class="cat-btn" onclick="filterCat(this,'${c.id}')">${c.emoji} ${c.name}</button>`).join('');
+}
+
+// ━━━━ DEAL TIMER ━━━━
+function startDealTimer() {
+  const end = new Date(); end.setHours(23,59,59,0);
+  function tick(){
+    const now = new Date(); const diff = end - now;
+    if(diff <= 0){ document.getElementById('deal-timer').textContent = '00:00:00'; return; }
+    const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000), s=Math.floor((diff%60000)/1000);
+    document.getElementById('deal-timer').textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+  tick(); setInterval(tick, 1000);
+}
+
+// ━━━━ RENDER ━━━━
+function renderProds(prods) {
+  const grid = document.getElementById('prod-grid');
+  if(!prods.length){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:30px;color:#94a3b8;font-size:13px;">Koi product nahi mila</div>';
+    return;
+  }
+  grid.innerHTML = prods.map(p => {
+    const off = Math.round((p.mrp - p.price) / p.mrp * 100);
+    const priceAfterGST = Math.round(p.price * (1 + GST_RATE/100));
+    const freeDelivery = p.price >= 500;
+    return `
+    <div class="pcard" onclick="openDet(${p.id})">
+      <div class="pcard-img" style="background:${getCatBg(p.category)};">
+        ${p.img ? `<img src="${p.img}" alt="${p.name}">` : `<div class="pcard-emoji">${p.emoji||'🐾'}</div>`}
+        ${p.badge ? `<span class="pcard-badge badge-${p.badge}">${getBadgeTxt(p.badge,p.offer)}</span>` : ''}
+        <span class="pcard-off-tag">${off}% OFF</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-brand">Vetraj</div>
+        <div class="pcard-name">${p.name}</div>
+        <div class="pcard-rat">
+          <span class="pcard-stars">${'⭐'.repeat(Math.floor(p.rating||4.5))}</span>
+          <span class="pcard-rcnt">(${p.reviews||0})</span>
+        </div>
+        <div class="pcard-price-row">
+          <span class="pcard-sp">₹${p.price}</span>
+          <span class="pcard-mrp">₹${p.mrp}</span>
+        </div>
+        <div class="pcard-gst">+GST • Total: ₹${priceAfterGST}</div>
+        <div class="pcard-del">${freeDelivery ? '🚚 Free Delivery' : '🚚 Delivery ₹49'}</div>
+        <button class="pcard-buy" onclick="event.stopPropagation();quickBuy(${p.id})">🛒 Buy Now</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function getCatBg(cat) {
+  const m = {liver:'linear-gradient(135deg,#dcfce7,#bbf7d0)',deworming:'linear-gradient(135deg,#dbeafe,#bfdbfe)',digestive:'linear-gradient(135deg,#f0fdf4,#dcfce7)',skin:'linear-gradient(135deg,#fef3c7,#fde68a)',vitamins:'linear-gradient(135deg,#ede9fe,#ddd6fe)'};
+  return m[cat] || 'linear-gradient(135deg,#f1f5f9,#e2e8f0)';
+}
+
+function getBadgeTxt(badge, offer) {
+  if(offer && offer.length < 14) return offer;
+  return {hot:'🔥 Hot',new:'🆕 New',sale:'💰 Sale',rec:'⭐ Top Pick'}[badge] || '';
+}
+
+// ━━━━ FILTER ━━━━
+function filterCat(el, cat) {
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderProds(cat === 'all' ? products : products.filter(p=>p.category===cat));
+}
+
+function filterProds(q) {
+  q = q.toLowerCase();
+  renderProds(products.filter(p=>p.name.toLowerCase().includes(q)||(p.desc||'').toLowerCase().includes(q)));
+}
+
+// ━━━━ DETAIL ━━━━
+function openDet(id) {
+  currentProd = products.find(p=>p.id===id);
+  if(!currentProd) return;
+  const p = currentProd;
+  const off = Math.round((p.mrp - p.price) / p.mrp * 100);
+  const saved = p.mrp - p.price;
+  const gstAmt = Math.round(p.price * GST_RATE / 100);
+  const totalWithGST = p.price + gstAmt;
+  const freeDelivery = p.price >= 500;
+
+  document.getElementById('det-ht').textContent = p.name;
+  document.getElementById('det-name').textContent = p.name;
+  document.getElementById('det-stars').textContent = '⭐'.repeat(Math.floor(p.rating||4.5));
+  document.getElementById('det-rcnt').textContent = `${p.rating||4.5} — ${p.reviews||0} reviews`;
+
+  // Image
+  const imgWrap = document.getElementById('det-img-wrap');
+  if(p.img) {
+    imgWrap.innerHTML = `<div class="det-img-wrap" style="position:relative;"><img class="det-img-main" src="${p.img}" alt="${p.name}"><div class="det-off-pill">${off}% OFF</div></div>`;
+  } else {
+    imgWrap.innerHTML = `<div class="det-img-emoji" style="position:relative;">${p.emoji||'🐾'}<div class="det-off-pill">${off}% OFF</div></div>`;
+  }
+
+  // Price
+  document.getElementById('det-mrp').textContent = `₹${p.mrp}`;
+  document.getElementById('det-sp').textContent = `₹${p.price}`;
+  document.getElementById('det-off-pill').textContent = `${off}% OFF`;
+  document.getElementById('det-saved').textContent = `₹${saved} saved!`;
+  document.getElementById('det-gst-txt').textContent = `GST (${GST_RATE}%): ₹${gstAmt} • Total payable: ₹${totalWithGST} • ${freeDelivery?'Free Delivery':'Delivery: ₹49'}`;
+
+  // Buy bar
+  document.getElementById('buy-bar-price').textContent = `₹${totalWithGST}`;
+  document.getElementById('buy-bar-gst').textContent = `incl. ${GST_RATE}% GST + ${freeDelivery?'Free':'₹49'} Delivery`;
+
+  // Tags
+  document.getElementById('det-tags').innerHTML = (p.tags||[]).map(t=>`<span class="det-tag">✅ ${t}</span>`).join('');
+
+  // Benefits
+  document.getElementById('det-benefits').innerHTML = (p.benefits||[]).map(b=>`<div class="ben-row"><div class="ben-ico">✅</div><div class="ben-txt">${b}</div></div>`).join('');
+
+  // Info
+  document.getElementById('det-info').innerHTML = [
+    {lbl:'Category', val:p.category},
+    {lbl:'Stock', val:`${p.stock||0} units`},
+    {lbl:'Expiry', val:p.expiry||'—'},
+    {lbl:'GST', val:`${GST_RATE}% included`},
+    {lbl:'Delivery', val:freeDelivery?'Free':'₹49'},
+    {lbl:'Return Policy', val:'7 days easy return'},
+  ].map(i=>`<div class="inf-row"><div class="inf-lbl">${i.lbl}</div><div class="inf-val">${i.val}</div></div>`).join('');
+
+  // Recs
+  const recs = (p.recs||[]).map(rid=>products.find(x=>x.id===rid)).filter(Boolean);
+  document.getElementById('det-recs').innerHTML = recs.map(r=>`
+    <div class="rec-item" onclick="openDet(${r.id})">
+      <div class="rec-img">${r.img?`<img src="${r.img}">`:(r.emoji||'🐾')}</div>
+      <div style="flex:1;">
+        <div class="rec-nm">${r.name}</div>
+        <div class="rec-why">✅ Often bought together</div>
+        <div class="rec-pr">₹${r.price} <span style="font-size:10px;color:#94a3b8;text-decoration:line-through;">₹${r.mrp}</span></div>
+      </div>
+      <button class="rec-add" onclick="event.stopPropagation();quickBuy(${r.id})">Add</button>
+    </div>`).join('');
+
+  document.getElementById('det-page').classList.add('show');
+  window.scrollTo(0,0);
+}
+
+function closeDet() { document.getElementById('det-page').classList.remove('show'); }
+
+// ━━━━ DELIVERY CHECK ━━━━
+function checkDelivery() {
+  const pin = document.getElementById('pin-inp').value;
+  const res = document.getElementById('del-result');
+  if(!pin || pin.length !== 6){ toast('⚠️ 6 digit PIN daalo'); return; }
+  res.style.display = 'block';
+  res.textContent = '⏳ Checking...';
+  setTimeout(()=>{
+    // Simulate — real mein delivery API connect hogi
+    res.textContent = `✅ Delivery available to ${pin} — 3-5 business days`;
+    res.style.color = 'var(--green)';
+  }, 800);
+}
+
+// ━━━━ ORDER ━━━━
+function quickBuy(id) {
+  currentProd = products.find(p=>p.id===id);
+  if(!currentProd) return;
+  openOrder('now');
+}
+
+function openOrder(mode) {
+  if(!currentProd) return;
+  orderMode = mode; qty = 1;
+  updateOrderSummary();
+
+  const p = currentProd;
+  document.getElementById('ord-prod-preview').innerHTML = `
+    <div class="ord-prod-img">${p.img?`<img src="${p.img}">`:(p.emoji||'🐾')}</div>
+    <div>
+      <div class="ord-prod-nm">${p.name}</div>
+      <div class="ord-prod-pr">₹${p.price} + GST</div>
+    </div>`;
+
+  document.getElementById('order-modal').classList.add('show');
+}
+
+function changeQty(d) {
+  qty = Math.max(1, Math.min(10, qty + d));
+  document.getElementById('qty-val').textContent = qty;
+  updateOrderSummary();
+}
+
+function updateOrderSummary() {
+  if(!currentProd) return;
+  const p = currentProd;
+  const subtotal = p.price * qty;
+  const gst = Math.round(subtotal * GST_RATE / 100);
+  const delivery = subtotal >= 500 ? 0 : 49;
+  const total = subtotal + gst + delivery;
+
+  document.getElementById('order-summary').innerHTML = `
+    <div class="os-row"><span>Price (${qty} unit${qty>1?'s':''})</span><span>₹${subtotal}</span></div>
+    <div class="os-row"><span>GST (${GST_RATE}%)</span><span>₹${gst}</span></div>
+    <div class="os-row"><span>Delivery</span><span style="color:${delivery===0?'var(--green)':''};">${delivery===0?'FREE':'₹'+delivery}</span></div>
+    <div class="os-total"><span>Total Amount</span><span>₹${total}</span></div>`;
+}
+
+async function placeOrder() {
+  const name = document.getElementById('ord-name').value.trim();
+  const phone = document.getElementById('ord-phone').value.trim();
+  const addr = document.getElementById('ord-addr').value.trim();
+  const city = document.getElementById('ord-city').value.trim();
+  const pin = document.getElementById('ord-pin').value.trim();
+  const state = document.getElementById('ord-state').value;
+
+  if(!name){toast('⚠️ Naam daalo');return;}
+  if(!phone||phone.length<10){toast('⚠️ Valid phone daalo');return;}
+  if(!addr){toast('⚠️ Address daalo');return;}
+  if(!city||!pin||!state){toast('⚠️ City, PIN, State daalo');return;}
+
+  const p = currentProd;
+  const subtotal = p.price * qty;
+  const gst = Math.round(subtotal * GST_RATE/100);
+  const delivery = subtotal >= 500 ? 0 : 49;
+  const total = subtotal + gst + delivery;
+  const orderId = `VET-${Date.now().toString().slice(-6)}`;
+
+  const order = {
+    orderId, productId:p.id, productName:p.name,
+    qty, price:p.price, gst, delivery, total,
+    customer:{name, phone, address:`${addr}, ${city}, ${state} - ${pin}`, pincode:pin, city, state},
+    status:'confirmed', createdAt: new Date().toISOString()
+  };
+
+  // Save lead to dashboard
+  fetch(`${BACKEND}/save-lead`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      ownerName:name, ownerPhone:phone,
+      petName:'', petType:'', petAge:'', petBreed:'',
+      doctorName:'', problem:'Product Order — '+p.name+' — ₹'+total
+    })
+  }).catch(()=>{});
+
+  // Save to server
+  try{
+    await fetch(`${BACKEND}/save-order`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(order)
+    });
+  }catch(e){}
+
+  closeModal();
+  showSuccess(order);
+}
+
+function waOrder() {
+  if(!currentProd) return;
+  const name = document.getElementById('ord-name').value || 'Customer';
+  const phone = document.getElementById('ord-phone').value || '';
+  const addr = document.getElementById('ord-addr').value || '';
+  const city = document.getElementById('ord-city').value || '';
+  const pin = document.getElementById('ord-pin').value || '';
+  const p = currentProd;
+  const subtotal = p.price * qty;
+  const gst = Math.round(subtotal * GST_RATE/100);
+  const delivery = subtotal >= 500 ? 0 : 49;
+  const total = subtotal + gst + delivery;
+
+  const msg = `🛒 *Vetraj Pet Store — New Order*\n\n*Product:* ${p.name}\n*Qty:* ${qty}\n*Subtotal:* ₹${subtotal}\n*GST (${GST_RATE}%):* ₹${gst}\n*Delivery:* ${delivery===0?'Free':'₹'+delivery}\n*TOTAL:* ₹${total}\n\n*Customer:*\n${name}\n📞 ${phone}\n📍 ${addr}, ${city} - ${pin}`;
+  window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, '_blank');
+  closeModal();
+}
+
+function showSuccess(order) {
+  document.getElementById('suc-order-id').textContent = `#${order.orderId}`;
+  document.getElementById('suc-msg').textContent = `${order.customer.name} ji, aapka ${order.productName} ka order confirm ho gaya! Delivery 3-5 business days mein hogi.`;
+  document.getElementById('success-page').classList.add('show');
+}
+
+function trackWA() {
+  const orderId = document.getElementById('suc-order-id').textContent;
+  const msg = `Namaskar! Mera order track karna hai.\nOrder ID: ${orderId}`;
+  window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+function closeSuccess() { document.getElementById('success-page').classList.remove('show'); }
+function closeModal() { document.getElementById('order-modal').classList.remove('show'); }
+
+function buyWA() {
+  if(!currentProd) return;
+  const msg = `Namaskar! Mujhe yeh product chahiye:\n\n🛒 *${currentProd.name}*\nPrice: ₹${currentProd.price}\n\nPlease order confirm karein 🙏`;
+  window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+function goWA() { window.open(`https://wa.me/${WA}?text=Namaskar! Vetraj products ke baare mein help chahiye.`, '_blank'); }
+
+function toast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+init();
+</script>
+</body>
+</html>
