@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -126,6 +127,7 @@ const NUT = {
 };
 
 const calcFood = (wt,days,cond,unit="kg") => {
+  days = String(days||"365").replace(/[^0-9]/g,"") || "365";
   let wtNum = parseFloat(wt)||10;
   if(unit==="g") wtNum = wtNum/1000;
   const w=wtNum, d=parseInt(days)||365;
@@ -133,8 +135,8 @@ const calcFood = (wt,days,cond,unit="kg") => {
   const base=Math.round(w*pct*1000);
   return `${base}–${base+50}`;
 };
-const yrAge  = d => (parseInt(d)/365).toFixed(1);
-const isAd   = d => parseInt(d)>=180;
+const yrAge  = d => { const n=parseInt(d||'0'); return !isNaN(n)&&n>0 ? (n/365).toFixed(1) : '?'; };
+const isAd   = d => { const n=parseInt(d||'0'); return !isNaN(n) ? n>=180 : (String(d).includes('year')||String(d).includes('3-7')||String(d).includes('7+')); };
 
 // ── Supplements ───────────────────────────────────────────
 const SUPPS = {
@@ -344,16 +346,29 @@ const ChartPDF = ({form,plan,data,chartId=""}) => {
           <div style={{fontSize:64}}>🐾</div>
         </div>
         <div style={{background:"rgba(255,255,255,0.06)",padding:"12px 22px",borderTop:`3px solid ${C.teal}`}}>
-          <div style={{color:"white",fontSize:21,fontWeight:900}}>{form.ownerName}</div>
-          <div style={{color:"rgba(255,255,255,0.6)",fontSize:11,marginTop:2}}>
-            📱 {form.mobile} &nbsp;|&nbsp; 📍 {form.city} &nbsp;|&nbsp; Pet Parent
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:6}}>
+            <div>
+              <div style={{color:"white",fontSize:21,fontWeight:900}}>{form.ownerName}</div>
+              <div style={{color:"rgba(255,255,255,0.6)",fontSize:11,marginTop:2}}>
+                📱 {form.mobile} &nbsp;|&nbsp; 📍 {form.city} &nbsp;|&nbsp; Pet Parent
+              </div>
+            </div>
+            {chartId&&(
+              <div style={{background:"rgba(0,196,212,0.15)",border:`1px solid ${C.teal}`,borderRadius:8,padding:"6px 12px",textAlign:"right"}}>
+                <div style={{color:C.teal,fontSize:11,fontWeight:900}}>🆔 {chartId}</div>
+                <div style={{color:"rgba(255,255,255,0.5)",fontSize:10,marginTop:2}}>
+                  📅 {new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"})} &nbsp;
+                  🕐 {new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}
+                </div>
+              </div>
+            )}
           </div>
-          <div style={{color:C.teal,fontWeight:"bold",fontSize:12,marginTop:5}}>
+          <div style={{color:C.teal,fontWeight:"bold",fontSize:12,marginTop:8}}>
             🎯 {form.ageDays} Days → {isWeekPlan?parseInt(form.ageDays)+7:isMultiWeek?parseInt(form.ageDays)+(totalWeeks*7):parseInt(form.ageDays)+(months*30)} Day (Feed Chart)
           </div>
           <div style={{color:"rgba(255,255,255,0.7)",fontSize:11,marginTop:2}}>
             Pet: {form.petName} &nbsp;|&nbsp; Breed: {form.breed} &nbsp;|&nbsp;
-            Age: {yrAge(form.ageDays||"365")} yr ({form.ageDays||"?"} days) &nbsp;|&nbsp;
+            Age: {form.ageDays && !isNaN(parseInt(form.ageDays)) ? yrAge(form.ageDays)+' yr ('+form.ageDays+' days)' : (form.ageDays||'N/A')} &nbsp;|&nbsp;
             Wt: {form.weightUnit==='g'?(parseFloat(form.weight)/1000).toFixed(2)+'kg ('+form.weight+'g)':form.weight+'kg'} &nbsp;|&nbsp; {form.gender} {form.petType==="cat"?"🐱":"🐶"}
           </div>
         </div>
@@ -1353,33 +1368,53 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
   if(screen==="form") {
 
     if(step===1) return (
-      <Shell progress cur={1} onBack={()=>setScreen("landing")}>
-        <div style={{fontWeight:900,color:C.navy,fontSize:16,marginBottom:18}}>🏠 Step 1: Pet Parent Details</div>
-        <div style={{marginBottom:14}}>
-          <Label text="Owner Full Name" req/>
-          <input value={form.ownerName} onChange={e=>set("ownerName",e.target.value)}
-            placeholder="e.g. Rita Devi" style={inp}
-            onFocus={e=>e.target.style.borderColor=C.teal}
-            onBlur={e=>e.target.style.borderColor="#ddd"}/>
+      <Shell progress cur={1} onBack={()=>setScreen(_fromPanel?"plan":"landing")}>
+        <div style={{fontWeight:900,color:C.navy,fontSize:16,marginBottom:18}}>
+          {_fromPanel ? `🐾 ${form.petName} ka Food Chart` : "🏠 Pet Parent Details"}
         </div>
-        <div style={{marginBottom:14}}>
-          <Label text="WhatsApp Number (10 digits)" req/>
-          <input value={form.mobile} onChange={e=>setPhone(e.target.value)}
-            inputMode="numeric" placeholder="e.g. 9891408554" maxLength={10} style={inp}
-            onFocus={e=>e.target.style.borderColor=C.teal}
-            onBlur={e=>e.target.style.borderColor="#ddd"}/>
-          {form.mobile.length>0&&form.mobile.length<10&&(
-            <div style={{fontSize:11,color:C.red,marginTop:3}}>⚠ {10-form.mobile.length} more digits needed</div>
-          )}
-          {form.mobile.length===10&&<div style={{fontSize:11,color:C.green,marginTop:3}}>✅ Valid</div>}
-        </div>
+
+        {/* Show pre-filled data if from panel */}
+        {_fromPanel && (
+          <div style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"10px 14px",marginBottom:14}}>
+            <div style={{fontSize:11,color:"#166534",fontWeight:700,marginBottom:4}}>✅ Panel se auto-filled:</div>
+            <div style={{fontSize:12,color:"#166534"}}>{form.ownerName} | 📞 {form.mobile} | 🐾 {form.petName} ({form.breed})</div>
+          </div>
+        )}
+
+        {/* Only show naam/phone if NOT from panel */}
+        {!_fromPanel && (
+          <>
+            <div style={{marginBottom:14}}>
+              <Label text="Owner Full Name" req/>
+              <input value={form.ownerName} onChange={e=>set("ownerName",e.target.value)}
+                placeholder="e.g. Rita Devi" style={inp}
+                onFocus={e=>e.target.style.borderColor=C.teal}
+                onBlur={e=>e.target.style.borderColor="#ddd"}/>
+            </div>
+            <div style={{marginBottom:14}}>
+              <Label text="WhatsApp Number (10 digits)" req/>
+              <input value={form.mobile} onChange={e=>setPhone(e.target.value)}
+                inputMode="numeric" placeholder="e.g. 9891408554" maxLength={10} style={inp}
+                onFocus={e=>e.target.style.borderColor=C.teal}
+                onBlur={e=>e.target.style.borderColor="#ddd"}/>
+              {form.mobile.length>0&&form.mobile.length<10&&(
+                <div style={{fontSize:11,color:C.red,marginTop:3}}>⚠ {10-form.mobile.length} more digits needed</div>
+              )}
+              {form.mobile.length===10&&<div style={{fontSize:11,color:C.green,marginTop:3}}>✅ Valid</div>}
+            </div>
+          </>
+        )}
+
+        {/* City - always needed */}
         <div style={{marginBottom:20,position:"relative"}}>
           <Label text="City" req/>
           <input value={form.city}
             onChange={e=>{set("city",e.target.value);setCSug(matchCity(e.target.value));}}
             onFocus={()=>setCOpen(true)}
             onBlur={()=>setTimeout(()=>setCOpen(false),150)}
-            placeholder="Type city name…" style={inp}
+            placeholder="Apna shahar type karein…"
+            autoComplete="off"
+            style={{...inp,WebkitUserSelect:"text",userSelect:"text",touchAction:"manipulation"}}
             onFocusCapture={e=>e.target.style.borderColor=C.teal}
             onBlurCapture={e=>e.target.style.borderColor="#ddd"}/>
           {cOpen&&cSug.length>0&&(
@@ -1399,31 +1434,39 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
           )}
         </div>
         <Btn onClick={()=>setStep(2)} style={{width:"100%"}}
-          disabled={!form.ownerName.trim()||form.mobile.length!==10||!form.city.trim()}>
-          Next: Pet Details →
+          disabled={!form.city.trim()||(!_fromPanel&&(!form.ownerName.trim()||form.mobile.length!==10))}>
+          Next →
         </Btn>
-        <div style={{textAlign:"center",marginTop:10}}>
-          <span onClick={()=>setScreen(_fromPanel?"plan":"landing")} style={{fontSize:11,color:"#bbb",cursor:"pointer"}}>← Back to plans</span>
-        </div>
       </Shell>
     );
 
     if(step===2) return (
       <Shell progress cur={2} onBack={()=>setStep(1)}>
-        <div style={{fontWeight:900,color:C.navy,fontSize:16,marginBottom:16}}>🐾 Step 2: Pet Details</div>
-        <div style={{marginBottom:14}}>
-          <Label text="Pet Type" req/>
-          <RadioRow value={form.petType} onChange={v=>set("petType",v)}
-            opts={[{v:"dog",label:"Dog",icon:"🐶"},{v:"cat",label:"Cat",icon:"🐱"}]}/>
+        <div style={{fontWeight:900,color:C.navy,fontSize:16,marginBottom:16}}>
+          {_fromPanel ? "⚖️ Weight & Age" : "🐾 Step 2: Pet Details"}
         </div>
-        <div style={{marginBottom:14}}>
-          <Label text="Pet Name" req/>
-          <input value={form.petName} onChange={e=>set("petName",e.target.value)}
-            placeholder="e.g. Ollie" style={inp}
-            onFocus={e=>e.target.style.borderColor=C.teal}
-            onBlur={e=>e.target.style.borderColor="#ddd"}/>
-        </div>
-        <div style={{marginBottom:14,position:"relative"}}>
+        {_fromPanel && (
+          <div style={{background:"#f0fdf4",border:"1.5px solid #86efac",borderRadius:10,padding:"10px 14px",marginBottom:14}}>
+            <div style={{fontSize:12,color:"#166534"}}>🐾 {form.petName} | {form.breed} | {form.petType==="cat"?"🐱 Cat":"🐶 Dog"}</div>
+          </div>
+        )}
+        {!_fromPanel && (
+          <>
+            <div style={{marginBottom:14}}>
+              <Label text="Pet Type" req/>
+              <RadioRow value={form.petType} onChange={v=>set("petType",v)}
+                opts={[{v:"dog",label:"Dog",icon:"🐶"},{v:"cat",label:"Cat",icon:"🐱"}]}/>
+            </div>
+            <div style={{marginBottom:14}}>
+              <Label text="Pet Name" req/>
+              <input value={form.petName} onChange={e=>set("petName",e.target.value)}
+                placeholder="e.g. Ollie" style={inp}
+                onFocus={e=>e.target.style.borderColor=C.teal}
+                onBlur={e=>e.target.style.borderColor="#ddd"}/>
+            </div>
+          </>
+        )}
+        {!_fromPanel && <div style={{marginBottom:14,position:"relative"}}>
           <Label text="Breed — type GSD, Lab, Pom… auto-fills" req/>
           <input value={form.breed} onChange={e=>handleBreed(e.target.value)}
             onFocus={()=>setBOpen(true)} onBlur={()=>setTimeout(()=>setBOpen(false),150)}
@@ -1444,7 +1487,7 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
               ))}
             </div>
           )}
-        </div>
+        </div>}
         {/* Age with unit selector */}
         <div style={{marginBottom:14}}>
           <Label text="Pet Age" req/>
@@ -1494,7 +1537,7 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
             <input
               value={form.weight}
               onChange={e=>set("weight",e.target.value)}
-              inputMode="decimal" type="text"
+              inputMode="decimal" type="text" pattern="[0-9.]*"
               placeholder={form.weightUnit==="g"?"e.g. 450":"e.g. 15.5"}
               style={{...inp,flex:1}}
               onFocus={e=>e.target.style.borderColor=C.teal}
@@ -1532,7 +1575,7 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
         <div style={{display:"flex",gap:10}}>
           <Btn onClick={()=>setStep(1)} color="#999" style={{flex:1}}>← Back</Btn>
           <Btn onClick={()=>setStep(3)} color={C.teal} style={{flex:2}}
-            disabled={!form.petName||!form.breed||!form.ageDays||parseInt(form.ageDays)<1||!form.weight}>
+            disabled={!form.petName||!form.breed||!form.weight}>
             Next: Health →
           </Btn>
         </div>
