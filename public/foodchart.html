@@ -12,7 +12,20 @@
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f8ff;}
     select,input,textarea,button{font-family:inherit;}
-    input,textarea{-webkit-user-select:text!important;user-select:text!important;touch-action:manipulation!important;-webkit-appearance:none;font-size:16px!important;}
+    input,textarea,select{
+      -webkit-user-select:text!important;
+      user-select:text!important;
+      touch-action:manipulation!important;
+      -webkit-appearance:none!important;
+      font-size:16px!important;
+      cursor:text!important;
+      pointer-events:auto!important;
+    }
+    input:focus,textarea:focus{
+      outline:none!important;
+      -webkit-user-select:text!important;
+      user-select:text!important;
+    }
     @media print{
       .no-print{display:none!important}
       body{margin:0;padding:0;background:white}
@@ -26,7 +39,7 @@
 <body>
   <div id="root"></div>
   <script type="text/babel" data-presets="react">
-    const { useState } = React;
+    const { useState, useRef, useEffect } = React;
 
     const BACKEND = window.location.origin;
     const WA_NUMBER = "919568606006";
@@ -226,9 +239,13 @@ const Btn = ({children,onClick,disabled,style={},color=C.teal,textColor="#fff"})
 );
 
 const inp = {
-  width:"100%",padding:"12px 13px",border:"1.5px solid #ddd",borderRadius:10,
-  fontSize:16,boxSizing:"border-box",fontFamily:"inherit",outline:"none",background:"white",
-  WebkitUserSelect:"text",userSelect:"text",touchAction:"manipulation",WebkitAppearance:"none",
+  width:"100%", padding:"12px 13px", border:"1.5px solid #ddd", borderRadius:10,
+  fontSize:16, boxSizing:"border-box", fontFamily:"inherit", outline:"none",
+  background:"white", color:"#000",
+  WebkitUserSelect:"text", userSelect:"text",
+  touchAction:"manipulation", cursor:"text",
+  WebkitAppearance:"none", appearance:"none",
+  pointerEvents:"auto",
 };
 
 const Label = ({text,req}) => (
@@ -1408,15 +1425,20 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
         {/* City - always needed */}
         <div style={{marginBottom:20,position:"relative"}}>
           <Label text="City" req/>
-          <input value={form.city}
-            onChange={e=>{set("city",e.target.value);setCSug(matchCity(e.target.value));}}
+          <input
+            defaultValue={form.city}
+            onInput={e=>{set("city",e.target.value);setCSug(matchCity(e.target.value));setCOpen(true);}}
             onFocus={()=>setCOpen(true)}
-            onBlur={()=>setTimeout(()=>setCOpen(false),150)}
+            onBlur={()=>setTimeout(()=>setCOpen(false),200)}
             placeholder="Apna shahar type karein…"
             autoComplete="off"
-            style={{...inp,WebkitUserSelect:"text",userSelect:"text",touchAction:"manipulation"}}
-            onFocusCapture={e=>e.target.style.borderColor=C.teal}
-            onBlurCapture={e=>e.target.style.borderColor="#ddd"}/>
+            autoCorrect="off"
+            autoCapitalize="words"
+            spellCheck="false"
+            type="text"
+            inputMode="text"
+            style={{...inp}}
+          />
           {cOpen&&cSug.length>0&&(
             <div style={{position:"absolute",top:"100%",left:0,right:0,zIndex:999,
               background:"white",border:`1.5px solid ${C.teal}`,borderRadius:10,
@@ -1535,10 +1557,13 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
           <Label text="Body Weight" req/>
           <div style={{display:"flex",gap:8}}>
             <input
-              value={form.weight}
-              onChange={e=>set("weight",e.target.value)}
-              inputMode="decimal" type="text" pattern="[0-9.]*"
+              defaultValue={form.weight}
+              onInput={e=>set("weight",e.target.value)}
+              inputMode="decimal"
+              type="text"
+              pattern="[0-9.]*"
               placeholder={form.weightUnit==="g"?"e.g. 450":"e.g. 15.5"}
+              autoComplete="off"
               style={{...inp,flex:1}}
               onFocus={e=>e.target.style.borderColor=C.teal}
               onBlur={e=>e.target.style.borderColor="#ddd"}
