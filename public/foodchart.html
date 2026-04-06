@@ -8,6 +8,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     *{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f8ff;}
@@ -2067,9 +2069,63 @@ PDF download ke liye: PDF Download button dabao → "Save as PDF" select karein.
           },500);
         }} style={{background:"#25D366",color:"white",border:"none",borderRadius:7,padding:"5px 10px",fontSize:11,cursor:"pointer",fontWeight:"bold"}}>📲 WA</button>
 
-        <button onClick={()=>{
-          window.print();
-        }} style={{background:C.teal,color:"white",border:"none",borderRadius:7,padding:"5px 10px",fontSize:11,cursor:"pointer",fontWeight:"bold"}}>🖨️ PDF Download</button>
+        <button onClick={async ()=>{
+          const btn = document.getElementById('pdf-dl-btn');
+          const orig = btn.innerHTML;
+          btn.innerHTML = '⏳ PDF...';
+          btn.disabled = true;
+          try {
+            const { jsPDF } = window.jspdf;
+            const chartEl = document.getElementById('vetraj-chart');
+            if(!chartEl){ alert('Chart not found'); return; }
+            // Capture chart as canvas
+            const canvas = await window.html2canvas(chartEl, {
+              scale: 2,
+              useCORS: true,
+              allowTaint: true,
+              backgroundColor: '#ffffff',
+              logging: false,
+              width: chartEl.scrollWidth,
+              height: chartEl.scrollHeight,
+            });
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            // A4 dimensions in mm
+            const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+            const pageW = pdf.internal.pageSize.getWidth();
+            const pageH = pdf.internal.pageSize.getHeight();
+            const margin = 8;
+            const usableW = pageW - margin*2;
+            const canvasAspect = canvas.height / canvas.width;
+            const imgH = usableW * canvasAspect;
+            // If chart is longer than one page, split into pages
+            let yPos = 0;
+            let pageNum = 0;
+            while(yPos < imgH) {
+              if(pageNum > 0) pdf.addPage();
+              const sliceH = Math.min(pageH - margin*2, imgH - yPos);
+              const srcY = (yPos / imgH) * canvas.height;
+              const srcH = (sliceH / imgH) * canvas.height;
+              // Create a slice canvas
+              const sliceCanvas = document.createElement('canvas');
+              sliceCanvas.width = canvas.width;
+              sliceCanvas.height = srcH;
+              const ctx = sliceCanvas.getContext('2d');
+              ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+              const sliceData = sliceCanvas.toDataURL('image/jpeg', 0.95);
+              pdf.addImage(sliceData, 'JPEG', margin, margin, usableW, sliceH);
+              yPos += sliceH;
+              pageNum++;
+            }
+            const fname = 'Vetraj_FoodChart_' + (form.petName||'Pet').replace(/\s+/g,'_') + '_' + (form.breed||'').replace(/\s+/g,'_') + '.pdf';
+            pdf.save(fname);
+          } catch(e) {
+            console.error('PDF error:', e);
+            alert('PDF banane mein error aaya. Dobara try karein.');
+          } finally {
+            btn.innerHTML = orig;
+            btn.disabled = false;
+          }
+        }} id="pdf-dl-btn" style={{background:C.teal,color:"white",border:"none",borderRadius:7,padding:"5px 10px",fontSize:11,cursor:"pointer",fontWeight:"bold"}}>⬇️ PDF</button>
       </div>
       <div className="no-print" style={{background:"#e8f8e8",padding:"6px 14px",textAlign:"center",fontSize:11,color:"#2d6a2d",borderBottom:"1px solid #c8f0c8"}}>
         ✅ Chart Ready — {plan?.label} | {form.ownerName} | {form.mobile} | {form.city}
