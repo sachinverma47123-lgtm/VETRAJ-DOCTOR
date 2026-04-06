@@ -739,13 +739,24 @@ function showFoodChart(){
 }
 
 function openFoodChart(planId){
+  // Convert age string to days
+  const ageMap = {
+    '0-6 months': '120',
+    '6-12 months': '270',
+    '1-3 years': '730',
+    '3-7 years': '1825',
+    '7+ years': '3650',
+    'unknown': '365'
+  };
+  const ageDaysVal = ageMap[pAge] || (pAge && !isNaN(pAge) ? pAge : '365');
+
   const params = new URLSearchParams({
     ownerName: oName||'',
     mobile: oPhone||'',
     petName: pName||'',
     petType: pType||'dog',
     breed: pBreed||'',
-    ageDays: pAge||'365',
+    ageDays: ageDaysVal,
     plan: planId||'p399'
   });
   window.open(`/foodchart.html?${params.toString()}`, '_blank');
