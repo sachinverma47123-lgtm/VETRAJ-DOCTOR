@@ -129,14 +129,19 @@ const matchCity = (q) => {
 
 // ── Nutrition ratios ──────────────────────────────────────
 const NUT = {
-  normal:  {c:50,v:30,p:20,label:"Balanced Diet"},
-  skin:    {c:45,v:40,p:15,label:"Skin Repair Formula"},
-  liver:   {c:50,v:40,p:10,label:"Liver Support Formula"},
-  obesity: {c:45,v:45,p:10,label:"Fat Loss Formula"},
-  puppy:   {c:50,v:25,p:25,label:"Growth Formula"},
-  kidney:  {c:55,v:35,p:10,label:"Kidney Support Formula"},
-  joint:   {c:45,v:35,p:20,label:"Joint Support Formula"},
-  gastric: {c:55,v:35,p:10,label:"Digestive Support Formula"},
+  normal:    {c:45,v:35,p:20,label:"Balanced Maintenance"},
+  obesity:   {c:25,v:60,p:15,label:"Low-Calorie High-Fiber"},
+  gastric:   {c:60,v:30,p:10,label:"Bland Easy-Digest"},
+  liver:     {c:50,v:40,p:10,label:"Low-Fat Detox"},
+  skin:      {c:35,v:40,p:25,label:"Anti-Inflammatory Omega-Rich"},
+  kidney:    {c:65,v:25,p:10,label:"Low-Protein Low-Phosphorus"},
+  joint:     {c:35,v:45,p:20,label:"Anti-Inflammatory Joint-Support"},
+  puppy:     {c:40,v:30,p:30,label:"High-Protein Growth"},
+  diabetes:  {c:20,v:60,p:20,label:"Low-GI High-Fiber"},
+  heart:     {c:40,v:40,p:20,label:"Low-Sodium Omega-Rich"},
+  cancer:    {c:15,v:45,p:40,label:"Low-Carb Anti-Cancer"},
+  parvovirus:{c:80,v:15,p:5, label:"Maximum Digestibility Recovery"},
+  distemper: {c:55,v:30,p:15,label:"Easy-Digest Immune-Support"},
 };
 
 const calcFood = (wt,days,cond,unit="kg") => {
@@ -153,14 +158,19 @@ const isAd   = d => { const n=parseInt(d||'0'); return !isNaN(n) ? n>=180 : (Str
 
 // ── Supplements ───────────────────────────────────────────
 const SUPPS = {
-  normal:  ["Calcium Syrup 2ml×2/day","Multivitamin 3ml×2/day","Vetraj Probiotic 1ml/day"],
-  skin:    ["Calcium Syrup 2ml×2/day","Multivitamin 3ml×2/day","Omega 1.5ml alt.day","Probiotic 1ml/day","Vetraj Skin Care Kit"],
-  liver:   ["Calcium Syrup 2ml×2/day","Multivitamin 3ml×2/day","Ganvet Liver Tonic 5ml×2/day","Probiotic 1ml/day"],
-  obesity: ["Calcium Syrup 2ml×2/day","Multivitamin 3ml×2/day","Omega 1.5ml alt.day","Probiotic 1ml/day"],
-  puppy:   ["Calcium Syrup 3ml×2/day","Multivitamin 3ml×2/day","Probiotic 1ml/day","Omega 1ml alt.day"],
-  kidney:  ["Calcium Syrup 1ml×2/day","Multivitamin 3ml×2/day","Probiotic 1ml/day"],
-  joint:   ["Calcium Syrup 2ml×2/day","Omega 1.5ml alt.day","Multivitamin 3ml×2/day","Probiotic 1ml/day"],
-  gastric: ["Calcium Syrup 2ml×2/day","Multivitamin 3ml×2/day","Probiotic 2ml/day"],
+  normal:    ["Vetraj Probiotic 1ml/day","Calcium Syrup 2ml×2/day","Multivitamin 3ml×2/day"],
+  skin:      ["Vetraj Skin Care Kit","Vetraj Probiotic 2ml/day","Omega 1.5ml alt.day","Calcium Syrup 2ml×2/day","Multivitamin 3ml×2/day"],
+  liver:     ["Ganvet Liver Tonic 5ml×2/day","Vetraj Probiotic 2ml/day","Calcium Syrup 2ml×2/day","Multivitamin 3ml×2/day"],
+  obesity:   ["Vetraj Probiotic 1ml/day","Omega 1.5ml alt.day","Calcium Syrup 2ml×2/day","Multivitamin 3ml×2/day"],
+  puppy:     ["Calcium Syrup 3ml×2/day","Multivitamin 3ml×2/day","Vetraj Probiotic 1ml/day","Omega 1ml alt.day"],
+  kidney:    ["Vetraj Probiotic 1ml/day","Multivitamin 3ml×2/day","Calcium Syrup 1ml×2/day"],
+  joint:     ["Omega 1.5ml alt.day","Calcium Syrup 2ml×2/day","Vetraj Probiotic 1ml/day","Multivitamin 3ml×2/day"],
+  gastric:   ["Vetraj Probiotic 2ml/day","Calcium Syrup 2ml×2/day","Multivitamin 3ml×2/day"],
+  diabetes:  ["Vetraj Probiotic 1ml/day","Multivitamin 3ml×2/day","Omega 1ml alt.day"],
+  heart:     ["Omega 1.5ml alt.day","Vetraj Probiotic 1ml/day","Calcium Syrup 1ml×2/day","Multivitamin 3ml×2/day"],
+  cancer:    ["Vetraj Probiotic 2ml/day","Omega 1.5ml alt.day","Multivitamin 3ml×2/day","Ganvet Liver Tonic 5ml×2/day"],
+  parvovirus:["Vetraj Probiotic 2ml/day (CRITICAL)","Calcium Syrup 1ml×2/day (recovery phase only)"],
+  distemper: ["Vetraj Probiotic 2ml/day","Multivitamin 3ml×2/day","Calcium Syrup 2ml×2/day"],
 };
 
 // ── NEW PLANS (4-tier) ────────────────────────────────────
@@ -390,6 +400,20 @@ const ChartPDF = ({form,plan,data,chartId=""}) => {
           </div>
         </div>
       </div>
+
+      {/* Emergency Banner for critical conditions */}
+      {(form.condition==="parvovirus"||form.condition==="distemper")&&(
+        <div style={{background:"#dc2626",color:"white",padding:"14px 18px",margin:"10px 0",borderRadius:10,border:"3px solid #991b1b"}}>
+          <div style={{fontWeight:900,fontSize:15,marginBottom:6}}>🚨 EMERGENCY NOTICE — VET REQUIRED IMMEDIATELY</div>
+          <div style={{fontSize:12,lineHeight:1.7}}>
+            {form.condition==="parvovirus"
+              ? "Parvovirus is LIFE-THREATENING. This food chart provides SUPPORTIVE CARE ONLY. Your dog needs IV fluids, anti-nausea medication, and antibiotics from a vet RIGHT NOW. Every hour without vet treatment reduces survival chances. Call Vetraj Helpline: 9568606006"
+              : "Distemper is a serious multi-system disease. This food chart supports recovery but CANNOT replace vet treatment. Neurological signs (tremors, circling, seizures) = emergency. Call Vetraj Helpline: 9568606006"
+            }
+          </div>
+          <div style={{marginTop:10,fontWeight:900}}>📞 Vetraj Emergency: 9568606006</div>
+        </div>
+      )}
 
       {/* Summary */}
       <div style={{borderLeft:`5px solid ${C.teal}`,background:"white",padding:"12px 18px",margin:"10px 0",boxShadow:"0 1px 8px rgba(0,0,0,0.05)",borderRadius:"0 10px 10px 0"}}>
@@ -909,56 +933,199 @@ function App() {
   //  CONDITION INTELLIGENCE — reasoning per condition
   // ══════════════════════════════════════════════════════
   const CONDITION_INTEL = {
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // CRITICAL DISEASES — LIFE-SAVING
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    parvovirus: {
+      problem: `PARVOVIRUS — LIFE-THREATENING. Gut lining is destroyed. The dog CANNOT digest normal food. Gut cells are dead or dying. ANY solid food will make it worse. This is a medical emergency — food is supportive care only, not cure. PRIMARY GOAL: rehydration + gut lining repair + prevent secondary infection through food.`,
+      strategy: `PARVOVIRUS FOOD PROTOCOL (only after vet stabilization):
+Phase 1 (Days 1-3): NOTHING solid. Only ORS (oral rehydration solution) — 1 tsp coconut water every 30 min if tolerating. Rice kanji water (strained, no rice) — 2-3ml per kg body weight every hour.
+Phase 2 (Days 4-5): Only kanji (rice water). No vegetables. No protein. Tiny sips, 10ml every hour. Watch for vomiting.
+Phase 3 (Days 6-7): Plain boiled rice + pumpkin — no salt, no oil, no vegetables yet. TINY portions — 1-2 tsp every 2 hours.
+SUPPLEMENTS: Probiotics CRITICAL — rebuilds gut lining. Must be given even if eating nothing.`,
+      avoid: `ABSOLUTELY NOTHING except what's listed above. No milk, no paneer, no vegetables, no protein, no oil, no anything. The gut is raw — any nutrition causes more damage. Water-based only in acute phase.`,
+      summerVeg: `NO vegetables in acute phase. In recovery (day 5+): Only well-boiled kaddu/pumpkin — it coats and heals gut lining. Nothing else.`,
+      note: `PARVOVIRUS OWNER WARNING: This dog NEEDS a vet immediately. Food chart alone cannot save this dog. IV fluids, anti-nausea medication, and antibiotics are needed. Food is supportive — your vet is primary. Every hour matters.`,
+      emergency: true,
+    },
+
+    distemper: {
+      problem: `DISTEMPER — NEUROLOGICAL + RESPIRATORY + DIGESTIVE multi-system disease. The immune system is fighting on 3 fronts simultaneously. Dog is weak, may have seizures, eye/nose discharge, coughing, and digestive issues. Food must support immune system WITHOUT taxing digestion.`,
+      strategy: `DISTEMPER FOOD PROTOCOL:
+- IMMUNE SUPPORT: Kacchi haldi MANDATORY (anti-viral, anti-inflammatory) — 1/4 tsp with every meal
+- SMALL FREQUENT MEALS: 4-5 tiny meals instead of 2 large — gut is compromised
+- HIGH DIGESTIBILITY: Plain boiled rice + moong dal khichdi as base — easiest to digest
+- VITAMIN C SUPPORT: Fresh papaya (small piece) — natural vitamin C, anti-viral properties
+- NO STRESS ON DIGESTION: Avoid all hard-to-digest foods, no raw anything, no heavy protein`,
+      avoid: `No raw vegetables. No heavy protein (no chicken, no egg in acute phase). No coconut oil (liver may be stressed). No dairy except curd probiotic in small amounts. No strong-tasting foods.`,
+      summerVeg: `Only soft-boiled: Lauki (cooling, easy digest), Kaddu (gut healing). Nothing raw. Nothing fibrous.`,
+      note: `DISTEMPER OWNER WARNING: Vet treatment is non-negotiable. Food only supports. Watch for neurological signs (tremors, circling) — these mean the disease has progressed. Report to vet immediately.`,
+      emergency: true,
+    },
+
+    kidney: {
+      problem: `KIDNEY DISEASE — The kidneys are not filtering waste properly. Protein waste (urea, creatinine) is building up in blood. HIGH protein diet KILLS kidney dogs faster. Phosphorus restriction is critical. The dog may be drinking a lot of water, losing weight, vomiting. This needs lifelong dietary management.`,
+      strategy: `KIDNEY DIET PROTOCOL — PHOSPHORUS + PROTEIN RESTRICTED:
+- LOW PROTEIN: Maximum 15-18% of diet. Use EGG WHITE ONLY (highest quality, lowest waste protein) or very small amount of chicken breast.
+- ZERO phosphorus foods: No dairy (paneer/curd have HIGH phosphorus — avoid), no fish, no organ meats
+- HIGH carbs for calories: Rice, oats — dog needs energy from carbs not protein
+- HIGH moisture: Every meal should have extra water added. Hydration = kidney flush
+- CALCIUM: Use carbonate supplement (vet prescribed) to bind phosphorus in gut
+- SMALL FREQUENT MEALS: 3-4 times daily — less waste production per meal
+- KACCHI HALDI MANDATORY: Natural anti-inflammatory, kidney-protective`,
+      avoid: `HIGH PHOSPHORUS — MUST AVOID: All dairy (paneer, curd, milk), fish, organ meats (kidney, liver of animals). HIGH PROTEIN: No regular chicken (white breast ok in tiny amounts only). No eggs except white only. No mushrooms, no legumes in large amounts.`,
+      summerVeg: `LOW phosphorus vegetables ONLY: Lauki (excellent for kidney — cooling, low phosphorus, diuretic), Kheera (natural diuretic), Tinda, Kaddu. Avoid: Palak (HIGH oxalate — bad for kidneys), Tori in excess.`,
+      note: `KIDNEY DISEASE: This is a slow killer if diet is wrong. Every gram of excess protein = more kidney damage. This chart is designed to slow disease progression. Monthly blood work (BUN, creatinine) is mandatory to adjust diet. Owner must understand this is lifelong management.`,
+    },
+
+    diabetes: {
+      problem: `DIABETES — Blood sugar regulation is broken. Insulin resistance or insufficient insulin means glucose cannot enter cells. Dog is hungry, drinking lots of water, losing weight despite eating. Every meal affects blood sugar levels — timing and consistency are as important as content.`,
+      strategy: `DIABETES FOOD PROTOCOL — LOW GLYCEMIC, CONSISTENT TIMING:
+- SAME TIME EVERY DAY: Meals must be at exact same times. Blood sugar spikes from irregular feeding.
+- LOW GLYCEMIC CARBS ONLY: Oats (low GI) and bajra are ONLY allowed carbs. NO white rice (spikes blood sugar)
+- HIGH FIBER MANDATORY: Fiber slows sugar absorption. Every meal = 50-60% vegetables
+- CONSISTENT PORTIONS: Weigh food. Same grams every day. No variation.
+- PROTEIN MODERATE: Helps stabilize blood sugar. Lean protein (chicken breast, egg white, paneer in small amounts)
+- FEED IMMEDIATELY AFTER INSULIN: If on insulin — feed within 15 minutes of injection
+- NO SIMPLE SUGARS: Zero fruit (even papaya has sugar). No honey. No coconut water (high sugar).`,
+      avoid: `ALL HIGH GI FOODS: Rice (white/brown), potato, sweet potato, banana, all fruits, honey, sugar, all treats. INCONSISTENCY is as dangerous as wrong food — do not skip meals or change timing.`,
+      summerVeg: `HIGH FIBER SUMMER VEGETABLES: Lauki (excellent — low GI, high fiber), Tori, Tinda, Kheera. Palak in small amounts (good for diabetics). Karela (bitter gourd) — natural blood sugar lowering effect — add 20-30g boiled 3x per week.`,
+      note: `DIABETES MANAGEMENT: Without diet discipline, insulin medication will not work properly. The food chart IS the medicine for diabetic dogs. Owner must test blood glucose regularly and report to vet. Small improvements in diet show results within 2-3 weeks.`,
+    },
+
+    heart: {
+      problem: `HEART DISEASE — The heart muscle is weak or valves are leaking. The body is retaining fluid (edema). Sodium (salt) causes water retention which puts MORE strain on the already-struggling heart. LOW SODIUM is the most critical requirement. Dog may cough, tire easily, have reduced appetite.`,
+      strategy: `CARDIAC DIET PROTOCOL — ZERO SODIUM, OMEGA-3 RICH:
+- ZERO SALT: Not a single grain of salt in any food. Cook everything without salt.
+- OMEGA-3 FATTY ACIDS: Reduces cardiac inflammation. Flaxseed (alsi) ground — 1 tsp daily. Or fish oil (vet-grade only).
+- TAURINE SUPPORT: Taurine deficiency linked to dilated cardiomyopathy. Egg white (2-3x week) is good source.
+- L-CARNITINE: Supports heart muscle. Chicken breast (boiled, no salt) provides some. 
+- MODERATE PROTEIN: Heart needs protein for muscle maintenance but not excess
+- SMALL FREQUENT MEALS: Large meals cause exertion. 3-4 small meals better than 2 large
+- KACCHI HALDI: CoQ10-like anti-oxidant effect. Mandatory daily.`,
+      avoid: `SODIUM SOURCES: No salt EVER. No processed food. No store-bought anything. No cheese. No fish sauce. No soy sauce. HIDDEN SODIUM: Be careful of curd (low but present) — limit to 30g max. No excess fluid if dog has edema — check with vet on water intake.`,
+      summerVeg: `HEART-FRIENDLY SUMMER VEG: Lauki (low sodium, cooling), Kheera (cooling, low sodium), Kaddu (potassium — helps heart function), Palak (magnesium — heart mineral), Tori. AVOID: Tinda has slightly higher sodium — limit.`,
+      note: `HEART DISEASE FOOD IS MEDICINE: A single salty meal can cause fluid in lungs (pulmonary edema) in advanced cases — this is an emergency. No exceptions on salt. If dog shows increased coughing or breathing difficulty after eating — vet immediately.`,
+    },
+
+    cancer: {
+      problem: `CANCER — Tumor cells feed on sugar/carbohydrates (Warburg effect). Standard high-carb diet literally FEEDS the cancer. Anti-cancer diet is: LOW carbohydrate, HIGH quality protein, HIGH healthy fats. This is the opposite of normal dog diet. The goal is to starve cancer cells while nourishing normal cells.`,
+      strategy: `ANTI-CANCER PROTOCOL — KETOGENIC DIRECTION:
+- REDUCE CARBS DRASTICALLY: Maximum 10-15% carbs. Cancer cells cannot use fat for energy — normal cells can.
+- HIGH QUALITY PROTEIN: 35-40% protein. Boiled chicken (boneless, no skin), egg white, fish (boneless boiled)
+- HEALTHY FATS: Coconut oil (MCT — anti-cancer properties), flaxseed/alsi (Omega-3 anti-inflammatory)
+- ANTIOXIDANTS MANDATORY: Kacchi haldi (curcumin = most studied natural anti-cancer compound), fresh spinach, papaya
+- IMMUNE SUPPORT: Goat milk (natural IgG antibodies), probiotic (gut immunity = 70% of immune system)
+- NO PROCESSED ANYTHING: Every meal fresh only`,
+      avoid: `ALL SIMPLE CARBS: White rice, white flour, sugar, honey, banana, sweet fruits. These directly feed tumor growth. NEVER give: Grapes (TOXIC), raisins (TOXIC), chocolate (TOXIC). No preserved/canned food.`,
+      summerVeg: `ANTI-CANCER SUMMER VEG: Palak (folate, anti-cancer), Lauki (alkalizing, anti-inflammatory), Kaddu (beta-carotene = anti-cancer), Kheera (cooling, hydrating). Fresh Papaya (papain enzyme — studied for anti-cancer properties).`,
+      note: `CANCER DIET NOTE: This diet cannot cure cancer but can significantly slow progression and improve quality of life. Studies show cancer dogs on low-carb diets live longer. Discuss with oncologist. Turmeric (curcumin) has 5000+ studies on anti-cancer effects — give daily without fail.`,
+    },
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // COMMON CONDITIONS
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     obesity: {
-      problem: `This dog has obesity. Root cause: food is being STORED not UTILIZED. Digestion is sluggish, metabolism is slow, nutrients are not absorbing properly — they are accumulating as fat. The dog is NOT getting proper nutrition despite eating, because absorption is poor. Do NOT just reduce food — fix digestion first, then reduce calorie density.`,
+      problem: `OBESITY — Food is being stored, not utilized. Digestion is sluggish, metabolism is slow. The dog is NOT getting proper nutrition despite eating — absorption is poor. Do NOT just reduce food — fix digestion first, then reduce calorie density.`,
       strategy: `OBESITY PROTOCOL:
-- Priority 1: Fix digestion — use high-fiber, water-rich vegetables that scrub the gut
-- Priority 2: Reduce calorie density — LESS carbs, MORE vegetables (60-65% must be vegetables)
-- Priority 3: Boost metabolism — kacchi haldi daily (anti-inflammatory, metabolic boost), coconut oil 3 days/week (medium-chain fat = burns fat not stores it)
-- NO rice for first 3 days — replace with small amount of desi/dhaan kata chawal or oats only
-- Portions STRICTLY controlled — do NOT overfeed even healthy food
-- Meal timing: morning meal LARGER, evening meal SMALLER (metabolism is higher in morning)
-- Add kaddu ke beej (pumpkin seeds) 1 tsp twice a week — natural dewormer + metabolism booster
-- Goat milk (fresh, NOT powder) — can add 50ml in morning 3 days/week — lactose-free, aids gut health`,
-      avoid: `STRICTLY AVOID: Aalu (potato), Tamatar (tomato — acidic, high sugar), Angur/Kishmish (grapes/raisins — TOXIC), any dry fruits, Shakargand (sweet potato has high GI for obese dogs — avoid), banana (high sugar), any processed food.`,
-      summerVeg: `SUMMER VEGETABLES (use these — currently garmi ka mausam April-May):
-- Lauki/Ghia (bottle gourd) — 80% water, very low calorie, excellent for obese dogs — USE DAILY
-- Tinda — light, cooling, digestive
-- Tori/Gilki (ridge gourd) — fiber-rich, low calorie
-- Kheera (cucumber) — cooling, hydrating, almost zero calorie
-- Kaddu (pumpkin) — low GI, fiber-rich, filling
-- Palak (spinach) — iron, fiber, detox
-- Pudina (mint leaves) — digestive, cooling — add 4-5 leaves to meals
-- Dhaniya (coriander leaves) — add fresh on top, detox properties`,
-      note: `Obesity in dogs means digestion is broken — fix digestion first, fat loss will follow automatically. Kanji day (Day 7) is CRITICAL — it gives the gut complete rest and resets digestive enzymes.`,
+- Priority 1: Fix digestion — high-fiber, water-rich vegetables that scrub the gut
+- Priority 2: Reduce calorie density — 60-65% must be vegetables, LESS carbs
+- Priority 3: Boost metabolism — kacchi haldi daily, coconut oil 3 days/week (MCT fat = burns fat)
+- NO white rice for first 2 weeks — replace with oats or bajra roti only
+- STRICT portions — weigh every meal
+- Morning meal LARGER, evening meal SMALLER (metabolism higher in morning)
+- Kaddu ke beej 1 tsp twice a week — natural dewormer + metabolism booster`,
+      avoid: `Aalu (potato), tamatar (tomato — high sugar), banana (high sugar), shakargand (sweet potato), all dry fruits, any treats. Grapes/raisins TOXIC.`,
+      summerVeg: `Lauki/Ghia DAILY (80% water, almost zero calorie), Kheera (cooling, zero calorie), Tinda, Tori/Gilki (fiber-rich), Kaddu (low GI, filling), Palak, Pudina, Dhaniya fresh.`,
+      note: `Digestion fix karo pehle — fat loss automatic follow karega. Kanji day (Day 7) is CRITICAL — gut complete rest and enzyme reset.`,
     },
+
     gastric: {
-      problem: `Gastric issues: gut lining is inflamed or irritated. Digestion is weak. Gas/bloating likely.`,
-      strategy: `Extremely easy-to-digest, bland foods only. Kanji (rice water) as base. Small meals, no heavy protein. Pumpkin is the hero food. Lauki and tinda for summer.`,
-      avoid: `No heavy protein, no coconut oil this week, no raw vegetables — everything lightly boiled. No banana. No high-fiber foods that cause gas.`,
-      summerVeg: `Lauki (boiled soft), Kaddu (boiled), Kheera (boiled lightly), Palak (small amount boiled well). Nothing raw.`,
-      note: `Gastric dogs need the softest, blandest food possible. Think hospital diet. Probiotic daily is critical.`,
+      problem: `GASTRIC ISSUES — Gut lining is inflamed or irritated. Digestion is weak. Gas, bloating, vomiting or loose stools likely. Root cause: wrong food, eating too fast, stress, or bacterial infection.`,
+      strategy: `GASTRIC HEALING PROTOCOL:
+- Days 1-2: ONLY kanji (rice water) + pumpkin. Literally nothing else.
+- Days 3-4: Plain boiled rice + kaddu. No vegetables, no protein yet.
+- Days 5-7: Slowly introduce one new ingredient at a time. Start with lauki.
+- PUMPKIN is the #1 gut-healing food — gives it in every meal
+- PROBIOTIC MANDATORY: Vetraj Probiotic daily — rebuilds good bacteria
+- SMALL MEALS MORE OFTEN: 4 tiny meals instead of 2 large
+- NO food 12 hours before first meal (gut rest)`,
+      avoid: `NO heavy protein (no chicken, no egg initially). No coconut oil. No raw vegetables — everything soft-boiled. No dairy except tiny amount of curd as probiotic. No fibrous vegetables initially. NO onion, garlic (destroy gut lining).`,
+      summerVeg: `Only soft-boiled: Lauki (easiest on gut), Kaddu (gut healing), Kheera (cooling, gentle). Nothing raw. Nothing hard or fibrous.`,
+      note: `Gastric dogs: think hospital diet. The more bland and simple, the faster healing. Probiotic is as important as food here. Gut microbiome restoration = recovery.`,
     },
-    skin: {
-      problem: `Skin infection: inflammation inside, showing outside as skin issues. Gut health and skin health are directly connected.`,
-      strategy: `Anti-inflammatory diet. Omega-rich foods. Coconut oil internally (3ml with food) AND externally (massage monthly). Turmeric (kacchi haldi) daily.`,
-      avoid: `No food that causes inflammation. No heavy carbs. Reduce dairy (except curd — it's probiotic). No tomato, no potato.`,
-      summerVeg: `Lauki, Tori, Palak, Kheera. Seasonal fruits: papaya (anti-inflammatory), watermelon (cooling, anti-inflammatory) — seedless only.`,
-      note: `Skin heals from inside — gut microbiome must improve first. Probiotic + Omega 3 combo is essential.`,
-    },
+
     liver: {
-      problem: `Liver issues: organ is stressed, toxins not filtering properly. Fat metabolism is impaired.`,
-      strategy: `Very LOW fat diet. High fiber to flush toxins. Lauki and pumpkin are excellent liver healers. No coconut oil. Turmeric is very important — it regenerates liver cells.`,
-      avoid: `Zero fat foods. No paneer (too much fat). No coconut oil. No banana. No heavy grains. Only moong dal as protein — lightest option.`,
-      summerVeg: `Lauki is the #1 liver-healing vegetable. Use abundantly. Tinda, Tori, Palak, Kheera. All light and water-rich.`,
-      note: `Liver needs complete rest from fat processing. Every meal should be as light as possible. Ganvet Liver Tonic is critical.`,
+      problem: `LIVER DISEASE — Organ is stressed, toxins not filtering properly. Fat metabolism is impaired. Bile production reduced. Dog may have yellow eyes/gums (jaundice), reduced appetite, vomiting. Every gram of fat = more liver work.`,
+      strategy: `LIVER DIET PROTOCOL — ZERO FAT, HIGH FIBER, DETOX:
+- ZERO FAT: No oil, no coconut oil, no paneer, no egg yolk. Liver cannot process fat right now.
+- HIGH FIBER: Fiber binds bile acids and removes toxins through stool. Vegetables = 60% of diet
+- PROTEIN: MOONG DAL ONLY as protein source — lightest, most liver-friendly protein
+- KACCHI HALDI: MANDATORY — curcumin directly regenerates liver cells. Use in every meal.
+- SILYMARIN (Milk thistle): Ask vet for supplement — strongest natural liver protector
+- SMALL MEALS: 3-4 times daily. Large meal = liver overwhelmed.
+- GANVET LIVER TONIC: Vetraj product specifically for this — critical addition`,
+      avoid: `ALL FATS: No coconut oil, no paneer, no egg yolk, no fatty meat. No high-protein foods. No chemical/preservative-containing anything. No excess Vitamin A (no liver meat, no carrot excess).`,
+      summerVeg: `LAUKI IS #1 LIVER FOOD — use abundantly, daily. Tinda, Tori, Kheera, Palak. All light, water-rich, low-fat. Mint (pudina) — liver-cooling, detox.`,
+      note: `Liver regenerates — it's one of few organs that can. But only if fat and toxin load is removed completely. Strict diet + Ganvet Liver Tonic = measurable improvement in 4-6 weeks. Blood ALT/AST tests will show improvement.`,
     },
+
+    skin: {
+      problem: `SKIN DISEASE — Inflammation is INSIDE showing OUTSIDE. Gut health and skin health are directly connected (gut-skin axis). If gut bacteria are imbalanced, skin suffers. Allergies, fungal, bacterial, or parasitic — all benefit from gut restoration.`,
+      strategy: `SKIN HEALING PROTOCOL — ANTI-INFLAMMATORY + GUT RESTORATION:
+- OMEGA-3 FATTY ACIDS: Coconut oil 3ml internally daily (anti-inflammatory), flaxseed/alsi ground 1 tsp
+- PROBIOTIC MANDATORY: Gut health = skin health. Vetraj Probiotic daily.
+- KACCHI HALDI: Curcumin = most powerful natural anti-inflammatory. Every meal.
+- ELIMINATE ALLERGENS: Start elimination diet — remove one ingredient at a time to find trigger
+- HIGH ANTIOXIDANTS: Papaya (Vitamin C, anti-inflammatory), spinach (Vitamin E)
+- ZINC SOURCES: Pumpkin seeds (kaddu ke beej) — 1 tsp daily — zinc = skin healing mineral`,
+      avoid: `INFLAMMATORY FOODS: No white rice (switch to oats), no heavy carbs. No dairy except curd (probiotic benefit outweighs). No tomato, no potato. COMMON ALLERGENS: If skin is very bad, try removing chicken for 2 weeks — chicken is #1 dog allergen. Try egg white instead.`,
+      summerVeg: `ANTI-INFLAMMATORY SUMMER VEG: Lauki, Tori, Palak, Kheera. ANTI-INFLAMMATORY FRUITS: Fresh papaya (pawpaw) — excellent for skin, seedless watermelon (cooling, anti-inflammatory). Avoid mango — too much sugar, can worsen yeast skin infections.`,
+      note: `Skin takes 3-4 weeks to show improvement from diet changes. Be consistent. If no improvement in 4 weeks, suspect food allergy — do elimination diet. Also check: is the dog eating or licking something outside that is causing this?`,
+    },
+
+    joint: {
+      problem: `JOINT PAIN / ARTHRITIS — Cartilage is wearing down. Inflammation in joints causes pain, stiffness, difficulty rising. Excess weight = more pressure on joints — weight management is part of treatment. Anti-inflammatory diet significantly reduces pain.`,
+      strategy: `JOINT SUPPORT PROTOCOL:
+- OMEGA-3 (anti-inflammatory): Coconut oil + flaxseed (alsi) ground daily. Reduces joint inflammation as effectively as mild NSAIDs.
+- GLUCOSAMINE NATURAL SOURCES: Bone broth (without onion/garlic/salt) — boil chicken bones for 2 hours, strain, give liquid
+- KACCHI HALDI MANDATORY: Curcumin = natural COX-2 inhibitor (same as anti-inflammatory drugs, no side effects)
+- GINGER (adrak): Small pinch boiled — powerful natural anti-inflammatory for joints
+- WEIGHT CONTROL: Every 1kg overweight = 4kg extra pressure on joints. Keep lean.
+- VITAMIN C: Fresh papaya — Vitamin C needed for collagen synthesis (cartilage)`,
+      avoid: `INFLAMMATORY FOODS: No white rice (switch to oats/bajra), no sugar, no processed anything. WEIGHT-GAINING FOODS: Strict portion control — overfeeding = more joint damage.`,
+      summerVeg: `ANTI-INFLAMMATORY SUMMER VEG: Palak (Vitamin K — bone health), Lauki (cooling, low calorie — helps weight), Kheera, Kaddu (antioxidants). Papaya (Vitamin C for collagen).`,
+      note: `Joint disease is progressive but diet can significantly slow it. Turmeric + flaxseed combination is one of the most evidence-backed natural joint protocols. Results visible in 3-4 weeks — less stiffness, better mobility.`,
+    },
+
+    puppy: {
+      problem: `PUPPY GROWTH — Rapid development phase. Bones, muscles, brain, immune system all building simultaneously. Nutritional deficiencies NOW cause lifelong problems. CRITICAL: Large breed puppies (GSD, Lab, Rottweiler) need CONTROLLED calcium — too much calcium = joint malformation. Small breed puppies need frequent feeding — hypoglycemia risk.`,
+      strategy: `PUPPY GROWTH PROTOCOL — 4 MEALS DAILY:
+- 4 MEALS DAILY MANDATORY: Puppy stomach is tiny. Blood sugar drops fast. Never skip meals.
+- CALCIUM BALANCE: Natural sources only — curd, goat milk, paneer in moderation. NO calcium supplements without vet direction (for large breeds especially)
+- DHA FOR BRAIN: Egg yolk 2-3x per week (not every day) — DHA = brain development
+- HIGH PROTEIN: 25-30% protein for muscle development
+- PHOSPHORUS BALANCE: Rice + vegetables provide right phosphorus level
+- PROBIOTIC: Puppy immune system is immature — gut bacteria is 70% of immunity
+- NO ADULT FOOD PORTIONS: Scale strictly to body weight`,
+      avoid: `PUPPY DANGERS: No chocolate (TOXIC), no grapes/raisins (TOXIC), no onion/garlic (TOXIC), no xylitol (DEADLY). No adult portion sizes. No single large meals. No excess calcium supplements (joint deformity risk in large breeds).`,
+      summerVeg: `PUPPY-SAFE SUMMER VEG: Lauki (cooling, safe), Kaddu (beta-carotene for immunity), Kheera (cooling, hydrating). All well-boiled. Fruits: small piece papaya (digestive enzymes help puppy gut develop), seedless watermelon (hydration in summer).`,
+      note: `Puppy nutrition mistakes cause lifelong consequences. Large breed puppies that grow TOO FAST get hip/elbow dysplasia. Controlled, balanced growth is the goal — NOT maximum size as fast as possible.`,
+    },
+
     normal: {
-      problem: `Healthy dog — maintain and optimize nutrition.`,
-      strategy: `Balanced rotation. Good variety. All seasonal vegetables.`,
-      avoid: `Standard toxin list: onion, garlic, chocolate, grapes, raisins, potato, tomato.`,
-      summerVeg: `Lauki, Tinda, Tori, Kheera, Kaddu, Palak, Carrot, Green Papaya. Fruits: Papaya, Watermelon (seedless), Apple.`,
-      note: `Prevention is better than cure. Consistent good diet keeps all organs healthy.`,
+      problem: `HEALTHY PET — Prevention mode. Maintain optimal nutrition to prevent future diseases. Build immune system. Ensure all organ systems function at peak.`,
+      strategy: `OPTIMAL WELLNESS PROTOCOL:
+- VARIETY ROTATION: Change carb, vegetable, protein every day — prevents boredom and ensures micronutrient completeness
+- GUT HEALTH: Probiotic 3x week. Curd/dahi daily. Healthy gut = healthy everything.
+- ANTIOXIDANTS: Kacchi haldi daily (cancer prevention, anti-aging), fresh seasonal vegetables
+- HYDRATION: Especially in Indian summer — always fresh water available
+- SEASONAL EATING: Eat what nature provides in that season — most nutritious, cheapest, freshest
+- DAY 7 KANJI: Even healthy dogs benefit from weekly gut rest and reset`,
+      avoid: `ALWAYS AVOID: Onion (destroy red blood cells), garlic (hemolytic anemia), grapes/raisins (acute kidney failure), chocolate (theobromine toxicity), xylitol (artificial sweetener in some peanut butters — DEADLY), raw dough (yeast toxicity), macadamia nuts, avocado.`,
+      summerVeg: `PEAK SUMMER (April-June) VEGETABLES: Lauki/Ghia (hydrating, cooling — #1 summer veg), Tinda, Tori/Gilki, Kheera/Cucumber (90% water — cooling), Kaddu/Pumpkin, Palak. Avoid: heavy root vegetables in summer heat. SUMMER FRUITS: Seedless watermelon (electrolytes), papaya (digestive enzymes), mango pulp ONLY (no skin/seed — 1-2 tsp, not excess).`,
+      note: `Prevention is always cheaper than treatment. A dog eating right from puppyhood rarely needs the vet except for vaccines. Consistent good nutrition is the single most impactful health intervention available to pet parents.`,
     },
   };
 
@@ -1041,69 +1208,138 @@ function App() {
 
   // ── Build intelligent AI prompt ────────────────────────
   const buildPrompt = () => {
-    const n    = NUT[form.condition] || NUT.normal;
-    const ad   = isAd(form.ageDays);
-    const mks  = ad ? ["breakfast","dinner"] : ["breakfast","lunch","evening","dinner"];
-    const food = calcFood(form.weight, form.ageDays, form.condition);
-    const w    = parseFloat(form.weight)||15;
+    const n     = NUT[form.condition] || NUT.normal;
+    const ad    = isAd(form.ageDays);
+    const mks   = ad ? ["breakfast","dinner"] : ["breakfast","lunch","evening","dinner"];
+    const food  = calcFood(form.weight, form.ageDays, form.condition);
+    const w     = parseFloat(form.weight) || 15;
     const intel = CONDITION_INTEL[form.condition] || CONDITION_INTEL.normal;
+    const seed  = Math.floor(Math.random() * 99999);
 
-    return `You are Dr. Mohit Saini, founder of Vetraj Pet Hospital with 15+ years experience. You are NOT a template-filler. You are a REASONING veterinary nutritionist who observes each patient individually and designs food based on deep understanding of their condition.
+    // ── Breed-specific intelligence ──────────────────────
+    const breedLower = (form.breed||"").toLowerCase();
+    const breedIntel = (() => {
+      if(breedLower.includes("german shepherd")||breedLower.includes("gsd"))
+        return {size:"large (25-40kg typical)",gut:"sensitive gut, prone to bloat — never give large single meal, split evenly",joint:"joint-prone — add coconut oil 3x/week mandatory, turmeric daily",coat:"double coat — omega from curd/goat milk important",notes:"GSD needs HIGH protein (lean), moderate carbs — their metabolism is fast. More boiled chicken or paneer than average. Avoid heavy starches."};
+      if(breedLower.includes("labrador")||breedLower.includes("lab"))
+        return {size:"large (25-35kg typical)",gut:"food-obsessed, prone to obesity — strict portion control",joint:"hip dysplasia risk — joint support critical",coat:"short coat — basic omega sufficient",notes:"Labs ALWAYS want more food but must be restricted. Calorie-dense foods in small portions. More vegetables, less carbs than they want."};
+      if(breedLower.includes("golden retriever"))
+        return {size:"large (25-34kg typical)",gut:"tolerant gut, does well with variety",joint:"hip/elbow issues — coconut oil mandatory",coat:"heavy coat — needs omega 3 regularly",notes:"Golden Retrievers love food and do well on varied diet. Higher protein need for coat health. Include goat milk 3x/week."};
+      if(breedLower.includes("pomeranian")||breedLower.includes("pom"))
+        return {size:"toy (2-3.5kg typical)",gut:"tiny stomach — very small portions, 3-4 meals essential",joint:"luxating patella risk — avoid high impact, keep lean",coat:"thick double coat — omega from curd critical",notes:"Pom needs tiny portions of dense nutrition. Never skip meals — hypoglycemia risk. Very small gram quantities. Curd daily mandatory."};
+      if(breedLower.includes("husky")||breedLower.includes("siberian"))
+        return {size:"medium-large (16-27kg typical)",gut:"evolved for low-calorie dense food — less is more",joint:"hardy joints",coat:"thick double coat needs omega 3 strongly",notes:"Huskies need LESS food than their size suggests. They're efficient metabolizers. More protein, less carbs. They thrive on lean diet."};
+      if(breedLower.includes("beagle"))
+        return {size:"medium (9-11kg typical)",gut:"prone to obesity, food-motivated — strict portions",joint:"generally good",coat:"short — basic care",notes:"Beagles are scent-driven and food-obsessed. Strict calorie control. More fiber-rich vegetables to keep them full."};
+      if(breedLower.includes("shihtzu")||breedLower.includes("shih tzu"))
+        return {size:"small (4-7.5kg typical)",gut:"prone to digestive sensitivity",joint:"intervertebral disc issues — keep lean",coat:"long silky coat — omega very important",notes:"Shih Tzu has sensitive digestion. Bland, easy-to-digest food. Curd daily for gut health. Small portions 3-4x daily."};
+      if(breedLower.includes("indie")||breedLower.includes("indian")||breedLower.includes("desi")||breedLower.includes("mutt")||breedLower.includes("mixed"))
+        return {size:"medium (12-25kg typical)",gut:"extremely hardy gut — evolved for Indian food",joint:"excellent joint health",coat:"short — basic",notes:"Indian breed/Indie dogs are incredibly adaptive. They evolved eating what humans eat — ghar ka khana is PERFECT for them. Their gut can handle variety well."};
+      if(breedLower.includes("rottweiler")||breedLower.includes("rott"))
+        return {size:"large-giant (35-60kg typical)",gut:"prone to bloat (GDV) — NEVER one large meal, always 2 equal meals",joint:"hip dysplasia risk — weight management critical",coat:"short",notes:"Rottweilers MUST eat in 2 equal meals, never one. High protein need for muscle mass. Keep away from obesity — joint stress increases dramatically."};
+      if(breedLower.includes("cat")||form.petType==="cat")
+        return {size:"cat (3-5kg typical)",gut:"obligate carnivore — needs animal protein even in veg homes",joint:"generally excellent",coat:"needs taurine and omega",notes:"CATS are obligate carnivores. Even if owner is vegetarian, cat needs some animal protein. Paneer + curd alone is insufficient long-term. Boiled egg white or chicken is strongly recommended."};
+      // Default medium dog
+      return {size:"medium (10-20kg typical)",gut:"standard digestion",joint:"standard",coat:"standard",notes:"Standard mixed-breed or medium dog nutrition applies."};
+    })();
+
+    // ── Random ingredient pools (shuffled per generation) ──
+    const shuffle = arr => [...arr].sort(()=>Math.random()-0.5);
+    const carbPool   = shuffle(["Dhaan Kata Chawal","Oats (boiled soft)","Bajra Roti (1 small)","Makai Roti (1 small)","Poha (boiled)","Moong Dal Khichdi"]);
+    const vegPool    = shuffle(["Lauki/Ghia (boiled)","Tinda (boiled)","Tori/Gilki (boiled)","Kheera (raw/boiled)","Kaddu/Pumpkin (boiled)","Palak (boiled)"]);
+    const protPool   = form.dietType==="nonveg"
+      ? shuffle(["Boiled Chicken 40g","Boiled Egg White 1","Boiled Fish 35g","Paneer 30g","Curd/Dahi 50g"])
+      : shuffle(["Paneer 35g","Curd/Dahi 50g","Moong Dal 40g","Curd/Dahi 60g","Paneer 25g"]);
+    const addPool    = shuffle(["Kacchi Haldi pinch","Pudina 4-5 leaves","Dhaniya fresh sprinkle","Goat Milk 50ml","Honey ½ tsp (morning only)","Coconut Oil 3ml (night)"]);
+
+    // ── Per-meal gram calculation ──────────────────────────
+    const sc = (base, ratio) => Math.round(base * (w/15) * ratio);
+    const carbG  = sc(food * (n.c/100), 1);
+    const vegG   = sc(food * (n.v/100), 1);
+    const protG  = sc(food * (n.p/100), 1);
+
+    // ── Day-by-day unique combos ──────────────────────────
+    const dayPlans = [1,2,3,4,5,6].map((day,i) => {
+      const carb = carbPool[i % carbPool.length];
+      const veg1 = vegPool[i % vegPool.length];
+      const veg2 = vegPool[(i+2) % vegPool.length];
+      const prot = protPool[i % protPool.length];
+      const add  = addPool[i % addPool.length];
+      const add2 = addPool[(i+3) % addPool.length];
+
+      const bfast = ad
+        ? `${carb} ${Math.round(carbG*0.55)}g\n${veg1} ${Math.round(vegG*0.55)}g\n${prot}\n${add}`
+        : `${carb} ${Math.round(carbG*0.3)}g\n${veg1} ${Math.round(vegG*0.3)}g\n${prot}\n${add}`;
+
+      const dinner = ad
+        ? `${carbPool[(i+3)%carbPool.length]} ${Math.round(carbG*0.45)}g\n${veg2} ${Math.round(vegG*0.45)}g\n${protPool[(i+2)%protPool.length]}\n${add2}`
+        : `${carbPool[(i+2)%carbPool.length]} ${Math.round(carbG*0.3)}g\n${veg2} ${Math.round(vegG*0.3)}g\n${protPool[(i+1)%protPool.length]}\n${add2}`;
+
+      const lunch = `${carbPool[(i+1)%carbPool.length]} ${Math.round(carbG*0.25)}g\n${vegPool[(i+1)%vegPool.length]} ${Math.round(vegG*0.25)}g\n${add}`;
+      const evening = `Goat Milk 50ml\nOR\nCurd ${Math.round(25*(w/15))}g\n${vegPool[(i+4)%vegPool.length]} ${Math.round(vegG*0.15)}g`;
+
+      if(ad) return `{"day":${day},"breakfast":${JSON.stringify(bfast)},"dinner":${JSON.stringify(dinner)}}`;
+      return `{"day":${day},"breakfast":${JSON.stringify(bfast)},"lunch":${JSON.stringify(lunch)},"evening":${JSON.stringify(evening)},"dinner":${JSON.stringify(dinner)}}`;
+    }).join(",");
+
+    const day7 = ad
+      ? `{"day":7,"breakfast":"Boiled Rice Water\\n(Kanji)\\nRice chhan kar\\nsirf watery part\\n~${Math.round(300*(w/15))}ml","dinner":"Coconut Water\\n~200ml\\n+\\nPumpkin Soup\\n~${Math.round(300*(w/15))}ml"}`
+      : `{"day":7,"breakfast":"Kanji ~${Math.round(200*(w/15))}ml","lunch":"Coconut Water ~150ml","evening":"Coconut Water ~100ml","dinner":"Pumpkin Soup ~${Math.round(200*(w/15))}ml"}`;
+
+    return `You are Dr. Mohit Saini, Vetraj Pet Hospital founder, 15 years experience. You are creating a COMPLETELY UNIQUE, PERSONALIZED food chart. This chart must look and feel DIFFERENT from any other chart you have generated.
+
+UNIQUE GENERATION SEED: ${seed} — Use this to ensure true randomness. No two charts should ever look the same.
 
 ═══════════════════════════════════
-PATIENT PROFILE
+PATIENT PROFILE (Read carefully — design specifically for THIS animal)
 ═══════════════════════════════════
-Pet: ${form.petName} | Breed: ${form.breed} | Gender: ${form.gender}
-Age: ${yrAge(form.ageDays)} years (${form.ageDays} days) | Weight: ${form.weight}kg
-Diet preference: ${form.dietType} | Activity: ${form.activity}
-PRIMARY CONDITION: ${form.condition.toUpperCase()}
-${form.conditionNote?`Additional context: ${form.conditionNote}`:""}
+Pet Name: ${form.petName}
+Breed: ${form.breed} — ${breedIntel.size}
+Gender: ${form.gender} | Age: ${yrAge(form.ageDays)} years (${form.ageDays} days)
+Body Weight: ${form.weight}kg | Diet: ${form.dietType} | Activity: ${form.activity}
+Health Condition: ${form.condition.toUpperCase()}
+${form.conditionNote?`Owner's note: ${form.conditionNote}`:""}
+
+BREED-SPECIFIC NOTES FOR ${form.breed.toUpperCase()}:
+${breedIntel.notes}
+Gut: ${breedIntel.gut}
+Coat: ${breedIntel.coat}
 
 ═══════════════════════════════════
-YOUR CLINICAL REASONING FOR THIS CASE
+CLINICAL REASONING
 ═══════════════════════════════════
 ${intel.problem}
-
-TREATMENT STRATEGY:
-${intel.strategy}
-
-WHAT TO AVOID STRICTLY:
-${intel.avoid}
-
-SEASON: It is currently April-May — peak Indian summer (garmi ka mausam).
-PRIORITY SUMMER VEGETABLES TO USE:
-${intel.summerVeg}
+Strategy: ${intel.strategy}
+Avoid: ${intel.avoid}
+Season: April-May Indian summer — use cooling vegetables: ${intel.summerVeg}
 
 ═══════════════════════════════════
-FOOD RULES (NON-NEGOTIABLE)
+STRICT RULES
 ═══════════════════════════════════
-✅ ALLOWED carbs (use in rotation, vary each day): Desi chawal/Dhaan kata chawal, Oats, Bajra aata roti, Makai aata roti, Poha, Moong dal khichdi
-✅ ALLOWED protein (${form.dietType==="nonveg"?"non-veg allowed":"strictly vegetarian only"}): ${form.dietType==="nonveg"?"Boiled chicken (boneless), boiled egg white, boiled fish (boneless), paneer, curd":"Paneer (moderate), curd/dahi, moong dal — NO MEAT"}
-✅ ALLOWED dairy: Fresh curd/dahi ✅ | Fresh Goat milk (NOT powder, lactose-free) ✅ | Paneer (condition-dependent)
-✅ ALLOWED additions: Kacchi haldi (raw turmeric, pinch), Coconut oil (3-5ml, 3 days/week, condition-dependent), Honey (½ tsp morning, 2 days/week), Kaddu ke beej/pumpkin seeds (special conditions), Pudina/mint leaves, Dhaniya/coriander leaves fresh
-❌ NEVER: Tamatar (tomato), Aalu (potato), Angur (grapes any color = TOXIC), Kishmish (raisins = TOXIC), Dry fruits, Salt, ANY masale/spices, Onion, Garlic, Chocolate, Powder milk
-❌ COOKING: NEVER pressure cooker — open bowl boiling ONLY. All vegetables must be boiled soft. No masale.
-❌ No commercial brand names. No Pedigree/Royal Canin/Drools/Purina.
+✅ Carbs (rotate daily, never repeat 2 days in a row): Dhaan Kata Chawal, Oats, Bajra Roti, Makai Roti, Poha, Moong Dal Khichdi
+✅ Protein (${form.dietType==="nonveg"?"non-veg ok":"vegetarian only"}): ${form.dietType==="nonveg"?"Boiled chicken, boiled egg white, boiled fish, paneer, curd":"Paneer, curd, moong dal"}
+✅ Daily additions: Kacchi haldi (DAILY), rotate — pudina, dhaniya, goat milk, coconut oil, honey
+❌ NEVER: Tomato, potato, grapes, raisins, onion, garlic, chocolate, salt, spices, dry fruits
+❌ COOKING: Open bowl only, no pressure cooker, no masale, boil soft
 
 ═══════════════════════════════════
-CHART REQUIREMENTS
+CHART REQUIREMENTS — UNIQUENESS MANDATORY
 ═══════════════════════════════════
-- Total food/day target: ${food}gm (${w}kg ${form.condition} dog)
-- Meals: ${ad?2:4}/day ${ad?"(Adult: 8AM breakfast + 8PM dinner, morning portion LARGER)":"(Puppy: 4 meals spread through day)"}
-- Nutrition target: ${n.c}% Carbs / ${n.v}% Veg / ${n.p}% Protein
-- Day 7 = ALWAYS liquid fasting (kanji + coconut water + pumpkin soup) — NON-NEGOTIABLE
-- EVERY DAY must be DIFFERENT — rotate carbs, rotate vegetables, rotate protein sources
-- NO copy-paste between days — each day must feel like a different meal plan
-- Exact gram quantities for EVERY ingredient in EVERY meal
-- Include seasonal summer vegetables prominently
+- Total food: ${food}gm/day for ${w}kg ${form.breed}
+- ${ad?2:4} meals/day
+- Nutrition: ${n.c}% Carbs / ${n.v}% Veg / ${n.p}% Protein
+- Day 7 = liquid fasting ALWAYS (kanji + coconut water + pumpkin soup)
+- EACH DAY must use DIFFERENT carb source — no repetition
+- EACH DAY different vegetable combination
+- Gram quantities must reflect EXACT weight: ${w}kg dog needs different grams than 10kg or 30kg dog
+- THIS CHART must look completely different from any Labrador chart, any Pomeranian chart, any other breed's chart
+- The combination order, portion sizes, additions — all must feel CUSTOM for ${form.petName} the ${form.breed}
 
-═══════════════════════════════════
-RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
-═══════════════════════════════════
-{"totalFood":"${food}gm","mealsPerDay":${ad?2:4},"nutritionRatio":"${n.c}% Carbs | ${n.v}% Veg | ${n.p}% Protein","naturalAdds":["describe 3 specific natural additions for THIS condition"],"specialNote":"one powerful clinical insight about THIS specific condition and dog","days":[{"day":1,${mks.map(k=>`"${k}":"Ingredient1 Xg\\nIngredient2 Xg\\nIngredient3 Xg"`).join(",")}},{"day":2,${mks.map(k=>`"${k}":"DIFFERENT items from day1"`).join(",")}},{"day":3,${mks.map(k=>`"${k}":"DIFFERENT again"`).join(",")}},{"day":4,${mks.map(k=>`"${k}":"DIFFERENT"`).join(",")}},{"day":5,${mks.map(k=>`"${k}":"DIFFERENT"`).join(",")}},{"day":6,${mks.map(k=>`"${k}":"DIFFERENT"`).join(",")}},${ ad
-  ? '{"day":7,"breakfast":"Boiled Rice Water\\n(Kanji)\\nRice chhan kar\\nsirf watery part\\n~350ml","dinner":"Full Coconut\\nwater-1 pic\\n+\\nPumpkin\\nSoup 350 lm"}'
-  : '{"day":7,"breakfast":"Boiled Rice Water\\n(Kanji) ~250ml","lunch":"Coconut Water\\n~150ml","evening":"Coconut Water\\n~100ml","dinner":"Full Coconut\\nwater-1 pic\\n+Pumpkin\\nSoup 250ml"}'
-}]}`;
+I am providing you a TEMPLATE as base — you must IMPROVE and PERSONALIZE it significantly:
+BASE TEMPLATE (improve this, don't copy it): [${dayPlans},${day7}]
+
+RESPOND WITH ONLY JSON — no markdown, no explanation:
+{"totalFood":"${food}gm","mealsPerDay":${ad?2:4},"nutritionRatio":"${n.c}% Carbs | ${n.v}% Veg | ${n.p}% Protein","naturalAdds":["breed-specific addition 1 for ${form.breed}","condition-specific addition 2","seasonal summer addition 3"],"specialNote":"Write a specific clinical insight about ${form.breed} at ${w}kg with ${form.condition} condition — mention the breed by name","days":[{"day":1,${mks.map(k=>`"${k}":"actual meal with exact grams"`).join(",")}},{"day":2,${mks.map(k=>`"${k}":"COMPLETELY DIFFERENT from day 1"`).join(",")}},{"day":3,${mks.map(k=>`"${k}":"COMPLETELY DIFFERENT from days 1-2"`).join(",")}},{"day":4,${mks.map(k=>`"${k}":"COMPLETELY DIFFERENT"`).join(",")}},{"day":5,${mks.map(k=>`"${k}":"COMPLETELY DIFFERENT"`).join(",")}},{"day":6,${mks.map(k=>`"${k}":"COMPLETELY DIFFERENT"`).join(",")}},${day7}]}`;
   };
 
   // ── Generate chart ─────────────────────────────────────
@@ -1623,14 +1859,19 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
         <div style={{fontWeight:900,color:C.navy,fontSize:16,marginBottom:16}}>🩺 Step 3: Health Condition</div>
         <RadioRow value={form.condition} onChange={v=>set("condition",v)} cols={2}
           opts={[
-            {v:"normal",  label:"✅ Normal",        bg:"#e8f8e8"},
-            {v:"skin",    label:"🐾 Skin Infection", bg:"#fce4ec"},
-            {v:"gastric", label:"🫃 Gastric",        bg:"#fff3e0"},
-            {v:"liver",   label:"🫀 Liver Issues",   bg:"#f3e5f5"},
-            {v:"kidney",  label:"💊 Kidney",         bg:"#e3f2fd"},
-            {v:"obesity", label:"⚖️ Obesity",        bg:"#e8f5e9"},
-            {v:"joint",   label:"🦴 Joint Pain",     bg:"#fff8e1"},
-            {v:"puppy",   label:"🐶 Puppy Growth",   bg:"#fff0f0"},
+            {v:"normal",    label:"✅ Healthy/Normal",   bg:"#e8f8e8"},
+            {v:"skin",      label:"🐾 Skin Disease",     bg:"#fce4ec"},
+            {v:"gastric",   label:"🫃 Gastric/Vomiting", bg:"#fff3e0"},
+            {v:"liver",     label:"🫀 Liver Disease",    bg:"#f3e5f5"},
+            {v:"kidney",    label:"💊 Kidney Disease",   bg:"#e3f2fd"},
+            {v:"obesity",   label:"⚖️ Overweight",       bg:"#e8f5e9"},
+            {v:"joint",     label:"🦴 Joint/Arthritis",  bg:"#fff8e1"},
+            {v:"puppy",     label:"🐶 Puppy Growth",     bg:"#fff0f0"},
+            {v:"diabetes",  label:"🩸 Diabetes",         bg:"#fef9c3"},
+            {v:"heart",     label:"❤️ Heart Disease",    bg:"#fde8e8"},
+            {v:"cancer",    label:"🎗️ Cancer Support",   bg:"#f5e6ff"},
+            {v:"parvovirus",label:"🚨 Parvovirus",       bg:"#fee2e2"},
+            {v:"distemper", label:"🚨 Distemper",        bg:"#fee2e2"},
           ]}/>
         {form.condition!=="normal"&&(
           <div style={{marginTop:14}}>
