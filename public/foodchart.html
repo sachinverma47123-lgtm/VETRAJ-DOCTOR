@@ -1403,14 +1403,14 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
           <>
             <div style={{marginBottom:14}}>
               <Label text="Owner Full Name" req/>
-              <input value={form.ownerName} onChange={e=>set("ownerName",e.target.value)}
+              <input onInput={e=>set("ownerName",e.target.value)} onKeyUp={e=>set("ownerName",e.target.value)}
                 placeholder="e.g. Rita Devi" style={inp}
                 onFocus={e=>e.target.style.borderColor=C.teal}
                 onBlur={e=>e.target.style.borderColor="#ddd"}/>
             </div>
             <div style={{marginBottom:14}}>
               <Label text="WhatsApp Number (10 digits)" req/>
-              <input value={form.mobile} onChange={e=>setPhone(e.target.value)}
+              <input onInput={e=>setPhone(e.target.value)} onKeyUp={e=>setPhone(e.target.value)}
                 inputMode="numeric" placeholder="e.g. 9891408554" maxLength={10} style={inp}
                 onFocus={e=>e.target.style.borderColor=C.teal}
                 onBlur={e=>e.target.style.borderColor="#ddd"}/>
@@ -1426,8 +1426,9 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
         <div style={{marginBottom:20,position:"relative"}}>
           <Label text="City" req/>
           <input
-            defaultValue={form.city}
+            id="city-input"
             onInput={e=>{set("city",e.target.value);setCSug(matchCity(e.target.value));setCOpen(true);}}
+            onKeyUp={e=>{set("city",e.target.value);setCSug(matchCity(e.target.value));}}
             onFocus={()=>setCOpen(true)}
             onBlur={()=>setTimeout(()=>setCOpen(false),200)}
             placeholder="Apna shahar type karein…"
@@ -1481,7 +1482,7 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
             </div>
             <div style={{marginBottom:14}}>
               <Label text="Pet Name" req/>
-              <input value={form.petName} onChange={e=>set("petName",e.target.value)}
+              <input onInput={e=>set("petName",e.target.value)} onKeyUp={e=>set("petName",e.target.value)}
                 placeholder="e.g. Ollie" style={inp}
                 onFocus={e=>e.target.style.borderColor=C.teal}
                 onBlur={e=>e.target.style.borderColor="#ddd"}/>
@@ -1490,7 +1491,7 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
         )}
         {!_fromPanel && <div style={{marginBottom:14,position:"relative"}}>
           <Label text="Breed — type GSD, Lab, Pom… auto-fills" req/>
-          <input value={form.breed} onChange={e=>handleBreed(e.target.value)}
+          <input onInput={e=>handleBreed(e.target.value)} onKeyUp={e=>handleBreed(e.target.value)}
             onFocus={()=>setBOpen(true)} onBlur={()=>setTimeout(()=>setBOpen(false),150)}
             placeholder="e.g. GSD, Beagle, Lab, Persian Cat…" style={inp}
             onFocusCapture={e=>e.target.style.borderColor=C.teal}
@@ -1515,16 +1516,25 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
           <Label text="Pet Age" req/>
           <div style={{display:"flex",gap:8}}>
             <input
-              value={form.ageVal}
-              onChange={e=>{
+              id="age-input"
+              onInput={e=>{
                 const v=e.target.value;
                 set("ageVal",v);
                 const u=form.ageUnit;
                 const d=u==="years"?Math.round(parseFloat(v||0)*365):u==="months"?Math.round(parseFloat(v||0)*30.4):parseInt(v||0);
                 set("ageDays",String(d||""));
               }}
-              inputMode="numeric"
-              placeholder="e.g. 5"
+              onKeyUp={e=>{
+                const v=e.target.value;
+                const u=form.ageUnit;
+                const d=u==="years"?Math.round(parseFloat(v||0)*365):u==="months"?Math.round(parseFloat(v||0)*30.4):parseInt(v||0);
+                set("ageDays",String(d||""));
+              }}
+              inputMode="decimal"
+              type="text"
+              pattern="[0-9.]*"
+              placeholder="e.g. 6"
+              autoComplete="off"
               style={{...inp,flex:1}}
               onFocus={e=>e.target.style.borderColor=C.teal}
               onBlur={e=>e.target.style.borderColor="#ddd"}
@@ -1557,8 +1567,9 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
           <Label text="Body Weight" req/>
           <div style={{display:"flex",gap:8}}>
             <input
-              defaultValue={form.weight}
+              id="weight-input"
               onInput={e=>set("weight",e.target.value)}
+              onKeyUp={e=>set("weight",e.target.value)}
               inputMode="decimal"
               type="text"
               pattern="[0-9.]*"
@@ -1624,7 +1635,7 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
         {form.condition!=="normal"&&(
           <div style={{marginTop:14}}>
             <Label text="Additional Notes (Optional)"/>
-            <textarea value={form.conditionNote} onChange={e=>set("conditionNote",e.target.value)}
+            <textarea onInput={e=>set("conditionNote",e.target.value)}
               placeholder="Describe symptoms or current treatment…" rows={3}
               style={{...inp,resize:"vertical",lineHeight:1.5}}
               onFocus={e=>e.target.style.borderColor=C.teal}
@@ -1726,7 +1737,7 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
         <div style={{background:"#f0f9ff",border:"2px solid #00c4d4",borderRadius:12,padding:14,marginBottom:12}}>
           <div style={{fontWeight:900,color:C.navy,fontSize:12,marginBottom:8}}>🎟️ Promo Code Hai?</div>
           <div style={{display:"flex",gap:8}}>
-            <input value={promoCode} onChange={e=>setPromoCode(e.target.value.toUpperCase())}
+            <input onInput={e=>setPromoCode(e.target.value.toUpperCase())} onKeyUp={e=>setPromoCode(e.target.value.toUpperCase())}
               onKeyDown={e=>e.key==="Enter"&&checkPromo()}
               placeholder="Enter promo code..."
               style={{...inp,flex:1,fontSize:13,padding:"9px 12px"}}/>
@@ -1799,19 +1810,7 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
         }} style={{background:"rgba(255,255,255,0.15)",color:"white",border:"none",borderRadius:7,padding:"5px 10px",fontSize:11,cursor:"pointer"}}>＋ New</button>
         <button onClick={generate} style={{background:"rgba(255,255,255,0.15)",color:"white",border:"none",borderRadius:7,padding:"5px 10px",fontSize:11,cursor:"pointer"}}>🔄 Regen</button>
         <button onClick={()=>{
-          // First download the HTML file, then open WA
-          const chartEl=document.getElementById("vetraj-chart");
-          if(chartEl){
-            const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Vetraj FeedChart</title><style>body{margin:8px;font-family:'Segoe UI',Arial,sans-serif;background:white}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:5mm;size:A4 landscape}table{width:100%;border-collapse:collapse}td,th{padding:5px 6px;font-size:9pt;line-height:1.4}</style></head><body>${chartEl.outerHTML}</body></html>`;
-            const blob=new Blob([html],{type:"text/html"});
-            const url=URL.createObjectURL(blob);
-            const a=document.createElement("a");
-            a.href=url;
-            a.download="Vetraj_"+form.petName+"_FeedChart.html";
-            a.click();
-            setTimeout(()=>URL.revokeObjectURL(url),3000);
-          }
-          // Then open WhatsApp
+          // Open WhatsApp with chart info
           setTimeout(()=>{
             const msg=encodeURIComponent(`🐾 *Vetraj Pet Food Chart*
 
@@ -1820,7 +1819,7 @@ RESPOND IN THIS EXACT JSON FORMAT ONLY (no markdown, no explanation):
 Owner: ${form.ownerName}
 📍 ${form.city}
 
-Chart download ho gaya hai — open karein aur print/save as PDF karein.
+PDF download ke liye: PDF Download button dabao → "Save as PDF" select karein.
 
 📞 9568606006 | vetraj.com`);
             window.open(`https://wa.me/91${form.mobile}?text=${msg}`,"_blank");
@@ -1828,34 +1827,8 @@ Chart download ho gaya hai — open karein aur print/save as PDF karein.
         }} style={{background:"#25D366",color:"white",border:"none",borderRadius:7,padding:"5px 10px",fontSize:11,cursor:"pointer",fontWeight:"bold"}}>📲 WA</button>
 
         <button onClick={()=>{
-          // Build a standalone HTML page from the chart div
-          const chartEl = document.getElementById("vetraj-chart");
-          if(!chartEl){alert("Chart not found");return;}
-          const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Vetraj_FeedChart_${form.petName}_${form.breed}</title>
-<style>
-  body{margin:0;padding:10px;font-family:'Segoe UI',Arial,sans-serif;background:white;}
-  *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  @page{margin:5mm;size:A4 landscape;}
-  table{border-collapse:collapse;width:100%;font-size:9pt;}
-  td,th{padding:5px 6px;line-height:1.4;}
-  @media print{body{padding:0;}}
-</style>
-</head>
-<body>${chartEl.outerHTML}</body>
-</html>`;
-          const blob = new Blob([html],{type:"text/html"});
-          const url  = URL.createObjectURL(blob);
-          const a    = document.createElement("a");
-          a.href     = url;
-          a.download = "Vetraj_FeedChart_"+form.petName.replace(/\s+/g,"_")+".html";
-          a.click();
-          setTimeout(()=>URL.revokeObjectURL(url),3000);
-        }} style={{background:C.teal,color:"white",border:"none",borderRadius:7,padding:"5px 10px",fontSize:11,cursor:"pointer",fontWeight:"bold"}}>⬇️ PDF</button>
+          window.print();
+        }} style={{background:C.teal,color:"white",border:"none",borderRadius:7,padding:"5px 10px",fontSize:11,cursor:"pointer",fontWeight:"bold"}}>🖨️ PDF Download</button>
       </div>
       <div className="no-print" style={{background:"#e8f8e8",padding:"6px 14px",textAlign:"center",fontSize:11,color:"#2d6a2d",borderBottom:"1px solid #c8f0c8"}}>
         ✅ Chart Ready — {plan?.label} | {form.ownerName} | {form.mobile} | {form.city}
@@ -1872,7 +1845,19 @@ Chart download ho gaya hai — open karein aur print/save as PDF karein.
           </div>
         )}
       </div>
-      <style>{`@media print{.no-print{display:none!important} body{margin:0;padding:0;background:white} *{-webkit-print-color-adjust:exact;print-color-adjust:exact} @page{margin:5mm;size:A4 landscape} table{page-break-inside:avoid} td{font-size:9pt!important;line-height:1.4!important} th{font-size:9pt!important}}`}</style>
+      <style>{`
+        @media print{
+          .no-print{display:none!important}
+          body{margin:0;padding:0;background:white}
+          *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+          @page{margin:8mm;size:A4 portrait}
+          table{page-break-inside:avoid}
+          td{font-size:9pt!important;line-height:1.4!important}
+          th{font-size:9pt!important}
+          div{page-break-inside:avoid}
+          #vetraj-chart{padding:0!important}
+        }
+      `}</style>
     </div>
   );
 
