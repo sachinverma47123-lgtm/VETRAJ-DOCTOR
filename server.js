@@ -15,13 +15,14 @@ app.use(express.static(path.join(__dirname, "public")));
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // RATE LIMITING
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.set("trust proxy", 1);
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000,
   max: 100,
   message: { error: "Too many requests, please try again later" }
 });
 const chatLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
+  windowMs: 1 * 60 * 1000,
   max: 20,
   message: { error: "Too many messages, thoda ruko 🙏" }
 });
@@ -1149,6 +1150,26 @@ app.get("/payment/config", (req, res) => {
     keyId: RAZORPAY_KEY_ID || "",
     configured: !!(RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET),
     fallbackUrl: "https://rzp.io/l/vetraj399"
+  });
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// GITHUB WEBHOOK — AUTO DEPLOY
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const { exec } = require("child_process");
+app.post("/webhook/deploy", (req, res) => {
+  const secret = process.env.DEPLOY_SECRET || "vetraj-deploy-2024";
+  const sig = req.headers["x-hub-signature-256"];
+  if (sig) {
+    const crypto = require("crypto");
+    const expected = "sha256=" + crypto.createHmac("sha256", secret).update(JSON.stringify(req.body)).digest("hex");
+    if (sig !== expected) return res.status(403).json({ error: "Invalid signature" });
+  }
+  console.log("Deploy webhook triggered!");
+  exec("cd /var/www/vetraj && git pull && npm install && pm2 restart vetraj", (err, stdout, stderr) => {
+    if (err) { console.error("Deploy error:", stderr); return res.json({ success: false, error: stderr }); }
+    console.log("Deploy success:", stdout);
+    res.json({ success: true, output: stdout });
   });
 });
 
