@@ -264,6 +264,24 @@ async function saveLead(d) {
     doctorName: d.doctorName || "",
     problem: d.problem || ""
   });
+
+  // Send lead to Akashvanni API
+  try {
+    const phone = (d.ownerPhone || "").toString().replace(/\D/g, "");
+    if (phone) {
+      const fullPhone = phone.startsWith("91") ? "+" + phone : "+91" + phone;
+      const customerName = d.ownerName || "Customer";
+      const apiUrl = `https://app.akashvanni.com/api/service/create-lead?user_id=69b44da471e857cddf164d22&template_name=order_initial_1&phone=${encodeURIComponent(fullPhone)}&customer_name=${encodeURIComponent(customerName)}&source=vetraj_chat`;
+
+      https.get(apiUrl, (res) => {
+        let data = "";
+        res.on("data", c => data += c);
+        res.on("end", () => console.log(`Akashvanni lead sent: ${fullPhone} — ${res.statusCode}`));
+      }).on("error", e => console.error("Akashvanni error:", e.message));
+    }
+  } catch (e) {
+    console.error("Akashvanni API error:", e.message);
+  }
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
