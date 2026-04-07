@@ -1,0 +1,16 @@
+node_modules/
+.env
+*.csv
+*.json
+!package.json
+!package-lock.json
+health_log.json
+vetraj_leads.csv
+vetraj_appointments.json
+vetraj_doctors.json
+vetraj_products.json
+vetraj_orders.json
+vetraj_medicines.json
+vetraj_prescriptions.json
+vetraj_categories.json
+vetraj_api_keys.json
