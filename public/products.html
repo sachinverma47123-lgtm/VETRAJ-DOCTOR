@@ -171,8 +171,11 @@ input,textarea,select{font-family:'Poppins',sans-serif;-webkit-user-select:text;
 .order-summary{background:#f0fdf4;border-radius:10px;padding:12px;margin-bottom:12px;}
 .os-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;}
 .os-total{display:flex;justify-content:space-between;font-size:14px;font-weight:800;color:var(--navy);padding-top:8px;border-top:2px solid #dcfce7;margin-top:4px;}
-.place-order-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--orange),var(--red));color:#fff;border:none;border-radius:12px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:700;cursor:pointer;}
+.pay-online-btn{width:100%;padding:14px;background:linear-gradient(135deg,#1a5a8a,#2d7fb8);color:#fff;border:none;border-radius:12px;font-family:'Poppins',sans-serif;font-size:15px;font-weight:800;cursor:pointer;margin-bottom:6px;box-shadow:0 4px 12px rgba(26,90,138,0.25);}
+.pay-online-btn:disabled{opacity:0.6;cursor:not-allowed;}
+.place-order-btn{width:100%;padding:12px;background:linear-gradient(135deg,var(--orange),var(--red));color:#fff;border:none;border-radius:12px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
 .wa-order-btn{width:100%;padding:13px;background:#25d366;color:#fff;border:none;border-radius:12px;font-family:'Poppins',sans-serif;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px;}
+.pay-divider{text-align:center;font-size:10px;color:#999;margin:8px 0 6px;text-transform:uppercase;letter-spacing:1px;font-weight:700;}
 
 /* SUCCESS PAGE */
 .success-page{display:none;position:fixed;inset:0;background:#fff;z-index:300;overflow-y:auto;}
@@ -348,7 +351,9 @@ input,textarea,select{font-family:'Poppins',sans-serif;-webkit-user-select:text;
     <!-- ORDER SUMMARY -->
     <div class="order-summary" id="order-summary"></div>
 
-    <button class="place-order-btn" onclick="placeOrder()">🛒 Order Place Karein</button>
+    <button class="pay-online-btn" id="pay-online-btn" onclick="payOnline()">💳 Pay Online — Razorpay (UPI / Card / NetBanking)</button>
+    <div class="pay-divider">— ya —</div>
+    <button class="place-order-btn" onclick="placeOrder()">🛒 COD — Order Place Karein</button>
     <button class="wa-order-btn" onclick="waOrder()">💬 WhatsApp Pe Order Karein</button>
   </div>
 </div>
@@ -386,6 +391,15 @@ input,textarea,select{font-family:'Poppins',sans-serif;-webkit-user-select:text;
 const WA = "919568606006";
 const BACKEND = window.location.origin;
 const GST_RATE = 18; // 18% GST
+let rzpConfig = {keyId:"",configured:false,fallbackUrl:"https://rzp.io/l/vetraj399"};
+fetch(`${BACKEND}/payment/config`).then(r=>r.json()).then(d=>{
+  rzpConfig = d;
+  if(d.configured && !window.Razorpay){
+    const s=document.createElement('script');
+    s.src='https://checkout.razorpay.com/v1/checkout.js';
+    document.head.appendChild(s);
+  }
+}).catch(()=>{});
 
 const DEFAULT_PRODUCTS = [
   {id:1,name:"Ganvet Liver Tonic",emoji:"🍃",img:"",category:"liver",mrp:399,price:299,stock:50,expiry:"2026-12",offer:"Bestseller",badge:"hot",rating:4.8,reviews:1247,desc:"Sugar-free liver tonic — dogs & cats ke liye sabse trusted liver support",tags:["Sugar Free","Dogs & Cats","Daily Use","100ml"],benefits:["Liver cells ko damage se bachata hai","Immunity badhata hai","Natural herbal formula","Appetite aur energy improve karta hai"],link:"",recs:[2,3,4]},
@@ -634,6 +648,102 @@ function updateOrderSummary() {
     <div class="os-row"><span>GST (${GST_RATE}%)</span><span>₹${gst}</span></div>
     <div class="os-row"><span>Delivery</span><span style="color:${delivery===0?'var(--green)':''};">${delivery===0?'FREE':'₹'+delivery}</span></div>
     <div class="os-total"><span>Total Amount</span><span>₹${total}</span></div>`;
+}
+
+function buildOrderFromForm(){
+  const name = document.getElementById('ord-name').value.trim();
+  const phone = document.getElementById('ord-phone').value.trim();
+  const addr = document.getElementById('ord-addr').value.trim();
+  const city = document.getElementById('ord-city').value.trim();
+  const pin = document.getElementById('ord-pin').value.trim();
+  const state = document.getElementById('ord-state').value;
+
+  if(!name){toast('⚠️ Naam daalo');return null;}
+  if(!phone||phone.length<10){toast('⚠️ Valid phone daalo');return null;}
+  if(!addr){toast('⚠️ Address daalo');return null;}
+  if(!city||!pin||!state){toast('⚠️ City, PIN, State daalo');return null;}
+  if(!currentProd){toast('⚠️ Product select nahi hai');return null;}
+
+  const p = currentProd;
+  const subtotal = p.price * qty;
+  const gst = Math.round(subtotal * GST_RATE/100);
+  const delivery = subtotal >= 500 ? 0 : 49;
+  const total = subtotal + gst + delivery;
+  const orderId = `VET-${Date.now().toString().slice(-6)}`;
+
+  return {
+    orderId, productId:p.id, productName:p.name,
+    qty, price:p.price, gst, delivery, total,
+    customer:{name, phone, address:`${addr}, ${city}, ${state} - ${pin}`, pincode:pin, city, state},
+    createdAt: new Date().toISOString(),
+    _name:name, _phone:phone
+  };
+}
+
+async function payOnline(){
+  const order = buildOrderFromForm();
+  if(!order) return;
+
+  // Save lead (same as COD flow)
+  fetch(`${BACKEND}/save-lead`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      ownerName:order._name, ownerPhone:order._phone,
+      petName:'', petType:'', petAge:'', petBreed:'',
+      doctorName:'', problem:'Product Order (Online Pay) — '+order.productName+' — ₹'+order.total
+    })
+  }).catch(()=>{});
+
+  const btn = document.getElementById('pay-online-btn');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ Opening Razorpay…'; }
+  const resetBtn = ()=>{ if(btn){ btn.disabled=false; btn.textContent='💳 Pay Online — Razorpay (UPI / Card / NetBanking)'; } };
+
+  const waFallback = () => {
+    const msg = `🛒 *Vetraj Pet Store — Online Payment Request*\n\n*Product:* ${order.productName}\n*Qty:* ${order.qty}\n*Total:* ₹${order.total}\n*Order ID:* ${order.orderId}\n\n*Customer:*\n${order._name}\n📞 ${order._phone}\n📍 ${order.customer.address}\n\nPlease payment link bhejein 🙏`;
+    window.open(`https://wa.me/${WA}?text=${encodeURIComponent(msg)}`, '_blank');
+    resetBtn();
+  };
+
+  if(rzpConfig.configured && window.Razorpay){
+    try{
+      const r = await fetch(`${BACKEND}/payment/create-order`,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({amount:order.total, receipt:order.orderId, notes:{product:order.productName, phone:order._phone}})
+      });
+      const rzpOrder = await r.json();
+      if(!rzpOrder || !rzpOrder.id) throw new Error('no order');
+
+      const rzp = new window.Razorpay({
+        key: rzpOrder.key || rzpConfig.keyId,
+        amount: rzpOrder.amount,
+        currency: rzpOrder.currency||'INR',
+        name: 'Vetraj Pet Store',
+        description: `${order.productName} × ${order.qty}`,
+        order_id: rzpOrder.id,
+        prefill:{ name:order._name, contact:order._phone },
+        theme:{ color:'#1a5a8a' },
+        modal:{ ondismiss: resetBtn },
+        handler: function(response){
+          fetch(`${BACKEND}/payment/verify`,{
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({
+              razorpay_order_id:response.razorpay_order_id,
+              razorpay_payment_id:response.razorpay_payment_id,
+              razorpay_signature:response.razorpay_signature,
+              orderData:{...order, status:'paid', paymentId:response.razorpay_payment_id, source:'products-page'}
+            })
+          }).catch(()=>{}).finally(()=>{
+            resetBtn();
+            closeModal();
+            showSuccess({...order, status:'paid'});
+          });
+        }
+      });
+      rzp.open();
+    }catch(e){ waFallback(); }
+  } else {
+    waFallback();
+  }
 }
 
 async function placeOrder() {

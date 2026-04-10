@@ -893,6 +893,7 @@ function App() {
   const [promoCode, setPromoCode] = useState("");
   const [promoMsg,  setPromoMsg]  = useState("");
   const [serverProds, setServerProds] = useState([]);
+  const [rzpConfig, setRzpConfig] = useState({keyId:"",configured:false,fallbackUrl:"https://rzp.io/l/vetraj399"});
   const getPromos=()=>{const c=getAdminConfig();return c.promoCodes||[];};
   const [consultForm, setConsultForm] = useState({name:"",mobile:"",petName:"",plan:""});
   const [consultDone, setConsultDone] = useState(false);
@@ -901,7 +902,78 @@ function App() {
     fetch(BACKEND+"/get-products").then(r=>r.json()).then(d=>{
       if(d.products&&d.products.length) setServerProds(d.products);
     }).catch(()=>{});
+    // Load Razorpay config + SDK
+    fetch(BACKEND+"/payment/config").then(r=>r.json()).then(d=>{
+      setRzpConfig(d);
+      if(d.configured && !window.Razorpay){
+        const s=document.createElement("script");
+        s.src="https://checkout.razorpay.com/v1/checkout.js";
+        document.head.appendChild(s);
+      }
+    }).catch(()=>{});
   },[]);
+
+  // Real Razorpay payment flow — opens checkout, verifies, then generates chart
+  const payAndGenerate = () => {
+    const amount = plan?.price || 0;
+    if(amount <= 0){ generate(); return; }
+    setLoading(true);
+
+    const orderData = {
+      orderId:"VFC-"+Date.now(),
+      productName:"Food Chart "+(plan?.label||""),
+      qty:1, price:amount, gst:Math.round(amount*0.18), delivery:0,
+      total:Math.round(amount*1.18),
+      customer:{name:form.ownerName||"",phone:form.mobile||"",address:form.city||"",pincode:"",city:form.city||"",state:""},
+      source:"foodchart", createdAt:new Date().toISOString()
+    };
+
+    const waFallback = () => {
+      const msg = encodeURIComponent(
+        `🐾 *Vetraj Food Chart Order*\n\nPlan: ${plan?.label}\nAmount: ₹${amount}\n\nOwner: ${form.ownerName}\nPhone: ${form.mobile}\nPet: ${form.petName} (${form.breed})\n\nPayment link bhejein please 🙏`
+      );
+      window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`,"_blank");
+      setLoading(false);
+      generate();
+    };
+
+    if(rzpConfig.configured && window.Razorpay){
+      fetch(BACKEND+"/payment/create-order",{
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({amount, receipt:orderData.orderId, notes:{owner:form.ownerName,phone:form.mobile,pet:form.petName,plan:plan?.label}})
+      }).then(r=>r.json()).then(order=>{
+        if(!order || !order.id) throw new Error("no order");
+        const rzp = new window.Razorpay({
+          key: order.key || rzpConfig.keyId,
+          amount: order.amount,
+          currency: order.currency||"INR",
+          name: "Vetraj Pet Hospital",
+          description: `Food Chart — ${plan?.label}`,
+          order_id: order.id,
+          prefill:{ name:form.ownerName||"", contact:form.mobile||"" },
+          theme:{ color:"#1a5a8a" },
+          modal:{ ondismiss: ()=>{ setLoading(false); } },
+          handler: (response)=>{
+            fetch(BACKEND+"/payment/verify",{
+              method:"POST", headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({
+                razorpay_order_id:response.razorpay_order_id,
+                razorpay_payment_id:response.razorpay_payment_id,
+                razorpay_signature:response.razorpay_signature,
+                orderData:{...orderData, paymentId:response.razorpay_payment_id, status:"paid"}
+              })
+            }).catch(()=>{}).finally(()=>{
+              setLoading(false);
+              generate();
+            });
+          }
+        });
+        rzp.open();
+      }).catch(()=>{ waFallback(); });
+    } else {
+      waFallback();
+    }
+  };
 
   const getSrvProd = (sp) => {
     if(!sp||!serverProds.length) return sp;
@@ -2019,10 +2091,15 @@ RESPOND WITH ONLY JSON — no markdown, no explanation:
           <div style={{fontSize:9,color:"#bbb",textAlign:"center",marginTop:9}}>🔒 256-bit SSL Secured by Razorpay</div>
         </div>
 
-        <Btn onClick={()=>{setLoading(true);setTimeout(()=>{setLoading(false);generate();},1500);}}
+        <Btn onClick={payAndGenerate}
           disabled={loading} color={C.orange} style={{width:"100%",fontSize:14,padding:"13px"}}>
           {loading?"⏳ Processing…":`🔒 Pay ₹${plan?.price} Securely`}
         </Btn>
+        {!rzpConfig.configured && (
+          <div style={{fontSize:10,color:"#f59e0b",textAlign:"center",marginTop:6}}>
+            ⚠️ Live payment gateway not configured — WhatsApp fallback active
+          </div>
+        )}
         <div style={{textAlign:"center",marginTop:9}}>
           <span onClick={()=>setScreen("plan")} style={{fontSize:11,color:"#bbb",cursor:"pointer"}}>← Change Plan</span>
         </div>
