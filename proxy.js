@@ -1,7 +1,7 @@
 const https = require('https');
 const http = require('http');
 
-const API_KEY = 'sk-ant-api03-Y5NCBe_8gHxz-uU0szgIIXa6EUvjw2CjNOg8-1QOMJGEOe2mqLystDePf4dbhuidXINuJePLnL4Wqv91zn67Mw-mlsccQAA';
+const API_KEY = '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 ';
 
 http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
