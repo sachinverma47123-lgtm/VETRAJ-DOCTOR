@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vetraj Daily OS</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #070D1A; color: #F0F6FF; font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+input, textarea { font-family: inherit; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const C = {
+  bg:"#070D1A",card:"#0F1923",card2:"#162030",border:"#1E2D3D",
+  teal:"#00C9A7",gold:"#FFB84D",red:"#FF4D6D",green:"#22C55E",
+  blue:"#60A5FA",purple:"#A78BFA",white:"#F0F6FF",muted:"#6B8299"
+};
+const catColor={digital:C.teal,hospital:C.blue,marketing:C.purple,finance:C.gold,operations:C.muted,custom:C.red};
+const catEmoji={digital:"💻",hospital:"🏥",marketing:"📣",finance:"💰",operations:"⚙️",custom:"🎯"};
+const priColor={high:C.red,medium:C.gold,low:C.muted};
+
+const TASK_PROMPT=`Tu Vetraj Pet Hospital ke founder Dr. Mohit Saini ka AI business strategist hai.
+CONTEXT:
+- 2 physical hospitals: Chandigarh + Haridwar Road
+- Digital platform: vetraj-doctor.onrender.com
+- Revenue funnel: Hospital -> Digital Consultation -> Food Chart + Medicine delivery
+- 1.25 lakh social media followers
+- Goal: Rs 50 Crore revenue by end of 2026
+TASK RULES:
+- Generate exactly 5 tasks
+- Each task: doable in 30-90 min, VERB FIRST, super specific
+- Mix: 2 digital + 1 hospital + 1 marketing + 1 finance/tracking
+- Each task must clearly connect to 50Cr goal
+RESPOND ONLY IN VALID JSON (no markdown, no backticks):
+{"greeting":"hinglish, direct, no praise","focus_of_day":"one strategic line","tasks":[{"id":1,"task":"...","why":"...","outcome":"...","time":45,"category":"digital","priority":"high"}],"hard_truth":"one uncomfortable truth","avoid_today":"one distraction to avoid"}`;
+
+const ANALYSIS_PROMPT=`Tu Vetraj ke founder Mohit ka brutally honest AI productivity analyst hai.
+RESPOND ONLY IN VALID JSON (no markdown, no backticks):
+{"score":72,"headline":"verdict in hinglish","completed_impact":"2 lines on business impact","missed_reason":"2 lines real reason","productivity_pattern":"1 line pattern","energy_diagnosis":"energy analysis","optimization_tip":"1 specific change for tomorrow","revenue_gap":"potential vs actual","tomorrow_top_task":"single most important task tomorrow","hard_question":"uncomfortable question"}`;
+
+const CUSTOM_PROMPT=`Tu Vetraj ke founder Mohit ka AI business partner hai. User ne ek custom task mention kiya. Analyze karo.
+RESPOND ONLY IN VALID JSON:
+{"task":"verb-first version","why":"strategic reason","outcome":"specific outcome","time":45,"category":"digital","priority":"high","flag":"Strategic ya distraction reason"}`;
+
+function Tag({label,color}){
+  return <span style={{fontSize:"10px",fontWeight:"700",background:color+"22",color,padding:"3px 9px",borderRadius:"99px",textTransform:"uppercase"}}>{label}</span>;
+}
+
+function Spinner(){
+  return(
+    <div style={{textAlign:"center",padding:"60px 0"}}>
+      <div style={{width:"44px",height:"44px",border:"3px solid #1E2D3D",borderTop:"3px solid #00C9A7",borderRadius:"50%",animation:"spin 0.8s linear infinite",margin:"0 auto 16px"}}/>
+      <div style={{color:C.muted,fontSize:"14px"}}>Claude soch raha hai...</div>
+    </div>
+  );
+}
+
+function Ring({value,max,color}){
+  const r=32,circ=2*Math.PI*r,pct=Math.min(value/max,1);
+  return(
+    <svg width="80" height="80" viewBox="0 0 80 80">
+      <circle cx="40" cy="40" r={r} fill="none" stroke="#1E2D3D" strokeWidth="6"/>
+      <circle cx="40" cy="40" r={r} fill="none" stroke={color} strokeWidth="6"
+        strokeDasharray={circ} strokeDashoffset={circ*(1-pct)}
+        strokeLinecap="round" transform="rotate(-90 40 40)"
+        style={{transition:"stroke-dashoffset 0.6s"}}/>
+      <text x="40" y="45" textAnchor="middle" fill="#F0F6FF" fontSize="14" fontWeight="800">{Math.round(pct*100)}%</text>
+    </svg>
+  );
+}
+
+function App(){
+  const [screen,setScreen]=React.useState("home");
+  const [tasks,setTasks]=React.useState([]);
+  const [meta,setMeta]=React.useState({});
+  const [checked,setChecked]=React.useState({});
+  const [expanded,setExpanded]=React.useState({});
+  const [customInput,setCustomInput]=React.useState("");
+  const [customLoading,setCustomLoading]=React.useState(false);
+  const [customResult,setCustomResult]=React.useState(null);
+  const [showCustom,setShowCustom]=React.useState(false);
+  const [revenue,setRevenue]=React.useState("");
+  const [note,setNote]=React.useState("");
+  const [energyNote,setEnergyNote]=React.useState("");
+  const [report,setReport]=React.useState(null);
+  const [loading,setLoading]=React.useState(false);
+  const [error,setError]=React.useState("");
+  const [totalRev,setTotalRev]=React.useState(0);
+
+  const today=new Date();
+  const dateStr=today.toLocaleDateString("hi-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+
+  const callClaude=React.useCallback(async(sys,msg)=>{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:2000,system:sys,messages:[{role:"user",content:msg}]})
+    });
+    if(!res.ok) throw new Error("API "+res.status);
+    const data=await res.json();
+    if(data.error) throw new Error(data.error.message);
+    const text=data.content?.map(b=>b.text||"").join("")||"";
+    const match=text.replace(/```json|```/g,"").trim().match(/\{[\s\S]*\}/);
+    if(!match) throw new Error("JSON parse failed");
+    return JSON.parse(match[0]);
+  },[]);
+
+  const genTasks=async()=>{
+    setLoading(true);setError("");setScreen("loading");
+    try{
+      const data=await callClaude(TASK_PROMPT,`Aaj hai ${dateStr}. Revenue: Rs ${totalRev} Crore. 5 tasks generate kar.`);
+      setTasks(data.tasks||[]);
+      setMeta({greeting:data.greeting,focus:data.focus_of_day,truth:data.hard_truth,avoid:data.avoid_today});
+      setChecked({});setCustomResult(null);setShowCustom(false);
+      setScreen("tasks");
+    }catch(e){setError("Error: "+e.message);setScreen("home");}
+    setLoading(false);
+  };
+
+  const analyzeCustom=async()=>{
+    if(!customInput.trim())return;
+    setCustomLoading(true);
+    try{
+      const data=await callClaude(CUSTOM_PROMPT,`Custom task: "${customInput}"`);
+      setCustomResult(data);
+    }catch(e){setCustomResult({task:customInput,why:"Analysis fail",outcome:"—",time:60,category:"custom",priority:"medium",flag:"Manual"});}
+    setCustomLoading(false);
+  };
+
+  const addCustom=()=>{
+    if(!customResult)return;
+    setTasks(p=>[...p.filter(t=>t.id!==99),{...customResult,id:99,isCustom:true}]);
+    setCustomResult(null);setCustomInput("");setShowCustom(false);
+  };
+
+  const genReport=async()=>{
+    setLoading(true);setScreen("loading");
+    try{
+      const doneIds=Object.keys(checked).filter(k=>checked[k]).map(Number);
+      const done=tasks.filter(t=>doneIds.includes(t.id));
+      const missed=tasks.filter(t=>!doneIds.includes(t.id));
+      const msg=`Aaj ${dateStr}:\nCOMPLETE (${done.length}):\n${done.map(t=>"- "+t.task).join("\n")||"Koi nahi"}\nMISSED (${missed.length}):\n${missed.map(t=>"- "+t.task).join("\n")||"Sab ho gaye"}\nREVENUE: Rs ${revenue||"0"}\nNOTE: ${energyNote||note||"—"}\nTOTAL: Rs ${totalRev} Crore`;
+      const data=await callClaude(ANALYSIS_PROMPT,msg);
+      if(revenue) setTotalRev(p=>parseFloat((p+parseFloat(revenue)/10000000).toFixed(4)));
+      setReport(data);setScreen("report");
+    }catch(e){setError("Error: "+e.message);setScreen("tasks");}
+    setLoading(false);
+  };
+
+  const doneCount=Object.values(checked).filter(Boolean).length;
+
+  const card={background:C.card,border:"1px solid "+C.border,borderRadius:"16px",padding:"20px",marginBottom:"14px"};
+  const lbl={fontSize:"10px",color:C.muted,letterSpacing:"1.5px",fontWeight:"700",textTransform:"uppercase"};
+  const inp={background:C.card2,border:"1px solid "+C.border,borderRadius:"10px",color:C.white,padding:"12px 14px",width:"100%",fontSize:"14px",outline:"none"};
+  const btn={background:"linear-gradient(135deg,#00C9A7,#0097A7)",color:"#fff",border:"none",borderRadius:"14px",padding:"16px",fontWeight:"800",fontSize:"16px",cursor:"pointer",width:"100%"};
+  const btnG={background:"linear-gradient(135deg,#FFB84D,#E07B00)",color:"#070D1A",border:"none",borderRadius:"14px",padding:"16px",fontWeight:"800",fontSize:"16px",cursor:"pointer",width:"100%"};
+  const btnO={background:"transparent",color:C.muted,border:"1px solid "+C.border,borderRadius:"12px",padding:"12px",fontWeight:"600",fontSize:"14px",cursor:"pointer",width:"100%"};
+
+  if(screen==="loading") return <div style={{minHeight:"100vh",background:C.bg}}><div style={{maxWidth:"480px",margin:"0 auto",padding:"24px 16px"}}><Spinner/></div></div>;
+
+  if(screen==="home") return(
+    <div style={{minHeight:"100vh",background:C.bg}}>
+      <div style={{maxWidth:"480px",margin:"0 auto",padding:"24px 16px 80px"}}>
+        <div style={{marginBottom:"28px",paddingTop:"8px"}}>
+          <div style={{fontSize:"10px",color:C.teal,letterSpacing:"3px",fontWeight:"700"}}>VETRAJ DAILY OS</div>
+          <div style={{fontSize:"26px",fontWeight:"900",marginTop:"6px"}}>Dr. Mohit Saini</div>
+          <div style={{fontSize:"13px",color:C.muted,marginTop:"4px"}}>{dateStr}</div>
+        </div>
+        <div style={{...card,background:"linear-gradient(135deg,#0D2218,#0A1A2E)",border:"1px solid #00C9A733"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div>
+              <div style={lbl}>2026 Target</div>
+              <div style={{fontSize:"36px",fontWeight:"900",color:C.gold,lineHeight:1.1,marginTop:"4px"}}>₹50 Crore</div>
+              <div style={{fontSize:"12px",color:C.muted,marginTop:"4px"}}>Abhi tak: <span style={{color:C.teal,fontWeight:"700"}}>₹{totalRev}Cr</span></div>
+            </div>
+            <Ring value={totalRev} max={50} color={C.teal}/>
+          </div>
+          <div style={{marginTop:"14px",background:"#1E2D3D44",borderRadius:"8px",height:"6px",overflow:"hidden"}}>
+            <div style={{height:"100%",width:Math.min(totalRev/50*100,100)+"%",background:"linear-gradient(90deg,#00C9A7,#FFB84D)",borderRadius:"8px",transition:"width 0.6s"}}/>
+          </div>
+        </div>
+        <div style={card}>
+          <div style={lbl}>Revenue Update (Crore ₹)</div>
+          <input style={{...inp,marginTop:"8px",fontSize:"22px",fontWeight:"800",color:C.gold}} type="number" step="0.1" value={totalRev} onChange={e=>setTotalRev(parseFloat(e.target.value)||0)}/>
+        </div>
+        {error&&<div style={{color:C.red,fontSize:"13px",marginBottom:"12px",padding:"12px",background:"#FF4D6D11",borderRadius:"10px"}}>{error}</div>}
+        <button style={btn} onClick={genTasks}>🎯 Aaj Ke Tasks Generate Karo</button>
+        <div style={{fontSize:"11px",color:C.muted,textAlign:"center",marginTop:"10px"}}>5 tasks — reason + outcome + analysis ke saath</div>
+      </div>
+    </div>
+  );
+
+  if(screen==="tasks") return(
+    <div style={{minHeight:"100vh",background:C.bg}}>
+      <div style={{maxWidth:"480px",margin:"0 auto",padding:"24px 16px 100px"}}>
+        <div style={{marginBottom:"20px"}}>
+          <div style={{fontSize:"10px",color:C.teal,letterSpacing:"2px",fontWeight:"700"}}>{dateStr}</div>
+          <div style={{fontSize:"20px",fontWeight:"900",marginTop:"4px"}}>{meta.greeting}</div>
+        </div>
+        <div style={{...card,borderLeft:"3px solid "+C.teal,background:C.card2}}>
+          <div style={lbl}>Aaj Ka Focus</div>
+          <div style={{fontSize:"15px",fontWeight:"600",marginTop:"6px",lineHeight:1.5}}>{meta.focus}</div>
+        </div>
+        <div style={{...card,borderLeft:"3px solid "+C.red,background:"#FF4D6D08"}}>
+          <div style={{...lbl,color:C.red}}>⚡ Hard Truth</div>
+          <div style={{fontSize:"14px",marginTop:"6px",lineHeight:1.5,color:"#FFB3BF"}}>{meta.truth}</div>
+        </div>
+        <div style={{...card,borderLeft:"3px solid "+C.gold,background:"#FFB84D08"}}>
+          <div style={{...lbl,color:C.gold}}>🚫 Aaj Yeh Mat Karo</div>
+          <div style={{fontSize:"14px",marginTop:"6px",lineHeight:1.5,color:"#FFE0A3"}}>{meta.avoid}</div>
+        </div>
+        <div style={{...card,padding:"14px 20px"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:"13px",color:C.muted}}>Tasks Complete</span>
+            <span style={{fontSize:"18px",fontWeight:"800",color:doneCount===tasks.length?C.green:C.white}}>{doneCount}/{tasks.length}</span>
+          </div>
+          <div style={{marginTop:"8px",background:C.border,borderRadius:"99px",height:"5px",overflow:"hidden"}}>
+            <div style={{height:"100%",width:(tasks.length?doneCount/tasks.length*100:0)+"%",background:"linear-gradient(90deg,#00C9A7,#22C55E)",transition:"width 0.4s"}}/>
+          </div>
+        </div>
+        {tasks.map(t=>{
+          const done=!!checked[t.id];
+          const open=!!expanded[t.id];
+          return(
+            <div key={t.id} style={{...card,borderLeft:"3px solid "+(done?C.green:catColor[t.category]||C.teal),opacity:done?0.65:1}}>
+              <div style={{display:"flex",gap:"12px",alignItems:"flex-start"}}>
+                <button onClick={()=>setChecked(p=>({...p,[t.id]:!p[t.id]}))} style={{width:"26px",height:"26px",borderRadius:"50%",flexShrink:0,border:"2px solid "+(done?C.green:C.border),background:done?C.green:"transparent",cursor:"pointer",marginTop:"1px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                  {done&&<span style={{color:C.bg,fontSize:"14px",fontWeight:"900"}}>✓</span>}
+                </button>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",justifyContent:"space-between",gap:"8px"}}>
+                    <div style={{fontSize:"15px",fontWeight:"700",lineHeight:1.4,textDecoration:done?"line-through":"none",color:done?C.muted:C.white}}>
+                      {catEmoji[t.category]||"📌"} {t.task}
+                      {t.isCustom&&<span style={{fontSize:"10px",color:C.red,marginLeft:"6px",fontWeight:"700"}}>CUSTOM</span>}
+                    </div>
+                    <span style={{fontSize:"11px",color:C.muted,flexShrink:0}}>{t.time}m</span>
+                  </div>
+                  <div style={{display:"flex",gap:"6px",marginTop:"8px",flexWrap:"wrap"}}>
+                    <Tag label={t.category} color={catColor[t.category]||C.teal}/>
+                    <Tag label={t.priority} color={priColor[t.priority]||C.muted}/>
+                  </div>
+                </div>
+              </div>
+              <button onClick={()=>setExpanded(p=>({...p,[t.id]:!p[t.id]}))} style={{background:"none",border:"1px solid "+C.border,borderRadius:"8px",color:C.muted,fontSize:"12px",cursor:"pointer",padding:"7px 12px",marginTop:"12px",width:"100%"}}>
+                {open?"▲ Band karo":"▼ Kyon karna hai + Outcome"}
+              </button>
+              {open&&(
+                <div style={{marginTop:"12px",display:"flex",flexDirection:"column",gap:"8px"}}>
+                  <div style={{background:C.card2,borderRadius:"10px",padding:"12px"}}>
+                    <div style={{fontSize:"10px",color:C.teal,fontWeight:"700",letterSpacing:"1px",marginBottom:"5px"}}>KYO KARNA HAI</div>
+                    <div style={{fontSize:"13px",lineHeight:1.6,color:"#B0C4D8"}}>{t.why}</div>
+                  </div>
+                  <div style={{background:C.card2,borderRadius:"10px",padding:"12px"}}>
+                    <div style={{fontSize:"10px",color:C.gold,fontWeight:"700",letterSpacing:"1px",marginBottom:"5px"}}>OUTCOME</div>
+                    <div style={{fontSize:"13px",lineHeight:1.6,color:"#FFE5B0"}}>{t.outcome}</div>
+                  </div>
+                  {t.flag&&<div style={{background:"#A78BFA11",borderRadius:"10px",padding:"12px"}}>
+                    <div style={{fontSize:"10px",color:C.purple,fontWeight:"700",letterSpacing:"1px",marginBottom:"5px"}}>CLAUDE KA FLAG</div>
+                    <div style={{fontSize:"13px",lineHeight:1.6,color:"#D4BBFF"}}>{t.flag}</div>
+                  </div>}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        <div style={{...card,border:"1px dashed #00C9A755",background:"#00C9A708"}}>
+          <div style={{...lbl,color:C.teal}}>➕ Custom Task</div>
+          <div style={{fontSize:"12px",color:C.muted,marginTop:"4px",marginBottom:"12px"}}>Apna koi zaruri kaam batao — main analyze karunga</div>
+          {!showCustom?(
+            <button style={{background:C.card2,color:C.teal,border:"1px solid #00C9A744",borderRadius:"10px",padding:"10px 16px",fontWeight:"700",fontSize:"13px",cursor:"pointer"}} onClick={()=>setShowCustom(true)}>+ Custom Task Add Karo</button>
+          ):(
+            <div>
+              <textarea style={{...inp,minHeight:"80px",resize:"vertical"}} placeholder="e.g. Website homepage redesign karna hai..." value={customInput} onChange={e=>setCustomInput(e.target.value)}/>
+              <div style={{display:"flex",gap:"8px",marginTop:"10px"}}>
+                <button style={{background:C.card2,color:C.teal,border:"1px solid #00C9A744",borderRadius:"10px",padding:"10px 16px",fontWeight:"700",fontSize:"13px",cursor:"pointer",flex:1}} onClick={analyzeCustom} disabled={customLoading}>{customLoading?"⏳ ...":"🔍 Analyze"}</button>
+                <button style={{...btnO,flex:0,padding:"10px 14px",fontSize:"12px"}} onClick={()=>{setShowCustom(false);setCustomResult(null);setCustomInput("");}}>Cancel</button>
+              </div>
+              {customResult&&(
+                <div style={{marginTop:"14px",background:C.card2,borderRadius:"12px",padding:"14px",border:"1px solid "+C.border}}>
+                  <div style={{fontSize:"14px",fontWeight:"700",marginBottom:"10px"}}>{catEmoji[customResult.category]||"📌"} {customResult.task}</div>
+                  <div style={{display:"flex",gap:"6px",marginBottom:"10px",flexWrap:"wrap"}}>
+                    <Tag label={customResult.category} color={catColor[customResult.category]||C.teal}/>
+                    <Tag label={customResult.priority} color={priColor[customResult.priority]||C.muted}/>
+                  </div>
+                  <div style={{fontSize:"12px",color:"#B0C4D8",marginBottom:"6px"}}><strong style={{color:C.teal}}>Why:</strong> {customResult.why}</div>
+                  <div style={{fontSize:"12px",color:"#FFE5B0",marginBottom:"8px"}}><strong style={{color:C.gold}}>Outcome:</strong> {customResult.outcome}</div>
+                  {customResult.flag&&<div style={{fontSize:"12px",color:"#D4BBFF",background:"#A78BFA11",padding:"8px 10px",borderRadius:"8px",marginBottom:"10px"}}><strong style={{color:C.purple}}>Flag:</strong> {customResult.flag}</div>}
+                  <button style={btn} onClick={addCustom}>✅ Add Karo</button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <div style={{...card,border:"1px solid #FFB84D33"}}>
+          <div style={{...lbl,color:C.gold}}>🌙 Sham Ka Update</div>
+          <div style={{marginTop:"12px",marginBottom:"12px"}}>
+            <div style={{fontSize:"12px",color:C.muted,marginBottom:"6px"}}>Aaj ka revenue (₹)</div>
+            <input style={{...inp,fontSize:"20px",fontWeight:"800",color:C.gold}} type="number" placeholder="e.g. 12000" value={revenue} onChange={e=>setRevenue(e.target.value)}/>
+          </div>
+          <div style={{marginBottom:"12px"}}>
+            <div style={{fontSize:"12px",color:C.muted,marginBottom:"6px"}}>Energy / blocker?</div>
+            <textarea style={{...inp,minHeight:"70px",resize:"vertical"}} placeholder="Kya roka aaj..." value={energyNote} onChange={e=>setEnergyNote(e.target.value)}/>
+          </div>
+          <div>
+            <div style={{fontSize:"12px",color:C.muted,marginBottom:"6px"}}>Extra note (optional)</div>
+            <textarea style={{...inp,minHeight:"55px",resize:"vertical"}} value={note} onChange={e=>setNote(e.target.value)}/>
+          </div>
+        </div>
+        <button style={btnG} onClick={genReport}>🔍 Deep Analysis Karo</button>
+        <div style={{height:"10px"}}/>
+        <button style={btnO} onClick={()=>setScreen("home")}>← Wapas Home</button>
+      </div>
+    </div>
+  );
+
+  if(screen==="report"&&report) return(
+    <div style={{minHeight:"100vh",background:C.bg}}>
+      <div style={{maxWidth:"480px",margin:"0 auto",padding:"24px 16px 80px"}}>
+        <div style={{marginBottom:"24px"}}>
+          <div style={{fontSize:"10px",color:C.gold,letterSpacing:"2px",fontWeight:"700"}}>EVENING ANALYSIS</div>
+          <div style={{fontSize:"22px",fontWeight:"900",marginTop:"4px"}}>{dateStr}</div>
+        </div>
+        <div style={{...card,background:"linear-gradient(135deg,#0D2218,#0A1A2E)",textAlign:"center",padding:"32px 20px"}}>
+          <div style={{fontSize:"80px",fontWeight:"900",color:report.score>=80?C.green:report.score>=50?C.gold:C.red,lineHeight:1}}>{report.score}</div>
+          <div style={{fontSize:"12px",color:C.muted,marginTop:"2px"}}>/ 100</div>
+          <div style={{fontSize:"17px",fontWeight:"700",marginTop:"14px"}}>{report.headline}</div>
+        </div>
+        {[
+          {key:"completed_impact",label:"✅ Jo Hua — Impact",color:C.green,tc:"#B0FFD0"},
+          {key:"missed_reason",label:"❌ Jo Raha — Real Reason",color:C.red,tc:"#FFB3BF"},
+          {key:"productivity_pattern",label:"🧠 Productivity Pattern",color:C.purple,tc:"#D4BBFF"},
+          {key:"energy_diagnosis",label:"⚡ Energy Diagnosis",color:C.blue,tc:"#BAD5FF"},
+          {key:"optimization_tip",label:"🔧 Kal Ka Optimization",color:C.teal,tc:C.white},
+          {key:"revenue_gap",label:"💰 Revenue Gap",color:C.gold,tc:"#FFE0A3"},
+        ].map(({key,label,color,tc})=>(
+          <div key={key} style={{...card,borderLeft:"3px solid "+color}}>
+            <div style={{...lbl,color}}>{label}</div>
+            <div style={{fontSize:"14px",lineHeight:1.7,marginTop:"8px",color:tc}}>{report[key]}</div>
+          </div>
+        ))}
+        <div style={{...card,background:"linear-gradient(135deg,#0D2218,#0A1A2E)",border:"1px solid #00C9A744"}}>
+          <div style={{...lbl,color:C.teal}}>🚀 Kal Ka #1 Task</div>
+          <div style={{fontSize:"17px",fontWeight:"800",lineHeight:1.5,marginTop:"8px"}}>{report.tomorrow_top_task}</div>
+        </div>
+        <div style={{...card,background:"#A78BFA11",border:"1px solid #A78BFA33"}}>
+          <div style={{...lbl,color:C.purple}}>❓ Sawaal Jo Avoid Kar Raha Hai</div>
+          <div style={{fontSize:"16px",fontWeight:"700",lineHeight:1.6,marginTop:"10px",fontStyle:"italic",color:"#D4BBFF"}}>"{report.hard_question}"</div>
+        </div>
+        <button style={btn} onClick={()=>{setScreen("home");setReport(null);setTasks([]);setChecked({});setRevenue("");setNote("");setEnergyNote("");setCustomResult(null);setCustomInput("");setShowCustom(false);}}>
+          🌅 Kal Ke Liye Tayaar
+        </button>
+      </div>
+    </div>
+  );
+
+  return <div style={{minHeight:"100vh",background:C.bg}}><div style={{maxWidth:"480px",margin:"0 auto",padding:"24px"}}><Spinner/></div></div>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
