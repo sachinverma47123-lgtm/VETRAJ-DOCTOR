@@ -267,13 +267,47 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
       <div class="qb-t">Aapka <span class="hl">Mobile Number</span></div>
     </div>
     <div class="f">
-      <input class="inp" id="ophone" type="tel" placeholder="10 digit number"
+      <input class="inp" id="ophone" type="tel" placeholder="10 digit WhatsApp number"
         maxlength="10" inputmode="numeric" autocomplete="off"
         onfocus="onInputFocus('qb-phone')"
-        onkeydown="if(event.key==='Enter'){event.preventDefault();goS2();}">
+        oninput="onPhoneInput(this)"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();sendOtp();}">
     </div>
 
-    <button class="btn-m" onclick="goS2()">Aage Badhein →</button>
+    <!-- FREE BADGE -->
+    <div style="background:#dcfce7;border:1.5px solid #86efac;border-radius:10px;padding:9px 13px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:18px;">🎁</span>
+      <div>
+        <div style="font-size:13px;font-weight:800;color:#15803d;">Yeh Checkup Bilkul FREE Hai!</div>
+        <div style="font-size:11px;color:#166534;">WhatsApp verify karein aur AI doctor se baat karein — koi charge nahi</div>
+      </div>
+    </div>
+
+    <!-- OTP SECTION -->
+    <div id="otp-section" style="display:none;margin-bottom:12px;">
+      <div class="qb" id="qb-otp" style="margin-bottom:8px;">
+        <div class="qb-l">📱 WhatsApp OTP — Verify Karein</div>
+        <div class="qb-t">WhatsApp per aaya <span class="hl">6-digit OTP</span> daalen</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:6px;">
+        <input class="inp" id="otp-input" type="tel" placeholder="6-digit OTP daalen"
+          maxlength="6" inputmode="numeric" style="flex:1;"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();verifyOtp();}">
+        <button onclick="verifyOtp()" style="background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;border-radius:11px;padding:12px 14px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">✓ Verify</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div id="otp-timer" style="font-size:11px;color:#64748b;font-weight:600;"></div>
+        <button id="resend-otp-btn" onclick="sendOtp(true)" style="display:none;background:none;border:none;color:#1a5a8a;font-size:11px;font-weight:700;cursor:pointer;font-family:'Poppins',sans-serif;">Dobara bhejo →</button>
+      </div>
+    </div>
+
+    <!-- VERIFIED BADGE -->
+    <div id="otp-verified-badge" style="display:none;background:#dcfce7;border:1.5px solid #86efac;border-radius:10px;padding:10px 14px;font-size:13px;color:#15803d;font-weight:700;margin-bottom:12px;text-align:center;">
+      ✅ WhatsApp Number Verify Ho Gaya!
+    </div>
+
+    <button class="btn-m" id="btn-send-otp" onclick="sendOtp(false)">📲 WhatsApp per OTP Bhejo</button>
+    <button class="btn-m" id="btn-continue-s2" style="display:none;" onclick="goS2()">Aage Badhein — Pet Ki Details →</button>
   </div>
 </div>
 
@@ -331,7 +365,16 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
       <div id="breed-sugg" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:2px solid var(--blue);border-radius:11px;z-index:100;max-height:180px;overflow-y:auto;box-shadow:0 4px 12px rgba(0,0,0,.15);"></div>
     </div>
 
-    <button class="btn-m" onclick="startChat()">🩺 <span id="s2-btn">Dr. Rohit Saini</span> Se Baat Shuru Karein</button>
+    <!-- FREE checkup badge on Screen 2 -->
+    <div style="background:linear-gradient(135deg,#0a2d5a,#1a5a8a);border-radius:12px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;">
+      <div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">👨‍⚕️</div>
+      <div style="flex:1;">
+        <div style="font-size:12px;font-weight:800;color:#fff;" id="s2-doc-name">Dr. Rohit Saini</div>
+        <div style="display:flex;align-items:center;gap:5px;"><div style="width:7px;height:7px;border-radius:50%;background:#4ade80;animation:blink 1.4s infinite;"></div><span style="font-size:10px;color:#4ade80;font-weight:700;">Abhi Online Hain</span></div>
+      </div>
+      <div style="background:#16a34a;color:#fff;font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;">FREE</div>
+    </div>
+    <button class="btn-m" onclick="startChat()" style="font-size:16px;padding:16px;background:linear-gradient(135deg,#dc2626,#ea580c);box-shadow:0 4px 16px rgba(220,38,38,.4);">🩺 Please Help — Checkup Abhi!</button>
     <button class="btn-b" onclick="goS1()">← Wapas</button>
   </div>
 </div>
@@ -346,10 +389,10 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
   <div class="bot">
     <div class="mtog">
       <button class="mbtn on" id="tb" onclick="setM('text')">⌨️ Type Karein</button>
-      <button class="mbtn" id="vb" onclick="setM('voice')">🎙️ Bol Kar Batayein</button>
+      <button class="mbtn" id="vb" onclick="setM('voice')">🎙️ Voice</button>
     </div>
     <div class="tr2" id="ta">
-      <textarea class="txti" id="inp" placeholder="Apni problem likhein..."
+      <textarea class="txti" id="inp" placeholder="Doctor ke sawaal ka jawab likhein..."
         onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send();}"
         oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,80)+'px'" rows="1"></textarea>
       <button class="sbtn" id="sb" onclick="send()">➤</button>
@@ -388,9 +431,10 @@ fetch(`${BACKEND}/payment/config`).then(r=>r.json()).then(d=>{
 
 let oName="",oPhone="",pName="",pType="",pAge="",pBreed="",pCondition="normal",pCity="";
 let doc={name:"Dr. Rohit Saini",exp:10};
-let hist=[],busy=false,mode="text",chatMode="consult";
+let hist=[],busy=false,mode="text",chatMode="health";
 let rec=null,listening=false,speaking=false;
-let voices=[],msgN=0,hcN=0,payDone=false,videoAsked=false;
+let voices=[],msgN=0,hcN=0,payDone=false,videoAsked=false,reportSent=false;
+let otpVerified=false,otpTimerInt=null;
 let picks={};
 
 if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=()=>{voices=window.speechSynthesis.getVoices();};voices=window.speechSynthesis.getVoices();}
@@ -580,12 +624,89 @@ async function loadDoc(){
     const d=await r.json();
     doc=d.doctor;
     $("hdr-dname").textContent=`${doc.name} — Live Baat Karen`;
-    $("hdr-dexp").textContent=`${doc.exp} Saal Anubhav | Pet Consultant | Nutrition Expert`;
+    $("hdr-dexp").textContent=`${doc.exp} Saal Anubhav | Pet Specialist`;
     $("s1-title").textContent=`${doc.name} — Abhi Online Hain`;
-    $("s2-btn").textContent=doc.name;
+    if($("s2-doc-name")) $("s2-doc-name").textContent=doc.name;
   }catch(e){}
 }
 loadDoc();
+
+// Phone input — reset OTP if number changes
+function onPhoneInput(inp){
+  if(otpVerified){ otpVerified=false; $("otp-verified-badge").style.display="none"; $("btn-continue-s2").style.display="none"; $("btn-send-otp").style.display="block"; }
+  $("otp-section").style.display="none";
+  clearInterval(otpTimerInt);
+}
+
+// ━━━━ OTP FLOW ━━━━
+async function sendOtp(isResend=false){
+  const phone=$("ophone").value.trim();
+  if(!$("oname").value.trim()){toast("⚠️ Pehle apna naam daalo");$("oname").focus();return;}
+  if(phone.length<10){toast("⚠️ Sahi 10 digit WhatsApp number daalo");$("ophone").focus();return;}
+
+  const btn=$("btn-send-otp");
+  btn.textContent="Bhej raha hai...";btn.disabled=true;
+
+  try{
+    const r=await fetch(`${BACKEND}/send-otp`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone})});
+    const d=await r.json();
+    if(d.success){
+      $("otp-section").style.display="block";
+      $("otp-input").value="";
+      $("otp-input").focus();
+      toast("✅ OTP WhatsApp per bheja gaya!");
+      startOtpTimer(600); // 10 minutes
+      if(isResend){$("resend-otp-btn").style.display="none";}
+    } else {
+      toast("❌ " + (d.error||"OTP nahi gaya — dobara try karein"));
+    }
+  }catch(e){
+    toast("❌ Network error — dobara try karein");
+  }
+  btn.textContent="📲 WhatsApp per OTP Bhejo";btn.disabled=false;
+}
+
+function startOtpTimer(seconds){
+  clearInterval(otpTimerInt);
+  const el=$("otp-timer");const resendBtn=$("resend-otp-btn");
+  resendBtn.style.display="none";
+  let s=seconds;
+  function tick(){
+    const m=Math.floor(s/60),sc=s%60;
+    el.textContent=`OTP valid: ${m}:${sc<10?'0'+sc:sc}`;
+    if(s<=0){clearInterval(otpTimerInt);el.textContent="OTP expire ho gaya";resendBtn.style.display="block";}
+    s--;
+  }
+  tick();otpTimerInt=setInterval(tick,1000);
+}
+
+async function verifyOtp(){
+  const phone=$("ophone").value.trim();
+  const otp=$("otp-input").value.trim();
+  if(otp.length<6){toast("⚠️ 6-digit OTP daalen");return;}
+
+  const btn=document.querySelector("#otp-section button");
+  btn.textContent="...";btn.disabled=true;
+
+  try{
+    const r=await fetch(`${BACKEND}/verify-otp`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({phone,otp})});
+    const d=await r.json();
+    if(d.success){
+      otpVerified=true;
+      clearInterval(otpTimerInt);
+      $("otp-section").style.display="none";
+      $("otp-verified-badge").style.display="block";
+      $("btn-send-otp").style.display="none";
+      $("btn-continue-s2").style.display="block";
+      toast("✅ WhatsApp verify ho gaya!");
+    } else {
+      toast("❌ " + (d.error||"Galat OTP — dobara daalen"));
+    }
+  }catch(e){
+    toast("❌ Network error");
+  }
+  btn.textContent="✓ Verify";btn.disabled=false;
+}
 
 // SCREENS
 function goS1(){$("s2").classList.add("hide");$("s1").classList.remove("hide");}
@@ -593,6 +714,7 @@ function goS2(){
   oName=$("oname").value.trim();oPhone=$("ophone").value.trim();
   if(!oName){toast("⚠️ Apna naam daalo");$("oname").focus();return;}
   if(oPhone.length<10){toast("⚠️ Sahi 10 digit number daalo");$("ophone").focus();return;}
+  if(!otpVerified){toast("⚠️ Pehle WhatsApp OTP verify karein");$("otp-input").focus();return;}
   $("s1").classList.add("hide");$("s2").classList.remove("hide");
   setTimeout(()=>{$("s2").scrollTop=0;$("pname").focus();},100);
 }
@@ -604,30 +726,23 @@ function startChat(){
   if(!pType){toast("⚠️ Dog ya Cat select karo");return;}
 
   fetch(`${BACKEND}/save-lead`,{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({ownerName:oName,ownerPhone:oPhone,petName:pName,petType:pType,petAge:pAge,petBreed:pBreed,doctorName:doc.name,problem:"Panel opened"})
+    body:JSON.stringify({ownerName:oName,ownerPhone:oPhone,petName:pName,petType:pType,petAge:pAge,petBreed:pBreed,doctorName:doc.name,problem:"Checkup started",whatsappVerified:otpVerified})
   }).catch(()=>{});
 
   $("s1").classList.add("hide");$("s2").classList.add("hide");
   $("chatscreen").classList.remove("hide");$("botbar").classList.remove("hide");
 
-  docMsg(
-    `Namaskar <span class="hi">${oName}</span> ji! 🙏\n\n<span class="hi">${pName}</span> ko kya problem ho rahi hai?`,
-    [
-      {t:"🤧 Khansi",v:"khansi ho rahi hai"},
-      {t:"🌡️ Bukhar/Fever",v:"bukhar hai"},
-      {t:"💩 Loose Motion",v:"loose motion ho raha hai"},
-      {t:"🤢 Ulti",v:"ulti ho rahi hai"},
-      {t:"🍽️ Khana Nahi",v:"khana nahi kha raha"},
-      {t:"😴 Kamzori",v:"bahut kamzor aur thaka hua hai"},
-      {t:"🐾 Khujali/Skin",v:"khujali aur skin problem hai"},
-      {t:"👁️ Aankhein",v:"aankhon mein problem hai"},
-      {t:"🏥 Health Checkup",v:"__HEALTH_CHECKUP__",g:true},
-      {t:"🥗 Food Chart",v:"__FOOD_CHART__",g:true},
-      {t:"📚 Pet Parenting",v:"__PET_PARENTING__",g:true},
-      {t:"❓ Kuch Aur",v:"mere pet ke baare mein kuch aur poochhna hai"},
-      {t:"🚨 Emergency",v:"__EMERGENCY__",e:true}
-    ]
-  );
+  // Always start in health checkup mode — single loop
+  chatMode="health";hcN=0;hist=[];
+
+  // Doctor welcome + auto-start checkup
+  docMsg(`Namaskar <span class="hi">${oName}</span> ji! 🙏\n\n<span class="hi">${pName}</span> ke baare mein thodi jaankaari lunga — sirf 2 minute.\n\nYeh health checkup <span class="ghi">bilkul FREE</span> hai.`);
+  setTimeout(async()=>{
+    showTyping();await sleep(1200);rmTyping();
+    const fm=`${pName} ka health checkup karo. Type:${pType}, Age:${pAge}${pBreed?', Breed:'+pBreed:''}. Pehla sawaal poochho — natural WhatsApp style mein.`;
+    hist.push({role:"user",content:fm});
+    await apiCall("health");
+  },1500);
 }
 
 // MESSAGES
@@ -719,17 +834,46 @@ function showVideoAsk(){
 
 function showPay(){
   if(payDone)return;payDone=true;
+
+  // Send WhatsApp report (free checkup summary) regardless of payment
+  sendReport();
+
   const msgs=$("msgs");const d=document.createElement("div");
   d.innerHTML=`<div class="paycard">
-    <div class="pc-top"><div class="pc-av">👨‍⚕️</div><div><div class="pc-nm">${doc.name}</div><div class="pc-sb">Vetraj Pet Hospital | ${doc.exp} Saal Experience</div></div></div>
-    <div class="pc-alert"><span class="pnm">${oName} ji — ${pName} ka mamla serious hai.</span><br>Abhi consultation lein — aaj hi slot available hai.</div>
-    <div class="pc-price">₹399 <span>/ consultation</span></div>
-    <div class="pc-list">✅ <b>${pName}</b> ka detailed examination<br>✅ Exact diagnosis + treatment plan<br>✅ Medicine guidance<br>✅ Diet plan — ghar ka sahi khana<br>✅ Follow-up support</div>
-    <button class="pc-btn" onclick="bookNow()">📅 Abhi Book Karein — ₹399</button>
-    <div class="pc-trust">🔒 Secure Payment | Vetraj Pet Hospital</div>
-    <div class="pc-call">Seedha baat: 📞 <b>${HELPLINE}</b></div>
+    <div class="pc-top">
+      <div class="pc-av">👨‍⚕️</div>
+      <div>
+        <div class="pc-nm">${doc.name}</div>
+        <div class="pc-sb">Vetraj Pet Hospital | ${doc.exp} Saal Experience</div>
+      </div>
+      <div style="margin-left:auto;background:#4ade80;color:#14532d;font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;">LIVE</div>
+    </div>
+    <div class="pc-alert">
+      <span class="pnm">📋 ${pName} ki Free Report WhatsApp per bhej di!</span><br>
+      Ab seedha phone pe <b>${doc.name}</b> se baat karein — poori problem solve ho jaegi.
+    </div>
+    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px;">
+      <div class="pc-price">₹399 <span>/ consultation</span></div>
+      <div style="font-size:14px;color:rgba(255,255,255,.5);text-decoration:line-through;">₹999</div>
+      <div style="background:#fbbf24;color:#713f12;font-size:10px;font-weight:800;padding:2px 7px;border-radius:8px;">60% OFF</div>
+    </div>
+    <div class="pc-list">✅ <b>${pName}</b> ki poori problem sun kar diagnosis<br>✅ Exact treatment plan + medicines<br>✅ Ghar ka sahi khana — diet chart<br>✅ Follow-up support WhatsApp pe</div>
+    <button class="pc-btn" onclick="bookNow()" style="background:#fff;color:#0a2d5a;font-size:15px;font-weight:800;">📞 Dr. Se Phone Pe Baat Karein — ₹399</button>
+    <div class="pc-trust">🔒 Secure Payment via Razorpay | Refund guarantee</div>
+    <div class="pc-call">Seedha call: 📞 <b>${HELPLINE}</b></div>
   </div>`;
   msgs.appendChild(d);scrollChat();
+}
+
+// Send WhatsApp health report
+async function sendReport(){
+  if(reportSent)return;reportSent=true;
+  const summary=hist.slice(-6).map(m=>`${m.role==='user'?'Owner':'Dr'}:${m.content}`).join(' | ');
+  try{
+    await fetch(`${BACKEND}/send-report`,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({phone:oPhone,ownerName:oName,petName:pName,petType:pType,petAge:pAge,chatSummary:summary,doctorName:doc.name})
+    });
+  }catch(e){}
 }
 
 function showFoodChart(){
@@ -784,19 +928,47 @@ function showSOS(){
 }
 
 function bookNow(){
-  // Pass panel data to booking page
-  const params = new URLSearchParams({
-    name: oName||'',
-    phone: oPhone||'',
-    pet: pName||'',
-    problem: ''
-  });
-  window.open(`/booking.html?${params.toString()}`, '_blank');
-  docMsg(`Bahut badhiya! 🎉\n\n<span class="hi">${oName}</span> ji — booking page mein date aur time select karein aur ₹399 pay karein.\n\nSawaal? 📞 <b>${HELPLINE}</b> 🙏`);
-  setTimeout(()=>{
-    docMsg(`Consultation se pehle <span class="hi">${pName}</span> ke liye yeh bhi available hai:`);
-    setTimeout(()=>showGanvet(),600);
-  },2500);
+  // Mark lead as paid
+  fetch(`${BACKEND}/update-lead-type`,{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({phone:oPhone,consultationType:"paid"})
+  }).catch(()=>{});
+
+  // Open Razorpay payment
+  if(rzpConfig.configured && window.Razorpay){
+    openRazorpay();
+  } else {
+    const params = new URLSearchParams({name:oName||'',phone:oPhone||'',pet:pName||'',problem:''});
+    window.open(`/booking.html?${params.toString()}`, '_blank');
+  }
+  docMsg(`Bahut badhiya! 🎉\n\n<span class="hi">${oName}</span> ji — ₹399 payment karein aur <b>${doc.name}</b> se seedha baat karein.\n\nSawaal? 📞 <b>${HELPLINE}</b> 🙏`);
+}
+
+async function openRazorpay(){
+  try{
+    const r=await fetch(`${BACKEND}/payment/create-order`,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({amount:399,receipt:"VTJ-"+Date.now(),notes:{owner:oName,phone:oPhone,pet:pName}})
+    });
+    const order=await r.json();
+    if(order.placeholder){window.open(rzpConfig.fallbackUrl||RAZORPAY_FALLBACK,'_blank');return;}
+    const options={
+      key:rzpConfig.keyId,amount:order.amount,currency:"INR",
+      name:"Vetraj Pet Hospital",description:`${pName} - Consultation`,
+      order_id:order.id,
+      handler:async(response)=>{
+        await fetch(`${BACKEND}/payment/verify`,{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({...response,orderData:{orderId:"VTJ-"+Date.now(),productName:"Consultation",qty:1,price:399,gst:0,delivery:0,total:399,customer:{name:oName,phone:oPhone,address:"",pincode:""}}})
+        });
+        toast("✅ Payment successful! Doctor call schedule ho rahi hai.");
+        const params=new URLSearchParams({name:oName,phone:oPhone,pet:pName,problem:""});
+        setTimeout(()=>window.location.href=`/booking.html?${params}`,1500);
+      },
+      prefill:{name:oName,contact:"91"+oPhone},
+      theme:{color:"#1a5a8a"}
+    };
+    new window.Razorpay(options).open();
+  }catch(e){
+    window.open(rzpConfig.fallbackUrl||RAZORPAY_FALLBACK,'_blank');
+  }
 }
 
 // PROCESS
@@ -860,7 +1032,7 @@ async function process(text,fromVoice=false){
     hcN++;
     hist.push({role:"user",content:text});
     showTyping();await sleep(700+Math.random()*800);
-    if(hcN>=8&&!videoAsked){rmTyping();showVideoAsk();busy=false;$("sb").disabled=false;return;}
+    if(hcN>=8&&!payDone){rmTyping();showPay();busy=false;$("sb").disabled=false;return;}
     await apiCall("health");
   } else {
     msgN++;

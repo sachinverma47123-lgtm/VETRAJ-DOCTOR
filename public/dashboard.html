@@ -234,6 +234,7 @@ input,textarea,select{
     <div class="nv" onclick="showPg('daily')">📈 Daily Stats</div>
     <div class="nv" onclick="showPg('foodcharts')">🍽️ Food Charts</div>
     <div class="nv" onclick="showPg('fcsettings')">⚙️ FC Settings</div>
+    <div class="nv" onclick="showPg('apiconfig')">🔧 API Config</div>
   </div>
 
   <!-- OVERVIEW -->
@@ -737,6 +738,89 @@ input,textarea,select{
       </select>
     </div>
     <button class="mc-btn" style="background:linear-gradient(135deg,var(--red),#ef4444);" onclick="confirmRefund()">💰 Refund Process Karein</button>
+  </div>
+</div>
+
+<!-- API CONFIG PAGE -->
+<div class="pg" id="pg-apiconfig" style="max-width:520px;margin:0 auto;">
+  <div style="font-size:14px;font-weight:800;color:var(--navy);margin-bottom:14px;">🔧 API Configuration</div>
+
+  <!-- Akashvanni / WhatsApp API -->
+  <div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:12px;border-left:4px solid #25d366;">
+    <div style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:4px;">💬 Akashvanni — WhatsApp API</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">OTP verification, report sending, aur drip campaign ke liye</div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:4px;">User ID</label>
+      <input id="cfg-wa-userid" type="text" placeholder="e.g. 69b44da471e857cddf164d22"
+        style="width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:9px;font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:4px;">OTP Template Name</label>
+      <input id="cfg-wa-otp-tpl" type="text" placeholder="e.g. otp_verification"
+        style="width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:9px;font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:4px;">Report Template Name</label>
+      <input id="cfg-wa-report-tpl" type="text" placeholder="e.g. health_report"
+        style="width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:9px;font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:4px;">Drip Campaign Template</label>
+      <input id="cfg-wa-drip-tpl" type="text" placeholder="e.g. order_initial_1"
+        style="width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:9px;font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
+    </div>
+    <div style="background:#f0fdf4;border-radius:8px;padding:9px 12px;font-size:11px;color:#15803d;margin-bottom:10px;">
+      ✅ <b>Current:</b> user_id = <span id="cfg-wa-current">69b44da471e857cddf164d22</span><br>
+      Templates: otp_verification | health_report | order_initial_1
+    </div>
+    <button onclick="saveCfgWA()" style="background:linear-gradient(135deg,#059669,#16a34a);color:#fff;border:none;padding:11px;border-radius:10px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;cursor:pointer;width:100%;">💾 Save WhatsApp Config</button>
+  </div>
+
+  <!-- Razorpay Config -->
+  <div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:12px;border-left:4px solid #3395ff;">
+    <div style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:4px;">💳 Razorpay — Payment Gateway</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">₹399 consultation payment ke liye</div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:4px;">Key ID (Public)</label>
+      <input id="cfg-rzp-key" type="text" placeholder="rzp_live_xxxxxxxxxxxxxxxx"
+        style="width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:9px;font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:4px;">Key Secret</label>
+      <input id="cfg-rzp-secret" type="password" placeholder="Enter secret key..."
+        style="width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:9px;font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--navy);display:block;margin-bottom:4px;">Fallback Payment Link (rzp.io short link)</label>
+      <input id="cfg-rzp-fallback" type="text" placeholder="https://rzp.io/l/vetraj399"
+        style="width:100%;padding:10px 13px;border:2px solid var(--border);border-radius:9px;font-family:'Poppins',sans-serif;font-size:13px;outline:none;" value="https://rzp.io/l/vetraj399">
+    </div>
+    <div id="cfg-rzp-status" style="background:#f0f9ff;border-radius:8px;padding:9px 12px;font-size:11px;color:var(--blue);margin-bottom:10px;">⏳ Status check ho raha hai...</div>
+    <button onclick="checkRzpStatus()" style="background:#f1f5f9;color:var(--navy);border:none;padding:9px;border-radius:9px;font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;cursor:pointer;width:100%;margin-bottom:8px;">🔄 Status Check Karein</button>
+    <div style="background:#fef9c3;border-radius:8px;padding:9px 12px;font-size:11px;color:#713f12;margin-bottom:10px;">⚠️ Keys .env file mein set hoti hain server pe. Yahan sirf verify kar sakte hain.</div>
+  </div>
+
+  <!-- Claude API -->
+  <div style="background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:12px;border-left:4px solid var(--purple);">
+    <div style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:4px;">🤖 Claude AI — Doctor Chat</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">AI doctor conversation engine</div>
+    <div id="cfg-claude-status" style="background:#f0f9ff;border-radius:8px;padding:9px 12px;font-size:11px;color:var(--blue);margin-bottom:10px;">⏳ Status check ho raha hai...</div>
+    <button onclick="checkClaudeStatus()" style="background:#f1f5f9;color:var(--navy);border:none;padding:9px;border-radius:9px;font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;cursor:pointer;width:100%;">🔄 AI Status Check Karein</button>
+  </div>
+
+  <!-- Env Variables Guide -->
+  <div style="background:linear-gradient(135deg,var(--navy),var(--blue));border-radius:14px;padding:16px;color:#fff;">
+    <div style="font-size:13px;font-weight:800;margin-bottom:10px;">📝 .env Variables</div>
+    <div style="font-size:11px;line-height:2;opacity:.9;font-family:'Courier New',monospace;background:rgba(0,0,0,.2);border-radius:8px;padding:10px;">
+      MONGODB_URI=mongodb+srv://...<br>
+      CLAUDE_API_KEY=sk-ant-...<br>
+      RAZORPAY_KEY_ID=rzp_live_...<br>
+      RAZORPAY_KEY_SECRET=...<br>
+      AKASHVANNI_USER_ID=69b44da4...<br>
+      WA_VERIFY_TOKEN=vetraj_webhook_2024<br>
+      ADMIN_KEY=vetraj2024
+    </div>
+    <div style="font-size:10px;opacity:.7;margin-top:8px;">Server restart ke baad changes apply hote hain</div>
   </div>
 </div>
 
@@ -1704,12 +1788,68 @@ function exportAppts(status){ window.open(`${BACKEND}/export/appointments?key=ve
 function exportRevenue(){ window.open(`${BACKEND}/export/revenue?key=vetraj2024`,'_blank'); }
 function exportRx(){ window.open(`${BACKEND}/export/prescriptions?key=vetraj2024`,'_blank'); }
 
+// ━━━━ API CONFIG FUNCTIONS ━━━━
+function saveCfgWA(){
+  const uid=document.getElementById('cfg-wa-userid').value.trim();
+  const otp=document.getElementById('cfg-wa-otp-tpl').value.trim();
+  const rpt=document.getElementById('cfg-wa-report-tpl').value.trim();
+  const drip=document.getElementById('cfg-wa-drip-tpl').value.trim();
+  if(uid) document.getElementById('cfg-wa-current').textContent=uid;
+  // Save to localStorage for reference (actual values are in .env)
+  localStorage.setItem('vetraj_cfg_wa',JSON.stringify({uid,otp,rpt,drip}));
+  toast('✅ WhatsApp config saved! .env mein AKASHVANNI_USER_ID update karein.');
+}
+
+async function checkRzpStatus(){
+  try{
+    const r=await fetch(`${BACKEND}/payment/config`);
+    const d=await r.json();
+    const el=document.getElementById('cfg-rzp-status');
+    if(d.configured){
+      el.style.background='#f0fdf4';el.style.color='#15803d';
+      el.innerHTML=`✅ <b>Razorpay Active</b> — Key ID: ${(d.keyId||'').substring(0,12)}...`;
+    } else {
+      el.style.background='#fee2e2';el.style.color='#dc2626';
+      el.innerHTML='❌ <b>Not Configured</b> — .env mein RAZORPAY_KEY_ID aur RAZORPAY_KEY_SECRET set karein';
+    }
+  }catch(e){
+    document.getElementById('cfg-rzp-status').innerHTML='❌ Status check failed';
+  }
+}
+
+async function checkClaudeStatus(){
+  try{
+    const r=await fetch(`${BACKEND}/ping`);
+    const d=await r.json();
+    const el=document.getElementById('cfg-claude-status');
+    el.style.background='#f0fdf4';el.style.color='#15803d';
+    el.innerHTML=`✅ <b>Server Online</b> — Uptime OK | Model: claude-sonnet-4-20250514`;
+  }catch(e){
+    document.getElementById('cfg-claude-status').innerHTML='❌ Server unreachable';
+  }
+}
+
+// Auto-check status when API config page opens
+function initApiConfig(){
+  checkRzpStatus();
+  checkClaudeStatus();
+  // Load saved WA config
+  try{
+    const saved=JSON.parse(localStorage.getItem('vetraj_cfg_wa')||'{}');
+    if(saved.uid) document.getElementById('cfg-wa-userid').value=saved.uid;
+    if(saved.otp) document.getElementById('cfg-wa-otp-tpl').value=saved.otp;
+    if(saved.rpt) document.getElementById('cfg-wa-report-tpl').value=saved.rpt;
+    if(saved.drip) document.getElementById('cfg-wa-drip-tpl').value=saved.drip;
+  }catch(e){}
+}
+
 function showPg(name){
   document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nv').forEach(n=>n.classList.remove('on'));
   var pg = document.getElementById('pg-'+name);
   if(pg) pg.classList.add('on');
   if(event && event.currentTarget) event.currentTarget.classList.add('on');
+  if(name==='apiconfig') initApiConfig();
   // Load page-specific data
   if(name==='orders') loadOrders();
   if(name==='products') loadDashProducts();

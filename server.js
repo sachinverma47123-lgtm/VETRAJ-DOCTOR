@@ -45,7 +45,12 @@ mongoose.connect(process.env.MONGODB_URI)
 const leadSchema = new mongoose.Schema({
   date: String, time: String, ownerName: String, ownerPhone: String,
   petName: String, petType: String, petAge: String, petBreed: String,
-  doctorName: String, problem: String, createdAt: { type: Date, default: Date.now }
+  doctorName: String, problem: String,
+  whatsappVerified: { type: Boolean, default: false },
+  chatSummary: String,
+  reportSent: { type: Boolean, default: false },
+  consultationType: { type: String, default: "free" }, // free or paid
+  createdAt: { type: Date, default: Date.now }
 });
 const Lead = mongoose.model("Lead", leadSchema);
 
@@ -232,6 +237,11 @@ function callClaude(system, messages) {
     req.end();
   });
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// OTP STORE (in-memory, 10 min expiry)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const otpStore = new Map();
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // DOCTOR SESSION (in-memory for chat assignment)
@@ -459,6 +469,128 @@ app.post("/save-lead", async (req, res) => {
   catch (e) { res.json({ success: false }); }
 });
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// WHATSAPP OTP — SEND
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.post("/send-otp", async (req, res) => {
+  try {
+    const { phone } = req.body;
+    if (!phone) return res.json({ success: false, error: "Phone required" });
+
+    const cleaned = phone.replace(/\D/g, "").replace(/^0+/, "");
+    const last10 = cleaned.length > 10 ? cleaned.slice(-10) : cleaned;
+    const fullPhone = "+91" + last10;
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    otpStore.set(last10, { otp, expires });
+
+    // Auto-cleanup after expiry
+    setTimeout(() => otpStore.delete(last10), 10 * 60 * 1000);
+
+    // Send via Akashvanni WhatsApp API
+    const AKASHVANNI_USER = process.env.AKASHVANNI_USER_ID || "69b44da471e857cddf164d22";
+    const apiUrl = `https://app.akashvanni.com/api/service/create-lead?user_id=${AKASHVANNI_USER}&template_name=otp_verification&phone=${encodeURIComponent(fullPhone)}&customer_name=Customer&otp=${otp}&source=vetraj_otp`;
+
+    https.get(apiUrl, (r) => {
+      let data = "";
+      r.on("data", c => data += c);
+      r.on("end", () => console.log(`OTP sent to ${fullPhone} via Akashvanni: ${r.statusCode}`));
+    }).on("error", e => console.error("OTP Akashvanni error:", e.message));
+
+    console.log(`[OTP] ${fullPhone} → ${otp}`); // Log for admin visibility
+    res.json({ success: true, message: "OTP sent to WhatsApp" });
+  } catch (e) {
+    console.error("send-otp error:", e.message);
+    res.json({ success: false, error: "OTP bhejne mein problem" });
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// WHATSAPP OTP — VERIFY
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.post("/verify-otp", (req, res) => {
+  try {
+    const { phone, otp } = req.body;
+    if (!phone || !otp) return res.json({ success: false, error: "Phone and OTP required" });
+
+    const last10 = phone.replace(/\D/g, "").slice(-10);
+    const stored = otpStore.get(last10);
+
+    if (!stored) return res.json({ success: false, error: "OTP nahi mila ya expire ho gaya" });
+    if (Date.now() > stored.expires) {
+      otpStore.delete(last10);
+      return res.json({ success: false, error: "OTP expire ho gaya — dobara bhejo" });
+    }
+    if (stored.otp !== otp.trim()) return res.json({ success: false, error: "Galat OTP" });
+
+    otpStore.delete(last10);
+    res.json({ success: true });
+  } catch (e) {
+    res.json({ success: false, error: "Verification error" });
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SEND WHATSAPP HEALTH REPORT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.post("/send-report", async (req, res) => {
+  try {
+    const { phone, ownerName, petName, petType, petAge, chatSummary, doctorName } = req.body;
+    if (!phone) return res.json({ success: false, error: "Phone required" });
+
+    const last10 = phone.replace(/\D/g, "").slice(-10);
+    const fullPhone = "+91" + last10;
+
+    // Save summary to latest lead for this phone
+    try {
+      await Lead.findOneAndUpdate(
+        { ownerPhone: last10 },
+        { $set: { chatSummary: chatSummary || "", reportSent: true } },
+        { sort: { createdAt: -1 } }
+      );
+    } catch (e) { console.error("Lead update error:", e.message); }
+
+    // Send via Akashvanni
+    const AKASHVANNI_USER = process.env.AKASHVANNI_USER_ID || "69b44da471e857cddf164d22";
+    const customerName = encodeURIComponent(ownerName || "Customer");
+    const pet = encodeURIComponent(petName || "");
+    const apiUrl = `https://app.akashvanni.com/api/service/create-lead?user_id=${AKASHVANNI_USER}&template_name=health_report&phone=${encodeURIComponent(fullPhone)}&customer_name=${customerName}&pet_name=${pet}&source=vetraj_report`;
+
+    https.get(apiUrl, (r) => {
+      let data = "";
+      r.on("data", c => data += c);
+      r.on("end", () => console.log(`Report sent to ${fullPhone}: ${r.statusCode}`));
+    }).on("error", e => console.error("Report send error:", e.message));
+
+    console.log(`[REPORT] Sent to ${fullPhone} for pet: ${petName}`);
+    res.json({ success: true });
+  } catch (e) {
+    console.error("send-report error:", e.message);
+    res.json({ success: false });
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// UPDATE LEAD CONSULTATION TYPE (paid/free)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.post("/update-lead-type", async (req, res) => {
+  try {
+    const { phone, consultationType } = req.body;
+    if (!phone) return res.json({ success: false });
+    const last10 = phone.replace(/\D/g, "").slice(-10);
+    await Lead.findOneAndUpdate(
+      { ownerPhone: last10 },
+      { $set: { consultationType: consultationType || "paid" } },
+      { sort: { createdAt: -1 } }
+    );
+    res.json({ success: true });
+  } catch (e) {
+    res.json({ success: false });
+  }
+});
+
 // ━━━━ APPOINTMENTS ━━━━
 app.post("/save-appointment", async (req, res) => {
   try {
@@ -485,6 +617,15 @@ app.post("/update-appointment", async (req, res) => {
     await Appointment.findByIdAndUpdate(id, update);
     res.json({ success: true });
   } catch (e) { res.json({ success: false }); }
+});
+
+// JSON leads endpoint — for supervisor panel (paid/unpaid segmentation)
+app.get("/get-leads-json", async (req, res) => {
+  if (req.query.key !== ADMIN_KEY) return res.status(403).json({ error: "Access denied" });
+  try {
+    const leads = await Lead.find().sort({ createdAt: -1 }).lean();
+    res.json({ leads });
+  } catch (e) { res.json({ leads: [] }); }
 });
 
 app.get("/download-leads", async (req, res) => {
