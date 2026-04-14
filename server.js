@@ -699,236 +699,249 @@ app.post("/send-report", async (req, res) => {
 // Ensure reports folder exists
 const REPORTS_DIR = path.join(__dirname, "public", "reports");
 if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
+const LOGO_PATH = path.join(__dirname, "public", "vetraj_logo.png");
 
-// Detect problem areas from chat history
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SHARED PDF ENGINE — Professional Vetraj Report
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const PROBLEM_CHECKS = [
+  { keys: ["joint","leg","limp","walk","stiffness","pair","ghutna","hip","lameness"], label: "Joint / Movement Issue" },
+  { keys: ["eat","food","khana","appetite","bhook","vomit","ulti","stomach","digestion","nausea"], label: "Appetite / Digestion Issue" },
+  { keys: ["eye","aankh","vision","dikhna","discharge","watery"], label: "Eye Concern" },
+  { keys: ["coat","skin","fur","baal","itch","khujli","dull","dandruff","flaky","rash","patch"], label: "Skin / Coat Issue" },
+  { keys: ["ear","kaan","scratch","khujana"], label: "Ear Concern" },
+  { keys: ["breath","sans","cough","khansi","naak","nose","wheeze"], label: "Respiratory Concern" },
+  { keys: ["energy","thaka","tired","lazy","slow","behaviour","unusual","letharg"], label: "Behaviour / Neurological" },
+  { keys: ["pending","bimaar","sick","fever","bukhar","infection","weak"], label: "General Health Weakness" },
+];
+
+// Detect from chatHistory array
 function detectProblemAreas(chatHistory) {
   const text = (chatHistory || []).map(m => m.content || "").join(" ").toLowerCase();
   const areas = [];
 
-  const checks = [
-    { keys: ["joint","leg","limp","walk","chal","pair","ghutna"], area: "joints",   label: "Joint / Movement Issue",   x: 122, y: 128 },
-    { keys: ["joint","leg","limp","walk","chal","pair","ghutna"], area: "joints2",  label: "Hip Joint Issue",           x: 48,  y: 128 },
-    { keys: ["eat","food","khana","appetite","bhook","vomit","ulti","stomach","pet"], area: "mouth", label: "Appetite / Digestion",    x: 164, y: 54  },
-    { keys: ["eye","aankh","vision","dikhna"],                    area: "eyes",    label: "Eye Concern",               x: 138, y: 40  },
-    { keys: ["coat","skin","fur","baal","itch","khujli","dull"],  area: "skin",    label: "Skin / Coat Issue",         x: 90,  y: 85  },
-    { keys: ["ear","kaan","scratch","khujana"],                   area: "ears",    label: "Ear Concern",               x: 130, y: 26  },
-    { keys: ["breath","sans","cough","khansi","naak","nose"],     area: "chest",   label: "Respiratory Concern",       x: 90,  y: 100 },
-    { keys: ["energy","thaka","tired","lazy","slow","behaviour","behavor","unusual"], area: "head", label: "Neurological / Behaviour", x: 148, y: 45 },
-  ];
-
   const seen = new Set();
-  for (const c of checks) {
-    if (seen.has(c.area)) continue;
+  for (const c of PROBLEM_CHECKS) {
+    if (seen.has(c.label)) continue;
     if (c.keys.some(k => text.includes(k))) {
-      seen.add(c.area);
-      areas.push({ label: c.label, x: c.x, y: c.y });
+      seen.add(c.label);
+      areas.push({ label: c.label });
     }
   }
-
-  // Always highlight at least 2 areas for impact
-  if (areas.length === 0) {
-    areas.push({ label: "Nutritional Deficiency", x: 90, y: 85 });
-    areas.push({ label: "Immunity Concern",        x: 148, y: 45 });
-  } else if (areas.length === 1) {
-    areas.push({ label: "Overall Health Risk",     x: 90, y: 85 });
-  }
-
+  if (areas.length === 0) { areas.push({ label: "Nutritional Deficiency" }); areas.push({ label: "Immunity Concern" }); }
+  else if (areas.length === 1) { areas.push({ label: "Overall Health Risk" }); }
   return areas;
 }
 
-// Draw dog silhouette + highlighted circles
-function drawDog(doc, offsetX, offsetY, problemAreas) {
-  const c = { r: 0.15, g: 0.25, b: 0.45 }; // navy body color
+// Detect from plain text string (problem field)
+function detectProblemAreasFromText(text) {
+  const t = (text || "").toLowerCase();
+  const areas = [];
+  const seen = new Set();
+  for (const c of PROBLEM_CHECKS) {
+    if (seen.has(c.label)) continue;
+    if (c.keys.some(k => t.includes(k))) {
+      seen.add(c.label);
+      areas.push({ label: c.label });
+    }
+  }
+  if (areas.length === 0) { areas.push({ label: "Nutritional Deficiency" }); areas.push({ label: "Immunity Concern" }); }
+  else if (areas.length === 1) { areas.push({ label: "Overall Health Risk" }); }
+  return areas;
+}
 
-  // Body
-  doc.save().ellipse(offsetX + 90, offsetY + 90, 55, 38).fillAndStroke([c.r, c.g, c.b], [c.r, c.g, c.b]);
+function calcRiskPct(areas) {
+  const n = areas.length;
+  return n === 0 ? 12 : n === 1 ? 32 : n === 2 ? 47 : n === 3 ? 62 : n === 4 ? 73 : Math.min(85, 60 + n * 5);
+}
 
-  // Head
-  doc.circle(offsetX + 148, offsetY + 45, 22).fillAndStroke([c.r, c.g, c.b], [c.r, c.g, c.b]);
+// Draw a thick arc segment on speedometer gauge
+function drawArcSegment(doc, cx, cy, r, p1, p2, color) {
+  const steps = 40;
+  doc.save().lineWidth(16).strokeColor(color).lineCap("round");
+  const firstAngle = Math.PI + (p1 / 100) * Math.PI;
+  doc.moveTo(cx + r * Math.cos(firstAngle), cy + r * Math.sin(firstAngle));
+  for (let i = 1; i <= steps; i++) {
+    const p = p1 + (p2 - p1) * i / steps;
+    const angle = Math.PI + (p / 100) * Math.PI;
+    doc.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+  }
+  doc.stroke().restore();
+}
 
-  // Neck
-  doc.polygon(
-    [offsetX + 128, offsetY + 60],
-    [offsetX + 138, offsetY + 55],
-    [offsetX + 145, offsetY + 65],
-    [offsetX + 133, offsetY + 72]
-  ).fillAndStroke([c.r, c.g, c.b], [c.r, c.g, c.b]);
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CORE PDF BUILDER — New Professional Design
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function buildVetrajReport(doc, { reportId, ownerName, ownerPhone, petName, petType, petAge, petBreed, doctorName, problemAreas, baseUrl }) {
+  const W = 595.28;
+  const navy = "#0a2d5a", teal = "#0891b2", green = "#16a34a", red = "#dc2626";
 
-  // Ear
-  doc.ellipse(offsetX + 132, offsetY + 27, 10, 15).rotate(-20, { origin: [offsetX + 132, offsetY + 27] }).fillAndStroke([0.1, 0.18, 0.35], [0.1, 0.18, 0.35]);
+  const riskPct = calcRiskPct(problemAreas);
+  const statusText = riskPct >= 80 ? "CRITICAL — IMMEDIATE VET CARE" :
+                     riskPct >= 60 ? "URGENT — VET CONSULTATION NOW" :
+                     riskPct >= 35 ? "RISK DETECTED — CONSULT SOON" : "MONITORING NEEDED";
 
-  // Snout
-  doc.ellipse(offsetX + 164, offsetY + 53, 12, 8).fillAndStroke([0.22, 0.34, 0.55], [0.22, 0.34, 0.55]);
+  // ── HEADER ──
+  doc.rect(0, 0, W, 72).fill(navy);
+  if (fs.existsSync(LOGO_PATH)) {
+    try { doc.image(LOGO_PATH, 18, 9, { height: 54 }); } catch(e) {}
+  }
+  doc.fontSize(24).fillColor("#ffffff").font("Helvetica-Bold")
+    .text("Pet Health Report", 0, 24, { width: W - 20, align: "right" });
 
-  // Nose tip
-  doc.circle(offsetX + 170, offsetY + 52, 3).fillAndStroke([0.05, 0.05, 0.05], [0.05, 0.05, 0.05]);
+  // ── REPORT ID BAR ──
+  doc.rect(0, 72, W, 20).fill("#f1f5f9");
+  const dateStr = new Date().toLocaleString("en-IN", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  doc.fontSize(8).fillColor("#64748b").font("Helvetica")
+    .text(`Report ID: ${reportId}   |   ${dateStr}`, 20, 78, { width: W - 40, align: "right" });
 
-  // Eye
-  doc.circle(offsetX + 140, offsetY + 40, 3).fillAndStroke([0.9, 0.9, 0.9], [0.9, 0.9, 0.9]);
+  // ── PET & OWNER DETAILS TABLE ──
+  let y = 106;
+  doc.fontSize(11).fillColor(teal).font("Helvetica-Bold").text("Pet & Owner Details", 30, y);
+  y += 16;
 
-  // Front legs
-  doc.roundedRect(offsetX + 118, offsetY + 120, 12, 45, 4).fillAndStroke([c.r, c.g, c.b], [c.r, c.g, c.b]);
-  doc.roundedRect(offsetX + 104, offsetY + 120, 12, 45, 4).fillAndStroke([c.r, c.g, c.b], [c.r, c.g, c.b]);
+  const rows = [
+    ["Owner Name", ownerName || "—", "Pet Name", petName || "—"],
+    ["Mobile", ownerPhone ? `+91${ownerPhone.replace(/\D/g,"").slice(-10)}` : "—", "Pet Type", petType || "Dog"],
+    ["", "", "Breed", petBreed || "Mixed Breed"],
+  ];
+  const colX = [30, 140, 310, 390];
+  const colW = [108, 168, 78, 165];
+  const rowH = 24;
 
-  // Back legs
-  doc.roundedRect(offsetX + 54, offsetY + 120, 12, 45, 4).fillAndStroke([c.r, c.g, c.b], [c.r, c.g, c.b]);
-  doc.roundedRect(offsetX + 40, offsetY + 120, 12, 45, 4).fillAndStroke([c.r, c.g, c.b], [c.r, c.g, c.b]);
+  rows.forEach((row, ri) => {
+    doc.rect(30, y, W - 60, rowH).fill(ri % 2 === 0 ? "#f8fafc" : "#ffffff");
+    doc.rect(30, y, W - 60, rowH).lineWidth(0.5).strokeColor("#e2e8f0").stroke();
+    doc.fontSize(8).font("Helvetica-Bold").fillColor("#374151").text(row[0], colX[0] + 6, y + 8, { width: colW[0] });
+    doc.font("Helvetica").fillColor("#1e293b").text(row[1], colX[1] + 4, y + 8, { width: colW[1] });
+    doc.font("Helvetica-Bold").fillColor("#374151").text(row[2], colX[2] + 6, y + 8, { width: colW[2] });
+    doc.font("Helvetica").fillColor("#1e293b").text(row[3], colX[3] + 4, y + 8, { width: colW[3] });
+    y += rowH;
+  });
+  doc.rect(30, 122, W - 60, rows.length * rowH).lineWidth(1).strokeColor("#cbd5e1").stroke();
 
-  // Tail
-  doc.save()
-    .moveTo(offsetX + 35, offsetY + 80)
-    .bezierCurveTo(offsetX + 15, offsetY + 55, offsetX + 5, offsetY + 40, offsetX + 20, offsetY + 30)
-    .lineWidth(7).strokeColor([0.15, 0.25, 0.45]).stroke();
-  doc.restore();
+  y += 14;
 
-  // Problem area highlights — red glowing circles
+  // ── GREEN CTA BUTTON ──
+  const bookingUrl = `${baseUrl}/booking.html`;
+  doc.rect(30, y, W - 60, 54).fill(green);
+  doc.fontSize(15).fillColor("#ffffff").font("Helvetica-Bold")
+    .text("Doctor Sa Sidhi Baat  \u2192", 30, y + 9, { width: W - 60, align: "center" });
+  doc.fontSize(9).fillColor("rgba(255,255,255,0.9)").font("Helvetica")
+    .text("Ek click mein doctor se connect karein — early consultation = better results", 30, y + 30, { width: W - 60, align: "center" });
+  doc.link(30, y, W - 60, 54, bookingUrl);
+  y += 68;
+
+  // ── HEALTH SCORE SUMMARY ──
+  doc.fontSize(11).fillColor(teal).font("Helvetica-Bold").text("Health Score Summary", 30, y);
+  y += 14;
+
+  // Risk box
+  doc.rect(30, y, W - 60, 58).fill("#fef2f2");
+  doc.rect(30, y, W - 60, 58).lineWidth(1).strokeColor("#fca5a5").stroke();
+  // Red square indicator
+  doc.rect(40, y + 26, 10, 10).fill(red);
+  doc.fontSize(13).fillColor(red).font("Helvetica-Bold").text(statusText, 40, y + 8, { width: 290 });
+  doc.fontSize(8).fillColor("#94a3b8").font("Helvetica").text("Overall Health Status", 40, y + 42);
+  // Risk %
+  doc.fontSize(38).fillColor(red).font("Helvetica-Bold").text(`${riskPct}%`, W - 170, y + 4, { width: 130, align: "right" });
+  doc.fontSize(9).fillColor(red).font("Helvetica-Bold").text("Risk Index", W - 150, y + 43, { width: 110, align: "right" });
+  y += 70;
+
+  // ── SPEEDOMETER GAUGE ──
+  const gaugeH = 115;
+  const cx = W / 2, cy = y + gaugeH - 18, r = 78;
+
+  // Background track
+  drawArcSegment(doc, cx, cy, r, 0, 100, "#e2e8f0");
+  // Color segments
+  drawArcSegment(doc, cx, cy, r, 0, 30, "#22c55e");
+  drawArcSegment(doc, cx, cy, r, 30, 60, "#f59e0b");
+  drawArcSegment(doc, cx, cy, r, 60, 80, "#f97316");
+  drawArcSegment(doc, cx, cy, r, 80, 100, "#ef4444");
+
+  // Labels
+  doc.fontSize(8).fillColor("#475569").font("Helvetica-Bold");
+  doc.text("Stable", cx - r - 32, cy + 6, { width: 36, align: "center" });
+  doc.text("Alert",  cx + r - 4,  cy + 6, { width: 36, align: "center" });
+  const midL = Math.PI + (0.30 * Math.PI);
+  const midR = Math.PI + (0.60 * Math.PI);
+  doc.text("Risk",    cx + (r + 8) * Math.cos(midL) - 16, cy + (r + 8) * Math.sin(midL) - 8, { width: 32 });
+  doc.text("Concern", cx + (r + 8) * Math.cos(midR) - 6,  cy + (r + 8) * Math.sin(midR) - 8, { width: 42 });
+
+  // Needle
+  const needleAngle = Math.PI + (riskPct / 100) * Math.PI;
+  const nx = cx + (r - 12) * Math.cos(needleAngle);
+  const ny = cy + (r - 12) * Math.sin(needleAngle);
+  doc.save().lineWidth(2.5).strokeColor("#1e293b").lineCap("round")
+    .moveTo(cx, cy).lineTo(nx, ny).stroke().restore();
+  doc.circle(cx, cy, 6).fill("#0a2d5a");
+  doc.circle(cx, cy, 3).fill("#ffffff");
+
+  y += gaugeH + 8;
+
+  // ── DOCTOR RECOMMENDATIONS ──
+  doc.fontSize(11).fillColor("#1e293b").font("Helvetica-Bold").text("Doctor Recommendations", 30, y);
+  y += 16;
+
+  const recMap = {
+    "Joint / Movement Issue":    "Mobility ya energy mein dikkat hai — joint pain ya arthritis ka early sign ho sakta hai.",
+    "Appetite / Digestion Issue":"Digestive issues hain — bland diet try karo aur fresh paani ensure karo. Vet se poochho.",
+    "Eye Concern":               "Aankh mein discharge ya redness — infection ya allergy ho sakta hai. Vet check zaroori.",
+    "Skin / Coat Issue":         "Skin/coat issues hain — allergy, fleas, ya nutritional deficiency check karo.",
+    "Ear Concern":               "Kaan mein infection ho sakta hai — ear drops ya cleaning ki zaroorat ho sakti hai.",
+    "Respiratory Concern":       "Saas ki problem detect hui — X-ray ya respiratory panel test recommend hai.",
+    "Behaviour / Neurological":  "Behaviour change hai — neuro exam ya thyroid test helpful hoga.",
+    "General Health Weakness":   "General weakness — blood panel aur complete checkup recommend hai.",
+    "Nutritional Deficiency":    "Ghar ka khana dogs ke liye nutritionally incomplete — proper dog food pe switch karo.",
+    "Immunity Concern":          "Immunity weak ho sakti hai — vaccination aur supplements review karo.",
+    "Overall Health Risk":       "Overall health risk detected — full physical exam recommended.",
+  };
+
+  const recs = ["Urgent — abhi vet se milo, der mat karo."];
   for (const area of problemAreas) {
-    const px = offsetX + area.x;
-    const py = offsetY + area.y;
+    if (recMap[area.label]) recs.push(recMap[area.label]);
+  }
+  if (recs.length < 4) recs.push("Regular health checkup har 6 mahine mein karo — prevention is better than cure.");
 
-    // Outer glow
-    doc.circle(px, py, 22).fillOpacity(0.15).fillColor([1, 0, 0]).fill();
-    doc.fillOpacity(1);
-
-    // Circle border
-    doc.circle(px, py, 18).lineWidth(2).strokeColor([0.9, 0.1, 0.1]).stroke();
-
-    // Dashed inner circle
-    doc.circle(px, py, 12).lineWidth(1).dash(3, { space: 2 }).strokeColor([1, 0.2, 0.2]).stroke().undash();
+  for (const rec of recs.slice(0, 6)) {
+    doc.fontSize(9).fillColor("#374151").font("Helvetica")
+      .text(`\u2022 ${rec}`, 42, y, { width: W - 82 });
+    y += 18;
   }
 
-  doc.restore();
+  // ── FOOTER ──
+  doc.rect(0, 772, W, 1).fill("#e2e8f0");
+  doc.fontSize(7).fillColor("#94a3b8").font("Helvetica")
+    .text(`Generated by Vetraj AI Pet Health Assistant  \u2022  ${new Date().toLocaleDateString("en-IN")}  \u2022  Report ID: ${reportId}`, 20, 778, { width: W - 40, align: "center" });
+  doc.fontSize(7).fillColor("#94a3b8")
+    .text("This report is for informational purposes only and does not replace professional veterinary advice.", 20, 788, { width: W - 40, align: "center" });
+}
+
+// Helper: create PDF file and return URL
+async function makePDF(fileName, drawFn) {
+  const filePath = path.join(REPORTS_DIR, fileName);
+  const pdfDoc = new PDFDocument({ size: "A4", margin: 0 });
+  const stream = fs.createWriteStream(filePath);
+  pdfDoc.pipe(stream);
+  drawFn(pdfDoc);
+  pdfDoc.end();
+  await new Promise((res, rej) => { stream.on("finish", res); stream.on("error", rej); });
+  return filePath;
 }
 
 app.post("/generate-report", async (req, res) => {
   try {
     const { ownerName, petName, petType, petAge, petBreed, chatHistory, doctorName, phone } = req.body;
-
     const reportId = "VR" + Date.now().toString().slice(-8);
     const fileName = `report_${reportId}.pdf`;
-    const filePath = path.join(REPORTS_DIR, fileName);
-
     const problemAreas = detectProblemAreas(chatHistory || []);
-
-    // Build concern list from problem areas
-    const concerns = problemAreas.map(a => a.label);
-    // Add defaults if needed
-    if (!concerns.includes("Nutritional Deficiency")) concerns.push("Nutritional Imbalance Risk");
-    if (concerns.length < 3) concerns.push("Immunity Weakness Detected");
-
-    const pdfDoc = new PDFDocument({ size: "A4", margin: 40 });
-    const stream = fs.createWriteStream(filePath);
-    pdfDoc.pipe(stream);
-
-    const W = 595, navy = "#0a2d5a", red = "#cc1111", orange = "#d97706";
-
-    // ── HEADER ──────────────────────────────────────────
-    pdfDoc.rect(0, 0, W, 70).fill(navy);
-    pdfDoc.fontSize(22).fillColor("#ffffff").font("Helvetica-Bold")
-      .text("🐾 VETRAJ PET HOSPITAL", 40, 14);
-    pdfDoc.fontSize(9).fillColor("#93c5fd")
-      .text("Health Checkup Report  |  Vetraj Pet Hospital", 40, 42);
-    pdfDoc.fontSize(8).fillColor("#cbd5e1")
-      .text(`Report ID: ${reportId}   |   Date: ${new Date().toLocaleDateString("en-IN")}`, 40, 56);
-
-    // ── WARNING BANNER ───────────────────────────────────
-    pdfDoc.rect(0, 70, W, 28).fill("#fef2f2");
-    pdfDoc.fontSize(10).fillColor(red).font("Helvetica-Bold")
-      .text("⚠️  ATTENTION: Health concerns detected — Immediate consultation recommended", 40, 79);
-
-    // ── PET & OWNER INFO ─────────────────────────────────
-    pdfDoc.rect(30, 112, 250, 100).lineWidth(1).strokeColor("#dde3ef").stroke();
-    pdfDoc.rect(30, 112, 250, 22).fill("#eef2fa");
-    pdfDoc.fontSize(9).fillColor(navy).font("Helvetica-Bold").text("PET OWNER DETAILS", 38, 119);
-    pdfDoc.font("Helvetica").fontSize(9).fillColor("#1e293b")
-      .text(`Name   :  ${ownerName || "—"}`,          38, 140)
-      .text(`Phone  :  +91-XXXXXXXX${(phone||"").slice(-2)}`, 38, 155)
-      .text(`City    :  India`,                         38, 170)
-      .text(`Report  :  FREE Health Checkup`,           38, 185);
-
-    pdfDoc.rect(300, 112, 265, 100).lineWidth(1).strokeColor("#dde3ef").stroke();
-    pdfDoc.rect(300, 112, 265, 22).fill("#eef2fa");
-    pdfDoc.fontSize(9).fillColor(navy).font("Helvetica-Bold").text("PET DETAILS", 308, 119);
-    pdfDoc.font("Helvetica").fontSize(9).fillColor("#1e293b")
-      .text(`Name    :  ${petName  || "—"}`, 308, 140)
-      .text(`Species :  ${petType  || "Dog"}`, 308, 155)
-      .text(`Breed   :  ${petBreed || "Mixed Breed"}`, 308, 170)
-      .text(`Age     :  ${petAge   || "—"}`, 308, 185);
-
-    // ── DIAGNOSIS BOX ────────────────────────────────────
-    pdfDoc.rect(30, 224, 535, 22).fill(red);
-    pdfDoc.fontSize(10).fillColor("#ffffff").font("Helvetica-Bold")
-      .text("HEALTH ASSESSMENT  —  CONCERNS DETECTED", 38, 230);
-
-    let cy = 256;
-    for (const concern of concerns.slice(0, 5)) {
-      pdfDoc.rect(30, cy, 535, 20).fill(cy % 40 === 16 ? "#fff5f5" : "#ffffff");
-      pdfDoc.circle(46, cy + 10, 4).fill(red);
-      pdfDoc.fontSize(9).fillColor("#1e293b").font("Helvetica-Bold")
-        .text(concern, 58, cy + 6);
-      pdfDoc.font("Helvetica").fillColor("#64748b")
-        .text("Requires immediate attention", 300, cy + 6);
-      cy += 22;
-    }
-    // Border around assessment
-    pdfDoc.rect(30, 224, 535, cy - 224).lineWidth(1).strokeColor("#fca5a5").stroke();
-
-    // ── DOG DIAGRAM ──────────────────────────────────────
-    const dogBoxY = cy + 16;
-    pdfDoc.rect(30, dogBoxY, 535, 210).lineWidth(1).strokeColor("#dde3ef").stroke();
-    pdfDoc.rect(30, dogBoxY, 535, 22).fill("#eef2fa");
-    pdfDoc.fontSize(9).fillColor(navy).font("Helvetica-Bold")
-      .text("BODY ANALYSIS — Problem Areas Highlighted", 38, dogBoxY + 7);
-
-    // Draw dog centered
-    const dogOffX = 185, dogOffY = dogBoxY + 30;
-    drawDog(pdfDoc, dogOffX, dogOffY, problemAreas);
-
-    // Legend
-    let legY = dogBoxY + 38;
-    pdfDoc.fontSize(8).fillColor(red).font("Helvetica-Bold").text("PROBLEM AREAS:", 420, legY);
-    legY += 14;
-    for (const area of problemAreas.slice(0, 5)) {
-      pdfDoc.circle(427, legY + 4, 4).fill(red);
-      pdfDoc.fontSize(8).fillColor("#1e293b").font("Helvetica").text(area.label, 436, legY);
-      legY += 16;
-    }
-
-    // ── DOCTOR RECOMMENDATION ────────────────────────────
-    const recY = dogBoxY + 220;
-    pdfDoc.rect(30, recY, 535, 80).fill("#fffbeb").stroke();
-    pdfDoc.rect(30, recY, 535, 22).fill(orange);
-    pdfDoc.fontSize(10).fillColor("#ffffff").font("Helvetica-Bold")
-      .text("DR. RECOMMENDATION", 38, recY + 7);
-    pdfDoc.fontSize(9).fillColor("#92400e").font("Helvetica")
-      .text(`Dr. ${doctorName || "Vetraj Expert Vet"} ke analysis ke anusar, ${petName || "aapke pet"} mein kuch health concerns detected hue hain.`, 38, recY + 30)
-      .text(`Inhe nazarandaaz karna theek nahi hoga — seedha consultation se sahi treatment plan milega.`, 38, recY + 46)
-      .text(`Consulting: ${doctorName || "Vetraj Expert Vet"}  |  Appointment: ₹399 only  |  Call: 9568606006`, 38, recY + 62);
-
-    // ── CTA ──────────────────────────────────────────────
-    const ctaY = recY + 90;
-    pdfDoc.rect(30, ctaY, 535, 36).fill(navy);
-    pdfDoc.fontSize(12).fillColor("#ffffff").font("Helvetica-Bold")
-      .text(`📞 Book Expert Consultation: vetraj.in  |  Helpline: 9568606006`, 38, ctaY + 12);
-
-    // ── FOOTER ───────────────────────────────────────────
-    pdfDoc.fontSize(7).fillColor("#94a3b8").font("Helvetica")
-      .text(`Yeh report ${doctorName || "Vetraj Expert Vet"} dwara Vetraj Pet Hospital ki taraf se jari ki gayi hai. Appointment ke liye: 9568606006`, 30, 790, { width: 535, align: "center" });
-
-    pdfDoc.end();
-
-    stream.on("finish", () => {
-      const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
-      const reportUrl = `${baseUrl}/reports/${fileName}`;
-      console.log(`[PDF] Generated: ${fileName}`);
-      res.json({ success: true, reportUrl, reportId });
-    });
-
-    stream.on("error", (e) => {
-      console.error("PDF stream error:", e.message);
-      res.json({ success: false });
-    });
-
+    const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+    await makePDF(fileName, doc => buildVetrajReport(doc, { reportId, ownerName, ownerPhone: phone, petName, petType, petAge, petBreed, doctorName, problemAreas, baseUrl }));
+    const reportUrl = `${baseUrl}/reports/${fileName}`;
+    console.log(`[PDF] Generated: ${fileName}`);
+    res.json({ success: true, reportUrl, reportId });
   } catch (e) {
     console.error("generate-report error:", e.message);
     res.json({ success: false });
@@ -1027,188 +1040,36 @@ app.get("/get-report", (req, res) => {
   res.json({ url: null });
 });
 
-// ━━━━ GENERATE PDF FROM LEAD DATA (for telecaller) ━━━━
-// Detects problem areas from problem string (chat Q&A text)
-function detectProblemAreasFromText(text) {
-  const t = (text || "").toLowerCase();
-  const areas = [];
-  const seen = new Set();
-
-  const checks = [
-    { keys: ["joint","limp","walk","stiffness","pair","ghutna","hip","lameness"], area: "joints",  label: "Joint / Movement Issue",    x: 122, y: 128 },
-    { keys: ["eat","food","khana","appetite","bhook","vomit","ulti","stomach","digestion","nausea"], area: "mouth", label: "Appetite / Digestion Issue", x: 164, y: 54 },
-    { keys: ["eye","aankh","vision","dikhna","discharge","watery"],               area: "eyes",    label: "Eye Concern",                x: 138, y: 40  },
-    { keys: ["coat","skin","fur","baal","itch","khujli","dull","dandruff","flaky","rash","patch"], area: "skin",  label: "Skin / Coat Issue",          x: 90,  y: 85  },
-    { keys: ["ear","kaan","scratch","khujana","head shake"],                      area: "ears",    label: "Ear Concern",                x: 130, y: 26  },
-    { keys: ["breath","sans","cough","khansi","naak","nose","respiratory","wheeze"], area: "chest", label: "Respiratory Concern",        x: 90,  y: 100 },
-    { keys: ["energy","thaka","tired","lazy","slow","behaviour","unusual","letharg"], area: "head", label: "Behaviour / Neurological",   x: 148, y: 45  },
-    { keys: ["pending","bimaar","sick","fever","bukhar","infection","weak"],      area: "body",    label: "General Health Weakness",    x: 90,  y: 68  },
-  ];
-
-  for (const c of checks) {
-    if (seen.has(c.area)) continue;
-    if (c.keys.some(k => t.includes(k))) {
-      seen.add(c.area);
-      areas.push({ label: c.label, x: c.x, y: c.y });
-    }
-  }
-
-  if (areas.length === 0) {
-    areas.push({ label: "Nutritional Deficiency", x: 90, y: 85 });
-    areas.push({ label: "Immunity Concern",        x: 148, y: 45 });
-  } else if (areas.length === 1) {
-    areas.push({ label: "Overall Health Risk",     x: 90, y: 85 });
-  }
-  return areas;
-}
-
 app.get("/generate-lead-report", async (req, res) => {
   const { phone, leadId, key } = req.query;
   if (key !== (process.env.ADMIN_KEY || "vetraj2024")) return res.json({ success: false, error: "unauthorized" });
 
-  // Find lead
   let lead = null;
   if (leadId) lead = memLeads.find(l => String(l._id) === String(leadId));
-  if (!lead && phone) {
-    const last10 = phone.replace(/\D/g, "").slice(-10);
-    lead = memLeads.find(l => l.ownerPhone === last10);
-  }
+  if (!lead && phone) { const last10 = phone.replace(/\D/g,"").slice(-10); lead = memLeads.find(l => l.ownerPhone === last10); }
   if (!lead && DB_READY) {
     try {
       if (leadId) lead = await Lead.findById(leadId).lean();
-      else if (phone) {
-        const last10 = phone.replace(/\D/g, "").slice(-10);
-        lead = await Lead.findOne({ ownerPhone: last10 }).sort({ createdAt: -1 }).lean();
-      }
+      else if (phone) { const last10 = phone.replace(/\D/g,"").slice(-10); lead = await Lead.findOne({ ownerPhone: last10 }).sort({ createdAt: -1 }).lean(); }
     } catch(e) {}
   }
   if (!lead) return res.json({ success: false, error: "lead not found" });
-
-  // If reportUrl already exists, return it
   if (lead.reportUrl) return res.json({ success: true, url: lead.reportUrl });
 
   try {
     const { ownerName, ownerPhone, petName, petType, petAge, petBreed, doctorName, problem } = lead;
     const reportId = "VR" + Date.now().toString().slice(-8);
     const fileName = `report_${reportId}.pdf`;
-    const filePath = path.join(REPORTS_DIR, fileName);
-
-    // Detect from problem text
     const problemAreas = detectProblemAreasFromText(problem || "");
-    const concerns = problemAreas.map(a => a.label);
-    if (!concerns.includes("Nutritional Imbalance Risk")) concerns.push("Nutritional Imbalance Risk");
-    if (concerns.length < 3) concerns.push("Immunity Weakness Detected");
-
-    const pdfDoc = new PDFDocument({ size: "A4", margin: 40 });
-    const stream = fs.createWriteStream(filePath);
-    pdfDoc.pipe(stream);
-
-    const W = 595, navy = "#0a2d5a", red = "#cc1111", orange = "#d97706";
-
-    // HEADER
-    pdfDoc.rect(0, 0, W, 70).fill(navy);
-    pdfDoc.fontSize(22).fillColor("#ffffff").font("Helvetica-Bold").text("🐾 VETRAJ PET HOSPITAL", 40, 14);
-    pdfDoc.fontSize(9).fillColor("#93c5fd").text("Health Checkup Report  |  Vetraj Pet Hospital", 40, 42);
-    pdfDoc.fontSize(8).fillColor("#cbd5e1").text(`Report ID: ${reportId}   |   Date: ${new Date().toLocaleDateString("en-IN")}`, 40, 56);
-
-    // WARNING BANNER
-    pdfDoc.rect(0, 70, W, 28).fill("#fef2f2");
-    pdfDoc.fontSize(10).fillColor(red).font("Helvetica-Bold")
-      .text("⚠️  ATTENTION: Health concerns detected — Immediate consultation recommended", 40, 79);
-
-    // PET & OWNER INFO
-    pdfDoc.rect(30, 112, 250, 100).lineWidth(1).strokeColor("#dde3ef").stroke();
-    pdfDoc.rect(30, 112, 250, 22).fill("#eef2fa");
-    pdfDoc.fontSize(9).fillColor(navy).font("Helvetica-Bold").text("PET OWNER DETAILS", 38, 119);
-    pdfDoc.font("Helvetica").fontSize(9).fillColor("#1e293b")
-      .text(`Name   :  ${ownerName || "—"}`, 38, 140)
-      .text(`Phone  :  +91-XXXXXX${(ownerPhone||"").slice(-4)}`, 38, 155)
-      .text(`City    :  India`, 38, 170)
-      .text(`Report  :  FREE Health Checkup`, 38, 185);
-
-    pdfDoc.rect(300, 112, 265, 100).lineWidth(1).strokeColor("#dde3ef").stroke();
-    pdfDoc.rect(300, 112, 265, 22).fill("#eef2fa");
-    pdfDoc.fontSize(9).fillColor(navy).font("Helvetica-Bold").text("PET DETAILS", 308, 119);
-    pdfDoc.font("Helvetica").fontSize(9).fillColor("#1e293b")
-      .text(`Name    :  ${petName  || "—"}`, 308, 140)
-      .text(`Species :  ${petType  || "Dog"}`, 308, 155)
-      .text(`Breed   :  ${petBreed || "Mixed Breed"}`, 308, 170)
-      .text(`Age     :  ${petAge   || "—"}`, 308, 185);
-
-    // DIAGNOSIS BOX
-    pdfDoc.rect(30, 224, 535, 22).fill(red);
-    pdfDoc.fontSize(10).fillColor("#ffffff").font("Helvetica-Bold")
-      .text("HEALTH ASSESSMENT  —  CONCERNS DETECTED", 38, 230);
-
-    let cy = 256;
-    for (const concern of concerns.slice(0, 5)) {
-      pdfDoc.rect(30, cy, 535, 20).fill(cy % 40 === 16 ? "#fff5f5" : "#ffffff");
-      pdfDoc.circle(46, cy + 10, 4).fill(red);
-      pdfDoc.fontSize(9).fillColor("#1e293b").font("Helvetica-Bold").text(concern, 58, cy + 6);
-      pdfDoc.font("Helvetica").fillColor("#64748b").text("Requires immediate attention", 300, cy + 6);
-      cy += 22;
-    }
-    pdfDoc.rect(30, 224, 535, cy - 224).lineWidth(1).strokeColor("#fca5a5").stroke();
-
-    // DOG DIAGRAM
-    const dogBoxY = cy + 16;
-    pdfDoc.rect(30, dogBoxY, 535, 210).lineWidth(1).strokeColor("#dde3ef").stroke();
-    pdfDoc.rect(30, dogBoxY, 535, 22).fill("#eef2fa");
-    pdfDoc.fontSize(9).fillColor(navy).font("Helvetica-Bold").text("BODY ANALYSIS — Problem Areas Highlighted", 38, dogBoxY + 7);
-    drawDog(pdfDoc, 185, dogBoxY + 30, problemAreas);
-
-    let legY = dogBoxY + 38;
-    pdfDoc.fontSize(8).fillColor(red).font("Helvetica-Bold").text("PROBLEM AREAS:", 420, legY);
-    legY += 14;
-    for (const area of problemAreas.slice(0, 5)) {
-      pdfDoc.circle(427, legY + 4, 4).fill(red);
-      pdfDoc.fontSize(8).fillColor("#1e293b").font("Helvetica").text(area.label, 436, legY);
-      legY += 16;
-    }
-
-    // HEALTH SUMMARY from problem text
-    const summaryY = dogBoxY + 220;
-    const summaryText = (problem || "").replace(/\|/g, "\n").substring(0, 500);
-    pdfDoc.rect(30, summaryY, 535, 22).fill("#f0fdf4");
-    pdfDoc.fontSize(9).fillColor("#166534").font("Helvetica-Bold").text("HEALTH CHECKUP Q&A SUMMARY", 38, summaryY + 7);
-    pdfDoc.fontSize(8).fillColor("#1e293b").font("Helvetica")
-      .text(summaryText || "Health checkup completed", 38, summaryY + 30, { width: 519, lineGap: 3 });
-
-    const recY = summaryY + 110;
-    pdfDoc.rect(30, recY, 535, 80).fill("#fffbeb").stroke();
-    pdfDoc.rect(30, recY, 535, 22).fill(orange);
-    pdfDoc.fontSize(10).fillColor("#ffffff").font("Helvetica-Bold").text("DR. RECOMMENDATION", 38, recY + 7);
-    pdfDoc.fontSize(9).fillColor("#92400e").font("Helvetica")
-      .text(`Dr. ${doctorName || "Vetraj Expert Vet"} ke analysis ke anusar, ${petName || "aapke pet"} mein kuch health concerns detected hue hain.`, 38, recY + 30)
-      .text(`Inhe nazarandaaz karna theek nahi hoga — seedha consultation se sahi treatment plan milega.`, 38, recY + 46)
-      .text(`Consulting: ${doctorName || "Vetraj Expert Vet"}  |  Appointment: Rs.399 only  |  Call: 9568606006`, 38, recY + 62);
-
-    const ctaY = recY + 90;
-    pdfDoc.rect(30, ctaY, 535, 36).fill(navy);
-    pdfDoc.fontSize(12).fillColor("#ffffff").font("Helvetica-Bold")
-      .text("Book Expert Consultation: vetraj.in  |  Helpline: 9568606006", 38, ctaY + 12);
-
-    pdfDoc.fontSize(7).fillColor("#94a3b8").font("Helvetica")
-      .text(`Yeh report ${doctorName || "Vetraj Expert Vet"} dwara Vetraj Pet Hospital ki taraf se jari ki gayi hai.`, 30, 790, { width: 535, align: "center" });
-
-    pdfDoc.end();
-
-    await new Promise((resolve, reject) => {
-      stream.on("finish", resolve);
-      stream.on("error", reject);
-    });
-
     const baseUrl = req.protocol + "://" + req.get("host");
+    await makePDF(fileName, doc => buildVetrajReport(doc, { reportId, ownerName, ownerPhone, petName, petType, petAge, petBreed, doctorName, problemAreas, baseUrl }));
     const reportUrl = `${baseUrl}/reports/${fileName}`;
-    console.log(`[PDF] Telecaller-generated: ${fileName} for ${ownerName}`);
-
-    // Save reportUrl back to lead
+    console.log(`[PDF] Telecaller report: ${fileName} for ${ownerName}`);
     const idx = memLeads.findIndex(l => String(l._id) === String(lead._id));
     if (idx >= 0) { memLeads[idx].reportUrl = reportUrl; persistLeads(); }
     if (DB_READY && lead._id && !String(lead._id).startsWith("mem_")) {
       try { await Lead.findByIdAndUpdate(lead._id, { $set: { reportUrl } }); } catch(e) {}
     }
-
     res.json({ success: true, url: reportUrl });
   } catch(e) {
     console.error("generate-lead-report error:", e.message);
