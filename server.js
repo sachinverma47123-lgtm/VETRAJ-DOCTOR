@@ -771,152 +771,199 @@ function drawArcSegment(doc, cx, cy, r, p1, p2, color) {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CORE PDF BUILDER — New Professional Design
+// CORE PDF BUILDER — Vetraj Branded Design
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function buildVetrajReport(doc, { reportId, ownerName, ownerPhone, petName, petType, petAge, petBreed, doctorName, problemAreas, baseUrl }) {
   const W = 595.28;
   const navy = "#0a2d5a", teal = "#0891b2", green = "#16a34a", red = "#dc2626";
-
   const riskPct = calcRiskPct(problemAreas);
-  const statusText = riskPct >= 80 ? "CRITICAL — IMMEDIATE VET CARE" :
-                     riskPct >= 60 ? "URGENT — VET CONSULTATION NOW" :
-                     riskPct >= 35 ? "RISK DETECTED — CONSULT SOON" : "MONITORING NEEDED";
 
-  // ── HEADER ──
-  doc.rect(0, 0, W, 72).fill(navy);
+  const statusText = riskPct >= 80 ? "CRITICAL \u2014 IMMEDIATE VET CARE" :
+                     riskPct >= 60 ? "URGENT \u2014 VET CONSULTATION NOW" :
+                     riskPct >= 35 ? "RISK DETECTED \u2014 CONSULT SOON" : "MONITORING NEEDED";
+
+  // ━━ HEADER: navy bar, white logo box on left, title on right ━━
+  doc.rect(0, 0, W, 80).fill(navy);
+
+  // White logo box (rounded look via filled rect)
+  doc.rect(12, 8, 150, 64).fill("#ffffff");
+
+  // Logo image inside white box
   if (fs.existsSync(LOGO_PATH)) {
-    try { doc.image(LOGO_PATH, 18, 9, { height: 54 }); } catch(e) {}
+    try { doc.image(LOGO_PATH, 16, 10, { height: 60 }); } catch(e) {}
   }
-  doc.fontSize(24).fillColor("#ffffff").font("Helvetica-Bold")
-    .text("Pet Health Report", 0, 24, { width: W - 20, align: "right" });
 
-  // ── REPORT ID BAR ──
-  doc.rect(0, 72, W, 20).fill("#f1f5f9");
-  const dateStr = new Date().toLocaleString("en-IN", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
-  doc.fontSize(8).fillColor("#64748b").font("Helvetica")
-    .text(`Report ID: ${reportId}   |   ${dateStr}`, 20, 78, { width: W - 40, align: "right" });
+  // "Pet Health Report" title right side
+  doc.fontSize(26).fillColor("#ffffff").font("Helvetica-Bold")
+    .text("Pet Health  Report", 175, 22, { width: W - 190, align: "right" });
 
-  // ── PET & OWNER DETAILS TABLE ──
-  let y = 106;
+  // ━━ REPORT ID bar ━━
+  doc.rect(0, 80, W, 18).fill("#f1f5f9");
+  const dateStr = new Date().toLocaleString("en-IN", { day:"numeric", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit" });
+  doc.fontSize(7.5).fillColor("#64748b").font("Helvetica")
+    .text(`Report ID: ${reportId}   |   ${dateStr}`, 20, 86, { width: W - 40, align: "right" });
+
+  // ━━ PET & OWNER DETAILS ━━
+  let y = 114;
   doc.fontSize(11).fillColor(teal).font("Helvetica-Bold").text("Pet & Owner Details", 30, y);
-  y += 16;
+  y += 14;
 
+  const tableTop = y;
   const rows = [
-    ["Owner Name", ownerName || "—", "Pet Name", petName || "—"],
-    ["Mobile", ownerPhone ? `+91${ownerPhone.replace(/\D/g,"").slice(-10)}` : "—", "Pet Type", petType || "Dog"],
-    ["", "", "Breed", petBreed || "Mixed Breed"],
+    ["Owner Name", ownerName || "\u2014", "Pet Name", petName || "\u2014"],
+    ["Mobile", ownerPhone ? `+91${(ownerPhone||"").replace(/\D/g,"").slice(-10)}` : "\u2014", "Pet Type", petType ? (petType.charAt(0).toUpperCase()+petType.slice(1)) : "Dog"],
+    ["\u00a0", "\u00a0", "Breed", petBreed || "Mixed Breed"],
   ];
-  const colX = [30, 140, 310, 390];
-  const colW = [108, 168, 78, 165];
-  const rowH = 24;
+  const cX = [30, 148, 318, 400], cW = [116, 168, 80, 155], rH = 23;
 
   rows.forEach((row, ri) => {
-    doc.rect(30, y, W - 60, rowH).fill(ri % 2 === 0 ? "#f8fafc" : "#ffffff");
-    doc.rect(30, y, W - 60, rowH).lineWidth(0.5).strokeColor("#e2e8f0").stroke();
-    doc.fontSize(8).font("Helvetica-Bold").fillColor("#374151").text(row[0], colX[0] + 6, y + 8, { width: colW[0] });
-    doc.font("Helvetica").fillColor("#1e293b").text(row[1], colX[1] + 4, y + 8, { width: colW[1] });
-    doc.font("Helvetica-Bold").fillColor("#374151").text(row[2], colX[2] + 6, y + 8, { width: colW[2] });
-    doc.font("Helvetica").fillColor("#1e293b").text(row[3], colX[3] + 4, y + 8, { width: colW[3] });
-    y += rowH;
+    const bg = ri % 2 === 0 ? "#f0f4f8" : "#ffffff";
+    doc.rect(30, y, W - 60, rH).fill(bg);
+    doc.rect(30, y, W - 60, rH).lineWidth(0.4).strokeColor("#d1d5db").stroke();
+    doc.fontSize(8).font("Helvetica-Bold").fillColor("#4b5563").text(row[0], cX[0]+5, y+7, { width: cW[0] });
+    doc.font("Helvetica").fillColor("#111827").text(row[1], cX[1]+4, y+7, { width: cW[1] });
+    doc.font("Helvetica-Bold").fillColor("#4b5563").text(row[2], cX[2]+5, y+7, { width: cW[2] });
+    doc.font("Helvetica").fillColor("#111827").text(row[3], cX[3]+4, y+7, { width: cW[3] });
+    y += rH;
   });
-  doc.rect(30, 122, W - 60, rows.length * rowH).lineWidth(1).strokeColor("#cbd5e1").stroke();
+  // Outer border
+  doc.rect(30, tableTop, W - 60, rows.length * rH).lineWidth(1).strokeColor("#9ca3af").stroke();
+  // Vertical divider
+  doc.moveTo(cX[2], tableTop).lineTo(cX[2], tableTop + rows.length * rH).lineWidth(0.4).strokeColor("#d1d5db").stroke();
 
   y += 14;
 
-  // ── GREEN CTA BUTTON ──
+  // ━━ GREEN CTA BUTTON ━━
   const bookingUrl = `${baseUrl}/booking.html`;
-  doc.rect(30, y, W - 60, 54).fill(green);
-  doc.fontSize(15).fillColor("#ffffff").font("Helvetica-Bold")
-    .text("Doctor Sa Sidhi Baat  \u2192", 30, y + 9, { width: W - 60, align: "center" });
-  doc.fontSize(9).fillColor("rgba(255,255,255,0.9)").font("Helvetica")
-    .text("Ek click mein doctor se connect karein — early consultation = better results", 30, y + 30, { width: W - 60, align: "center" });
-  doc.link(30, y, W - 60, 54, bookingUrl);
-  y += 68;
-
-  // ── HEALTH SCORE SUMMARY ──
-  doc.fontSize(11).fillColor(teal).font("Helvetica-Bold").text("Health Score Summary", 30, y);
-  y += 14;
-
-  // Risk box
-  doc.rect(30, y, W - 60, 58).fill("#fef2f2");
-  doc.rect(30, y, W - 60, 58).lineWidth(1).strokeColor("#fca5a5").stroke();
-  // Red square indicator
-  doc.rect(40, y + 26, 10, 10).fill(red);
-  doc.fontSize(13).fillColor(red).font("Helvetica-Bold").text(statusText, 40, y + 8, { width: 290 });
-  doc.fontSize(8).fillColor("#94a3b8").font("Helvetica").text("Overall Health Status", 40, y + 42);
-  // Risk %
-  doc.fontSize(38).fillColor(red).font("Helvetica-Bold").text(`${riskPct}%`, W - 170, y + 4, { width: 130, align: "right" });
-  doc.fontSize(9).fillColor(red).font("Helvetica-Bold").text("Risk Index", W - 150, y + 43, { width: 110, align: "right" });
+  const btnY = y;
+  doc.rect(30, btnY, W - 60, 56).fill(green);
+  // Button text
+  doc.fontSize(16).fillColor("#ffffff").font("Helvetica-Bold")
+    .text("Doctor Sa Sidhi Baat  \u2192", 30, btnY + 10, { width: W - 60, align: "center" });
+  doc.fontSize(9).fillColor("rgba(255,255,255,0.88)").font("Helvetica")
+    .text("Ek click mein doctor se connect karein \u2014 early consultation = better results", 30, btnY + 32, { width: W - 60, align: "center" });
+  doc.link(30, btnY, W - 60, 56, bookingUrl);
   y += 70;
 
-  // ── SPEEDOMETER GAUGE ──
-  const gaugeH = 115;
-  const cx = W / 2, cy = y + gaugeH - 18, r = 78;
+  // ━━ HEALTH SCORE SUMMARY ━━
+  doc.fontSize(11).fillColor(teal).font("Helvetica-Bold").text("Health Score Summary", 30, y);
+  y += 13;
 
-  // Background track
-  drawArcSegment(doc, cx, cy, r, 0, 100, "#e2e8f0");
-  // Color segments
-  drawArcSegment(doc, cx, cy, r, 0, 30, "#22c55e");
-  drawArcSegment(doc, cx, cy, r, 30, 60, "#f59e0b");
-  drawArcSegment(doc, cx, cy, r, 60, 80, "#f97316");
+  // Risk box — red border
+  const boxH = 60;
+  doc.rect(30, y, W - 60, boxH).fill("#fef2f2");
+  doc.rect(30, y, W - 60, boxH).lineWidth(1.2).strokeColor("#f87171").stroke();
+
+  // Left: status text
+  doc.fontSize(13).fillColor(red).font("Helvetica-Bold").text(statusText, 40, y + 8, { width: 290 });
+  // Small red squares (like reference image)
+  doc.rect(40, y + 30, 8, 8).fill(red);
+  doc.rect(52, y + 30, 8, 8).fill(red);
+  doc.fontSize(8).fillColor("#9ca3af").font("Helvetica").text("Overall Health Status", 40, y + 44);
+
+  // Right: risk %
+  doc.fontSize(40).fillColor(red).font("Helvetica-Bold")
+    .text(`${riskPct}%`, W - 175, y + 4, { width: 140, align: "right" });
+  doc.fontSize(9).fillColor(red).font("Helvetica-Bold")
+    .text("Risk Index", W - 155, y + 46, { width: 120, align: "right" });
+
+  y += boxH + 12;
+
+  // ━━ SPEEDOMETER GAUGE ━━
+  const gaugeH = 120;
+  const cx = W / 2, cy = y + gaugeH - 20, r = 82;
+
+  // Background grey track
+  drawArcSegment(doc, cx, cy, r, 0, 100, "#e5e7eb");
+  // Colour bands: green / yellow / orange / red
+  drawArcSegment(doc, cx, cy, r,  0,  30, "#22c55e");
+  drawArcSegment(doc, cx, cy, r, 30,  60, "#f59e0b");
+  drawArcSegment(doc, cx, cy, r, 60,  80, "#f97316");
   drawArcSegment(doc, cx, cy, r, 80, 100, "#ef4444");
 
-  // Labels
-  doc.fontSize(8).fillColor("#475569").font("Helvetica-Bold");
-  doc.text("Stable", cx - r - 32, cy + 6, { width: 36, align: "center" });
-  doc.text("Alert",  cx + r - 4,  cy + 6, { width: 36, align: "center" });
-  const midL = Math.PI + (0.30 * Math.PI);
-  const midR = Math.PI + (0.60 * Math.PI);
-  doc.text("Risk",    cx + (r + 8) * Math.cos(midL) - 16, cy + (r + 8) * Math.sin(midL) - 8, { width: 32 });
-  doc.text("Concern", cx + (r + 8) * Math.cos(midR) - 6,  cy + (r + 8) * Math.sin(midR) - 8, { width: 42 });
+  // Labels (matching reference exactly)
+  doc.fontSize(8).fillColor("#374151").font("Helvetica-Bold");
+  // Stable — far left
+  doc.text("Stable", cx - r - 36, cy + 8, { width: 38, align: "center" });
+  // Alert — far right
+  doc.text("Alert",  cx + r,       cy + 8, { width: 38, align: "center" });
+  // Risk — above left quarter
+  const angRisk    = Math.PI + 0.30 * Math.PI;
+  const angConcern = Math.PI + 0.60 * Math.PI;
+  doc.text("Risk",    cx + (r + 12) * Math.cos(angRisk)    - 10, cy + (r + 12) * Math.sin(angRisk)    - 6, { width: 28 });
+  doc.text("Concern", cx + (r + 12) * Math.cos(angConcern) - 16, cy + (r + 12) * Math.sin(angConcern) - 6, { width: 42 });
 
-  // Needle
+  // Needle — angle proportional to riskPct (0%=left, 100%=right)
   const needleAngle = Math.PI + (riskPct / 100) * Math.PI;
-  const nx = cx + (r - 12) * Math.cos(needleAngle);
-  const ny = cy + (r - 12) * Math.sin(needleAngle);
-  doc.save().lineWidth(2.5).strokeColor("#1e293b").lineCap("round")
+  const nx = cx + (r - 14) * Math.cos(needleAngle);
+  const ny = cy + (r - 14) * Math.sin(needleAngle);
+  doc.save().lineWidth(2.5).strokeColor("#111827").lineCap("round")
     .moveTo(cx, cy).lineTo(nx, ny).stroke().restore();
-  doc.circle(cx, cy, 6).fill("#0a2d5a");
+  // Center circle
+  doc.circle(cx, cy, 7).fill("#0a2d5a");
   doc.circle(cx, cy, 3).fill("#ffffff");
 
-  y += gaugeH + 8;
+  // Bottom divider line (as in reference)
+  doc.rect(30, cy + 14, W - 60, 3).fill("#1e3a5f");
 
-  // ── DOCTOR RECOMMENDATIONS ──
-  doc.fontSize(11).fillColor("#1e293b").font("Helvetica-Bold").text("Doctor Recommendations", 30, y);
-  y += 16;
+  y += gaugeH + 14;
 
-  const recMap = {
-    "Joint / Movement Issue":    "Mobility ya energy mein dikkat hai — joint pain ya arthritis ka early sign ho sakta hai.",
-    "Appetite / Digestion Issue":"Digestive issues hain — bland diet try karo aur fresh paani ensure karo. Vet se poochho.",
-    "Eye Concern":               "Aankh mein discharge ya redness — infection ya allergy ho sakta hai. Vet check zaroori.",
-    "Skin / Coat Issue":         "Skin/coat issues hain — allergy, fleas, ya nutritional deficiency check karo.",
-    "Ear Concern":               "Kaan mein infection ho sakta hai — ear drops ya cleaning ki zaroorat ho sakti hai.",
-    "Respiratory Concern":       "Saas ki problem detect hui — X-ray ya respiratory panel test recommend hai.",
-    "Behaviour / Neurological":  "Behaviour change hai — neuro exam ya thyroid test helpful hoga.",
-    "General Health Weakness":   "General weakness — blood panel aur complete checkup recommend hai.",
-    "Nutritional Deficiency":    "Ghar ka khana dogs ke liye nutritionally incomplete — proper dog food pe switch karo.",
-    "Immunity Concern":          "Immunity weak ho sakti hai — vaccination aur supplements review karo.",
-    "Overall Health Risk":       "Overall health risk detected — full physical exam recommended.",
+  // ━━ DOCTOR RECOMMENDATIONS ━━
+  doc.fontSize(11).fillColor("#111827").font("Helvetica-Bold").text("Doctor Recommendations", 30, y);
+  y += 15;
+
+  // Detailed recommendations with procedure names
+  const recData = {
+    "Joint / Movement Issue":    { text: "Mobility mein dikkat — joint pain ya arthritis ka sign. Recommended: Hip X-ray, Joint mobility exam, anti-inflammatory protocol." },
+    "Appetite / Digestion Issue":{ text: "Digestive problem detect hui. Recommended: Bland diet, deworming, Endoscopy evaluation, fresh water ensure karo." },
+    "Eye Concern":               { text: "Aankh mein issue detected. Recommended: Ophthalmoscopy exam, eye culture test, antibiotic drops evaluation." },
+    "Skin / Coat Issue":         { text: "Skin/coat problem hai. Recommended: Allergy panel test, Skin scraping, flea treatment, nutritional supplement review." },
+    "Ear Concern":               { text: "Kaan mein infection sign. Recommended: Otoscopy exam, Ear culture test, cleaning protocol, antifungal/antibiotic drops." },
+    "Respiratory Concern":       { text: "Saas ki problem detected. Recommended: Chest X-ray, Bronchoscopy evaluation, respiratory panel test." },
+    "Behaviour / Neurological":  { text: "Behaviour change detected. Recommended: Neurological exam, MRI/CT scan evaluation, thyroid function test." },
+    "General Health Weakness":   { text: "General weakness detected. Recommended: Complete blood panel, CBC test, full physical examination." },
+    "Nutritional Deficiency":    { text: "Ghar ka khana nutritionally incomplete. Recommended: Vet-approved dog food, vitamin supplement, diet chart consultation." },
+    "Immunity Concern":          { text: "Immunity issue detected. Recommended: Vaccination review, Immunity booster protocol, titer test." },
+    "Overall Health Risk":       { text: "Overall health risk detected. Recommended: Comprehensive wellness exam, blood work, preventive care plan." },
   };
 
-  const recs = ["Urgent — abhi vet se milo, der mat karo."];
-  for (const area of problemAreas) {
-    if (recMap[area.label]) recs.push(recMap[area.label]);
-  }
-  if (recs.length < 4) recs.push("Regular health checkup har 6 mahine mein karo — prevention is better than cure.");
+  // First bullet: urgent (with double-square like reference)
+  doc.rect(40, y + 2, 7, 7).fill(red);
+  doc.rect(50, y + 2, 7, 7).fill(red);
+  doc.fontSize(9).fillColor("#111827").font("Helvetica-Bold")
+    .text(`Urgent \u2014 abhi vet se milo, der mat karo.`, 62, y, { width: W - 100 });
+  y += 16;
 
-  for (const rec of recs.slice(0, 6)) {
+  // Food recommendation always
+  doc.fontSize(9).fillColor("#374151").font("Helvetica")
+    .text(`\u2022  Ghar ka khana dogs ke liye nutritionally incomplete hota hai \u2014 proper dog food pe switch karo.`, 40, y, { width: W - 78 });
+  y += 14;
+
+  // Problem-specific recs
+  for (const area of problemAreas.slice(0, 4)) {
+    const rd = recData[area.label];
+    if (rd) {
+      doc.fontSize(9).fillColor("#374151").font("Helvetica")
+        .text(`\u2022  ${rd.text}`, 40, y, { width: W - 78 });
+      y += doc.heightOfString(`\u2022  ${rd.text}`, { width: W - 78 }) + 4;
+    }
+  }
+
+  // If room, add general tip
+  if (y < 740) {
     doc.fontSize(9).fillColor("#374151").font("Helvetica")
-      .text(`\u2022 ${rec}`, 42, y, { width: W - 82 });
-    y += 18;
+      .text(`\u2022  Regular health checkup har 6 mahine mein \u2014 prevention is better than cure.`, 40, y, { width: W - 78 });
+    y += 14;
   }
 
-  // ── FOOTER ──
-  doc.rect(0, 772, W, 1).fill("#e2e8f0");
-  doc.fontSize(7).fillColor("#94a3b8").font("Helvetica")
-    .text(`Generated by Vetraj AI Pet Health Assistant  \u2022  ${new Date().toLocaleDateString("en-IN")}  \u2022  Report ID: ${reportId}`, 20, 778, { width: W - 40, align: "center" });
-  doc.fontSize(7).fillColor("#94a3b8")
-    .text("This report is for informational purposes only and does not replace professional veterinary advice.", 20, 788, { width: W - 40, align: "center" });
+  // ━━ FOOTER ━━
+  const footY = Math.max(y + 10, 775);
+  doc.rect(0, footY - 2, W, 0.5).fill("#e5e7eb");
+  const docName = doctorName || "Vetraj Expert Vet";
+  doc.fontSize(7).fillColor("#9ca3af").font("Helvetica")
+    .text(`Generated by Vetraj AI Pet Health Assistant  \u2022  ${new Date().toLocaleDateString("en-IN")}  \u2022  Report ID: ${reportId}`, 20, footY + 2, { width: W - 40, align: "center" });
+  doc.fontSize(7).fillColor("#9ca3af")
+    .text("This report is for informational purposes only and does not replace professional veterinary advice.", 20, footY + 12, { width: W - 40, align: "center" });
 }
 
 // Helper: create PDF file and return URL
