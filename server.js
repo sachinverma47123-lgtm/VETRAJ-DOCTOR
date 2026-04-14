@@ -1024,15 +1024,196 @@ app.get("/get-report", (req, res) => {
   const last10 = (phone || "").replace(/\D/g, "").slice(-10);
   const lead = memLeads.find(l => l.ownerPhone === last10);
   if (lead && lead.reportUrl) return res.json({ url: lead.reportUrl });
-  // Try to find latest report file for this phone
-  try {
-    const files = fs.readdirSync(REPORTS_DIR).filter(f => f.endsWith('.pdf')).sort().reverse();
-    if (files.length) {
-      const baseUrl = req.protocol + '://' + req.get('host');
-      return res.json({ url: `${baseUrl}/reports/${files[0]}` });
-    }
-  } catch(e) {}
   res.json({ url: null });
+});
+
+// ━━━━ GENERATE PDF FROM LEAD DATA (for telecaller) ━━━━
+// Detects problem areas from problem string (chat Q&A text)
+function detectProblemAreasFromText(text) {
+  const t = (text || "").toLowerCase();
+  const areas = [];
+  const seen = new Set();
+
+  const checks = [
+    { keys: ["joint","limp","walk","stiffness","pair","ghutna","hip","lameness"], area: "joints",  label: "Joint / Movement Issue",    x: 122, y: 128 },
+    { keys: ["eat","food","khana","appetite","bhook","vomit","ulti","stomach","digestion","nausea"], area: "mouth", label: "Appetite / Digestion Issue", x: 164, y: 54 },
+    { keys: ["eye","aankh","vision","dikhna","discharge","watery"],               area: "eyes",    label: "Eye Concern",                x: 138, y: 40  },
+    { keys: ["coat","skin","fur","baal","itch","khujli","dull","dandruff","flaky","rash","patch"], area: "skin",  label: "Skin / Coat Issue",          x: 90,  y: 85  },
+    { keys: ["ear","kaan","scratch","khujana","head shake"],                      area: "ears",    label: "Ear Concern",                x: 130, y: 26  },
+    { keys: ["breath","sans","cough","khansi","naak","nose","respiratory","wheeze"], area: "chest", label: "Respiratory Concern",        x: 90,  y: 100 },
+    { keys: ["energy","thaka","tired","lazy","slow","behaviour","unusual","letharg"], area: "head", label: "Behaviour / Neurological",   x: 148, y: 45  },
+    { keys: ["pending","bimaar","sick","fever","bukhar","infection","weak"],      area: "body",    label: "General Health Weakness",    x: 90,  y: 68  },
+  ];
+
+  for (const c of checks) {
+    if (seen.has(c.area)) continue;
+    if (c.keys.some(k => t.includes(k))) {
+      seen.add(c.area);
+      areas.push({ label: c.label, x: c.x, y: c.y });
+    }
+  }
+
+  if (areas.length === 0) {
+    areas.push({ label: "Nutritional Deficiency", x: 90, y: 85 });
+    areas.push({ label: "Immunity Concern",        x: 148, y: 45 });
+  } else if (areas.length === 1) {
+    areas.push({ label: "Overall Health Risk",     x: 90, y: 85 });
+  }
+  return areas;
+}
+
+app.get("/generate-lead-report", async (req, res) => {
+  const { phone, leadId, key } = req.query;
+  if (key !== (process.env.ADMIN_KEY || "vetraj2024")) return res.json({ success: false, error: "unauthorized" });
+
+  // Find lead
+  let lead = null;
+  if (leadId) lead = memLeads.find(l => String(l._id) === String(leadId));
+  if (!lead && phone) {
+    const last10 = phone.replace(/\D/g, "").slice(-10);
+    lead = memLeads.find(l => l.ownerPhone === last10);
+  }
+  if (!lead && DB_READY) {
+    try {
+      if (leadId) lead = await Lead.findById(leadId).lean();
+      else if (phone) {
+        const last10 = phone.replace(/\D/g, "").slice(-10);
+        lead = await Lead.findOne({ ownerPhone: last10 }).sort({ createdAt: -1 }).lean();
+      }
+    } catch(e) {}
+  }
+  if (!lead) return res.json({ success: false, error: "lead not found" });
+
+  // If reportUrl already exists, return it
+  if (lead.reportUrl) return res.json({ success: true, url: lead.reportUrl });
+
+  try {
+    const { ownerName, ownerPhone, petName, petType, petAge, petBreed, doctorName, problem } = lead;
+    const reportId = "VR" + Date.now().toString().slice(-8);
+    const fileName = `report_${reportId}.pdf`;
+    const filePath = path.join(REPORTS_DIR, fileName);
+
+    // Detect from problem text
+    const problemAreas = detectProblemAreasFromText(problem || "");
+    const concerns = problemAreas.map(a => a.label);
+    if (!concerns.includes("Nutritional Imbalance Risk")) concerns.push("Nutritional Imbalance Risk");
+    if (concerns.length < 3) concerns.push("Immunity Weakness Detected");
+
+    const pdfDoc = new PDFDocument({ size: "A4", margin: 40 });
+    const stream = fs.createWriteStream(filePath);
+    pdfDoc.pipe(stream);
+
+    const W = 595, navy = "#0a2d5a", red = "#cc1111", orange = "#d97706";
+
+    // HEADER
+    pdfDoc.rect(0, 0, W, 70).fill(navy);
+    pdfDoc.fontSize(22).fillColor("#ffffff").font("Helvetica-Bold").text("🐾 VETRAJ PET HOSPITAL", 40, 14);
+    pdfDoc.fontSize(9).fillColor("#93c5fd").text("Health Checkup Report  |  Vetraj Pet Hospital", 40, 42);
+    pdfDoc.fontSize(8).fillColor("#cbd5e1").text(`Report ID: ${reportId}   |   Date: ${new Date().toLocaleDateString("en-IN")}`, 40, 56);
+
+    // WARNING BANNER
+    pdfDoc.rect(0, 70, W, 28).fill("#fef2f2");
+    pdfDoc.fontSize(10).fillColor(red).font("Helvetica-Bold")
+      .text("⚠️  ATTENTION: Health concerns detected — Immediate consultation recommended", 40, 79);
+
+    // PET & OWNER INFO
+    pdfDoc.rect(30, 112, 250, 100).lineWidth(1).strokeColor("#dde3ef").stroke();
+    pdfDoc.rect(30, 112, 250, 22).fill("#eef2fa");
+    pdfDoc.fontSize(9).fillColor(navy).font("Helvetica-Bold").text("PET OWNER DETAILS", 38, 119);
+    pdfDoc.font("Helvetica").fontSize(9).fillColor("#1e293b")
+      .text(`Name   :  ${ownerName || "—"}`, 38, 140)
+      .text(`Phone  :  +91-XXXXXX${(ownerPhone||"").slice(-4)}`, 38, 155)
+      .text(`City    :  India`, 38, 170)
+      .text(`Report  :  FREE Health Checkup`, 38, 185);
+
+    pdfDoc.rect(300, 112, 265, 100).lineWidth(1).strokeColor("#dde3ef").stroke();
+    pdfDoc.rect(300, 112, 265, 22).fill("#eef2fa");
+    pdfDoc.fontSize(9).fillColor(navy).font("Helvetica-Bold").text("PET DETAILS", 308, 119);
+    pdfDoc.font("Helvetica").fontSize(9).fillColor("#1e293b")
+      .text(`Name    :  ${petName  || "—"}`, 308, 140)
+      .text(`Species :  ${petType  || "Dog"}`, 308, 155)
+      .text(`Breed   :  ${petBreed || "Mixed Breed"}`, 308, 170)
+      .text(`Age     :  ${petAge   || "—"}`, 308, 185);
+
+    // DIAGNOSIS BOX
+    pdfDoc.rect(30, 224, 535, 22).fill(red);
+    pdfDoc.fontSize(10).fillColor("#ffffff").font("Helvetica-Bold")
+      .text("HEALTH ASSESSMENT  —  CONCERNS DETECTED", 38, 230);
+
+    let cy = 256;
+    for (const concern of concerns.slice(0, 5)) {
+      pdfDoc.rect(30, cy, 535, 20).fill(cy % 40 === 16 ? "#fff5f5" : "#ffffff");
+      pdfDoc.circle(46, cy + 10, 4).fill(red);
+      pdfDoc.fontSize(9).fillColor("#1e293b").font("Helvetica-Bold").text(concern, 58, cy + 6);
+      pdfDoc.font("Helvetica").fillColor("#64748b").text("Requires immediate attention", 300, cy + 6);
+      cy += 22;
+    }
+    pdfDoc.rect(30, 224, 535, cy - 224).lineWidth(1).strokeColor("#fca5a5").stroke();
+
+    // DOG DIAGRAM
+    const dogBoxY = cy + 16;
+    pdfDoc.rect(30, dogBoxY, 535, 210).lineWidth(1).strokeColor("#dde3ef").stroke();
+    pdfDoc.rect(30, dogBoxY, 535, 22).fill("#eef2fa");
+    pdfDoc.fontSize(9).fillColor(navy).font("Helvetica-Bold").text("BODY ANALYSIS — Problem Areas Highlighted", 38, dogBoxY + 7);
+    drawDog(pdfDoc, 185, dogBoxY + 30, problemAreas);
+
+    let legY = dogBoxY + 38;
+    pdfDoc.fontSize(8).fillColor(red).font("Helvetica-Bold").text("PROBLEM AREAS:", 420, legY);
+    legY += 14;
+    for (const area of problemAreas.slice(0, 5)) {
+      pdfDoc.circle(427, legY + 4, 4).fill(red);
+      pdfDoc.fontSize(8).fillColor("#1e293b").font("Helvetica").text(area.label, 436, legY);
+      legY += 16;
+    }
+
+    // HEALTH SUMMARY from problem text
+    const summaryY = dogBoxY + 220;
+    const summaryText = (problem || "").replace(/\|/g, "\n").substring(0, 500);
+    pdfDoc.rect(30, summaryY, 535, 22).fill("#f0fdf4");
+    pdfDoc.fontSize(9).fillColor("#166534").font("Helvetica-Bold").text("HEALTH CHECKUP Q&A SUMMARY", 38, summaryY + 7);
+    pdfDoc.fontSize(8).fillColor("#1e293b").font("Helvetica")
+      .text(summaryText || "Health checkup completed", 38, summaryY + 30, { width: 519, lineGap: 3 });
+
+    const recY = summaryY + 110;
+    pdfDoc.rect(30, recY, 535, 80).fill("#fffbeb").stroke();
+    pdfDoc.rect(30, recY, 535, 22).fill(orange);
+    pdfDoc.fontSize(10).fillColor("#ffffff").font("Helvetica-Bold").text("DR. RECOMMENDATION", 38, recY + 7);
+    pdfDoc.fontSize(9).fillColor("#92400e").font("Helvetica")
+      .text(`Dr. ${doctorName || "Vetraj Expert Vet"} ke analysis ke anusar, ${petName || "aapke pet"} mein kuch health concerns detected hue hain.`, 38, recY + 30)
+      .text(`Inhe nazarandaaz karna theek nahi hoga — seedha consultation se sahi treatment plan milega.`, 38, recY + 46)
+      .text(`Consulting: ${doctorName || "Vetraj Expert Vet"}  |  Appointment: Rs.399 only  |  Call: 9568606006`, 38, recY + 62);
+
+    const ctaY = recY + 90;
+    pdfDoc.rect(30, ctaY, 535, 36).fill(navy);
+    pdfDoc.fontSize(12).fillColor("#ffffff").font("Helvetica-Bold")
+      .text("Book Expert Consultation: vetraj.in  |  Helpline: 9568606006", 38, ctaY + 12);
+
+    pdfDoc.fontSize(7).fillColor("#94a3b8").font("Helvetica")
+      .text(`Yeh report ${doctorName || "Vetraj Expert Vet"} dwara Vetraj Pet Hospital ki taraf se jari ki gayi hai.`, 30, 790, { width: 535, align: "center" });
+
+    pdfDoc.end();
+
+    await new Promise((resolve, reject) => {
+      stream.on("finish", resolve);
+      stream.on("error", reject);
+    });
+
+    const baseUrl = req.protocol + "://" + req.get("host");
+    const reportUrl = `${baseUrl}/reports/${fileName}`;
+    console.log(`[PDF] Telecaller-generated: ${fileName} for ${ownerName}`);
+
+    // Save reportUrl back to lead
+    const idx = memLeads.findIndex(l => String(l._id) === String(lead._id));
+    if (idx >= 0) { memLeads[idx].reportUrl = reportUrl; persistLeads(); }
+    if (DB_READY && lead._id && !String(lead._id).startsWith("mem_")) {
+      try { await Lead.findByIdAndUpdate(lead._id, { $set: { reportUrl } }); } catch(e) {}
+    }
+
+    res.json({ success: true, url: reportUrl });
+  } catch(e) {
+    console.error("generate-lead-report error:", e.message);
+    res.json({ success: false, error: e.message });
+  }
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1161,8 +1342,9 @@ app.get("/caller-leads", async (req, res) => {
   try {
     const { name } = req.query;
     if (!name) return res.json([]);
-    if (!DB_READY) return res.json(memLeads.filter(l => l.assignedTo === name));
-    const leads = await Lead.find({ assignedTo: name }).sort({ createdAt: -1 }).limit(200).lean();
+    // Return leads assigned to this caller OR unassigned (new form submissions)
+    if (!DB_READY) return res.json(memLeads.filter(l => !l.assignedTo || l.assignedTo === '' || l.assignedTo === name));
+    const leads = await Lead.find({ $or: [{ assignedTo: name }, { assignedTo: '' }, { assignedTo: null }] }).sort({ createdAt: -1 }).limit(200).lean();
     res.json(leads);
   } catch (e) { res.json([]); }
 });

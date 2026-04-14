@@ -621,13 +621,24 @@ async function saveNotes(i, id, phone){
 async function findReport(i){
   const lead = getFilteredLeads()[i];
   const phone = (lead.ownerPhone||lead.Phone||'').replace(/\D/g,'').slice(-10);
-  // Try to find report from server
+  const leadId = lead._id||'';
+  toast('⏳ PDF generate ho rahi hai...');
   try {
-    const r = await fetch(`${BACKEND}/get-report?phone=${phone}&key=vetraj2024`);
+    // First check if reportUrl already stored
+    if(lead.reportUrl){ window.open(lead.reportUrl,'_blank'); return; }
+    // Generate PDF on-demand from lead data
+    const params = new URLSearchParams({ phone, key:'vetraj2024' });
+    if(leadId) params.set('leadId', leadId);
+    const r = await fetch(`${BACKEND}/generate-lead-report?${params}`);
     const d = await r.json();
-    if(d.url){ window.open(d.url,'_blank'); }
-    else { toast('Report abhi available nahi — pet parent ne complete nahi kiya'); }
-  } catch(e){ toast('Report nahi mili'); }
+    if(d.success && d.url){
+      lead.reportUrl = d.url; // cache locally
+      window.open(d.url,'_blank');
+      toast('✅ PDF ready — download ho gayi!');
+    } else {
+      toast('❌ PDF generate nahi hui: '+(d.error||'unknown error'));
+    }
+  } catch(e){ toast('❌ Error: '+e.message); }
 }
 
 function openWA(phone, ownerName, petName){

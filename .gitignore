@@ -1,10 +1,13 @@
 node_modules/
 .env
 *.csv
-*.json
-!package.json
-!package-lock.json
 health_log.json
+server.js.bak
+Vetraj
+
+# Data files (auto-generated, not for git)
+data/leads.json
+data/telecallers.json
 vetraj_leads.csv
 vetraj_appointments.json
 vetraj_doctors.json
