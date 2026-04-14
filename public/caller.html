@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vetraj — Telecaller Panel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--blue:#1a5a8a;--dk:#0d3d6b;--green:#16a34a;--red:#dc2626;--gold:#d97706;--bg:#f0f9ff;--white:#fff;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);}
+
+/* LOGIN */
+#login-page{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0a2d5a,#1a5a8a);}
+.lbox{background:#fff;border-radius:16px;padding:36px 32px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.lbox h2{color:var(--dk);font-size:20px;margin-bottom:4px;}
+.lbox p{color:var(--muted);font-size:13px;margin-bottom:24px;}
+.lbox input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:12px;outline:none;}
+.lbox input:focus{border-color:var(--blue);}
+.lbtn{width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;}
+.lbtn:hover{background:var(--dk);}
+.lerr{color:var(--red);font-size:13px;margin-top:8px;display:none;}
+
+/* APP */
+#app{display:none;}
+.hdr{background:linear-gradient(135deg,#0a2d5a,#1a5a8a);padding:12px 20px;display:flex;align-items:center;gap:12px;}
+.hdr-logo{font-size:24px;}
+.hdr-title{color:#fff;font-weight:800;font-size:16px;}
+.hdr-sub{color:rgba(255,255,255,.6);font-size:12px;}
+.hdr-name{margin-left:auto;background:rgba(255,255,255,.15);color:#fff;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;}
+.logout-btn{background:rgba(255,255,255,.15);color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;margin-left:8px;}
+
+.main{padding:16px;max-width:1100px;margin:0 auto;}
+
+/* STATS */
+.stats{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+.stat{background:#fff;border-radius:12px;padding:14px 20px;flex:1;min-width:120px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.stat-n{font-size:28px;font-weight:800;color:var(--blue);}
+.stat-l{font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* FILTERS */
+.filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
+.filters input{padding:9px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;width:220px;}
+.filter-btn{padding:8px 16px;border:1.5px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-size:13px;color:var(--text);}
+.filter-btn.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+.refresh-btn{padding:8px 16px;background:var(--green);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;margin-left:auto;}
+
+/* LEAD CARDS */
+.lead-card{background:#fff;border-radius:12px;margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.07);overflow:hidden;border-left:4px solid var(--border);}
+.lead-card.pending{border-left-color:#f59e0b;}
+.lead-card.called{border-left-color:#3b82f6;}
+.lead-card.interested{border-left-color:#10b981;}
+.lead-card.booked{border-left-color:#16a34a;}
+.lead-card.not_interested{border-left-color:#94a3b8;}
+
+.lc-top{padding:14px 16px;display:flex;align-items:flex-start;gap:14px;cursor:pointer;}
+.lc-av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1a5a8a,#2980b9);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.lc-info{flex:1;min-width:0;}
+.lc-name{font-weight:700;font-size:15px;color:var(--text);}
+.lc-pet{font-size:13px;color:var(--muted);margin-top:2px;}
+.lc-time{font-size:11px;color:var(--muted);margin-top:4px;}
+.lc-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+.status-badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;text-transform:uppercase;}
+.sb-pending{background:#fef3c7;color:#92400e;}
+.sb-called{background:#dbeafe;color:#1e40af;}
+.sb-interested{background:#d1fae5;color:#065f46;}
+.sb-booked{background:#bbf7d0;color:#14532d;}
+.sb-not_interested{background:#f1f5f9;color:#64748b;}
+.sb-follow_up{background:#ede9fe;color:#5b21b6;}
+.lc-phone{font-size:13px;font-weight:700;color:var(--blue);}
+
+/* FUNNEL TRACK */
+.funnel-track{padding:10px 16px;background:#f8fafc;border-top:1px solid var(--border);display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+.ft-step{display:flex;align-items:center;gap:4px;font-size:11px;}
+.ft-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+.ft-dot.done{background:#16a34a;color:#fff;}
+.ft-dot.current{background:#f59e0b;color:#fff;}
+.ft-dot.pending{background:#e2e8f0;color:#94a3b8;}
+.ft-label{color:var(--muted);white-space:nowrap;}
+.ft-arrow{color:#cbd5e1;font-size:10px;}
+
+/* EXPANDED DETAIL */
+.lc-detail{display:none;padding:14px 16px;border-top:1px solid var(--border);}
+.lc-detail.open{display:block;}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.dg-item{background:#f8fafc;border-radius:8px;padding:10px 12px;}
+.dg-label{font-size:11px;color:var(--muted);margin-bottom:2px;}
+.dg-val{font-size:13px;font-weight:600;color:var(--text);}
+.problem-text{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px;font-size:12px;color:#9a3412;margin-bottom:14px;line-height:1.6;}
+.action-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.act-btn{padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;}
+.btn-call{background:#16a34a;color:#fff;}
+.btn-pdf{background:#1a5a8a;color:#fff;}
+.btn-wa{background:#25d366;color:#fff;}
+.status-sel{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:#fff;cursor:pointer;}
+.notes-area{width:100%;margin-top:10px;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;resize:vertical;min-height:60px;font-family:inherit;}
+.save-note-btn{margin-top:6px;padding:7px 16px;background:var(--blue);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty-state div{font-size:40px;margin-bottom:12px;}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:999;display:none;}
+
+/* FOLLOW-UP POPUP */
+#followup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;align-items:center;justify-content:center;}
+#followup-overlay.show{display:flex;}
+.fu-box{background:#fff;border-radius:16px;width:92%;max-width:520px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+.fu-header{background:#dc2626;padding:16px 20px;display:flex;align-items:center;gap:10px;}
+.fu-header.blink{animation:redBlink 0.8s infinite;}
+@keyframes redBlink{0%,100%{background:#dc2626;}50%{background:#991b1b;}}
+.fu-title{color:#fff;font-weight:800;font-size:16px;flex:1;}
+.fu-count{background:rgba(255,255,255,.25);color:#fff;font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;}
+.fu-body{padding:16px;max-height:400px;overflow-y:auto;}
+.fu-item{border:2px solid #fecaca;border-radius:10px;padding:12px;margin-bottom:10px;background:#fff5f5;}
+.fu-item.overdue{border-color:#dc2626;background:#fef2f2;}
+.fu-item.today{border-color:#f59e0b;background:#fffbeb;}
+.fu-item-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.fu-item-name{font-weight:700;font-size:14px;color:#0f172a;}
+.fu-item-pet{font-size:12px;color:#64748b;}
+.fu-item-time{margin-left:auto;font-size:11px;font-weight:700;}
+.fu-item-time.overdue{color:#dc2626;}
+.fu-item-time.today{color:#d97706;}
+.fu-item-note{font-size:12px;color:#475569;margin-bottom:8px;}
+.fu-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.fu-act-btn{padding:6px 12px;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;}
+.fu-call{background:#16a34a;color:#fff;}
+.fu-done{background:#3b82f6;color:#fff;}
+.fu-later{background:#f1f5f9;color:#334155;}
+.fu-footer{padding:12px 16px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;}
+.fu-dismiss{background:#fee2e2;color:#dc2626;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+.fu-snooze{background:#f1f5f9;color:#475569;border:none;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;}
+
+/* FOLLOW-UP DATE ROW */
+.followup-row{display:none;margin-top:10px;background:#fef3c7;border:1.5px solid #fbbf24;border-radius:8px;padding:10px 12px;}
+.followup-row.show{display:block;}
+.followup-row label{font-size:11px;font-weight:700;color:#92400e;display:block;margin-bottom:4px;}
+.followup-row input{padding:8px 10px;border:1.5px solid #fbbf24;border-radius:7px;font-size:13px;outline:none;background:#fff;width:100%;margin-bottom:6px;}
+.followup-row textarea{width:100%;padding:8px 10px;border:1.5px solid #fbbf24;border-radius:7px;font-size:12px;resize:none;font-family:inherit;background:#fff;outline:none;}
+.set-fu-btn{margin-top:6px;padding:7px 14px;background:#d97706;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;width:100%;}
+</style>
+</head>
+<body>
+
+<!-- FOLLOW-UP REMINDER POPUP -->
+<div id="followup-overlay">
+  <div class="fu-box">
+    <div class="fu-header blink" id="fu-header">
+      <div style="font-size:22px;">🔔</div>
+      <div class="fu-title">Follow-Up Pending Hai!</div>
+      <div class="fu-count" id="fu-count">0</div>
+    </div>
+    <div class="fu-body" id="fu-body"></div>
+    <div class="fu-footer">
+      <span style="font-size:11px;color:#94a3b8;">Action lene ke baad popup band hoga</span>
+      <div style="display:flex;gap:8px;">
+        <button class="fu-snooze" onclick="snoozeFollowup()">⏰ 30 min baad</button>
+        <button class="fu-dismiss" onclick="checkAndDismiss()">✓ Sab dekh liya</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-page">
+  <div class="lbox">
+    <h2>📞 Telecaller Login</h2>
+    <p>Vetraj Pet Hospital — Caller Panel</p>
+    <input type="text" id="lu" placeholder="Aapka Naam" autocomplete="off">
+    <input type="password" id="lp" placeholder="Password" value="caller123">
+    <button class="lbtn" onclick="doLogin()">Login karein</button>
+    <div class="lerr" id="lerr">❌ Galat naam ya password</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="hdr">
+    <div class="hdr-logo">🐾</div>
+    <div>
+      <div class="hdr-title">Vetraj — Caller Panel</div>
+      <div class="hdr-sub">Assigned Leads Dashboard</div>
+    </div>
+    <div class="hdr-name" id="caller-name-display">—</div>
+    <button class="logout-btn" onclick="doLogout()">Logout</button>
+  </div>
+
+  <div class="main">
+    <div class="stats">
+      <div class="stat"><div class="stat-n" id="st-total">0</div><div class="stat-l">Total Leads</div></div>
+      <div class="stat"><div class="stat-n" id="st-pending" style="color:#f59e0b;">0</div><div class="stat-l">Pending</div></div>
+      <div class="stat"><div class="stat-n" id="st-called" style="color:#3b82f6;">0</div><div class="stat-l">Called</div></div>
+      <div class="stat"><div class="stat-n" id="st-interested" style="color:#10b981;">0</div><div class="stat-l">Interested</div></div>
+      <div class="stat"><div class="stat-n" id="st-booked" style="color:#16a34a;">0</div><div class="stat-l">Booked</div></div>
+    </div>
+
+    <div class="filters">
+      <input type="text" id="srch" placeholder="🔍 Search naam, phone, pet..." oninput="filterLeads()">
+      <button class="filter-btn on" onclick="setFilter('all',this)">Sab</button>
+      <button class="filter-btn" onclick="setFilter('pending',this)">Pending</button>
+      <button class="filter-btn" onclick="setFilter('called',this)">Called</button>
+      <button class="filter-btn" onclick="setFilter('interested',this)">Interested</button>
+      <button class="filter-btn" onclick="setFilter('booked',this)">Booked</button>
+      <button class="refresh-btn" onclick="loadLeads()">🔄 Refresh</button>
+    </div>
+
+    <!-- MANUAL LEAD FORM -->
+    <div style="background:#fff;border-radius:12px;margin-bottom:16px;box-shadow:0 2px 10px rgba(0,0,0,.07);overflow:hidden;">
+      <div style="padding:12px 16px;background:linear-gradient(135deg,#1a5a8a,#2980b9);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleManualForm()">
+        <div style="color:#fff;font-weight:700;font-size:14px;">➕ Manual Lead Add Karo (Incoming Call)</div>
+        <div style="color:rgba(255,255,255,.7);font-size:12px;" id="manual-toggle-icon">▼ Expand</div>
+      </div>
+      <div id="manual-form" style="display:none;padding:16px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div><label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:3px;">OWNER NAAM *</label>
+            <input id="ml-name" type="text" placeholder="Pet parent ka naam..." style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;">
+          </div>
+          <div><label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:3px;">PHONE *</label>
+            <input id="ml-phone" type="tel" placeholder="10 digit number..." style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;">
+          </div>
+          <div><label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:3px;">PET NAAM</label>
+            <input id="ml-pet" type="text" placeholder="Pet ka naam..." style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;">
+          </div>
+          <div><label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:3px;">PET TYPE</label>
+            <select id="ml-type" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;background:#fff;">
+              <option value="dog">🐶 Dog</option>
+              <option value="cat">🐱 Cat</option>
+              <option value="other">🐾 Other</option>
+            </select>
+          </div>
+          <div><label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:3px;">BREED</label>
+            <input id="ml-breed" type="text" placeholder="e.g. Labrador, Pug..." style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;">
+          </div>
+          <div><label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:3px;">AGE</label>
+            <input id="ml-age" type="text" placeholder="e.g. 2 years..." style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;">
+          </div>
+        </div>
+        <div style="margin-bottom:10px;"><label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:3px;">PROBLEM / NOTES *</label>
+          <textarea id="ml-problem" rows="2" placeholder="Pet ki problem kya hai? Caller ne kya bataya..." style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;resize:none;font-family:inherit;"></textarea>
+        </div>
+        <div style="margin-bottom:10px;"><label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:3px;">INITIAL STATUS</label>
+          <select id="ml-status" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;background:#fff;">
+            <option value="called">📞 Called</option>
+            <option value="interested">✅ Interested</option>
+            <option value="follow_up">🔄 Follow Up</option>
+            <option value="pending">⏳ Pending</option>
+          </select>
+        </div>
+        <button onclick="saveManualLead()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1a5a8a,#2980b9);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">💾 Lead Save Karo</button>
+      </div>
+    </div>
+
+    <div id="leads-container"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BACKEND = window.location.origin;
+let callerName = '';
+let allLeads = [];
+let currentFilter = 'all';
+
+const FUNNEL_STEPS = [
+  {key:'landed', label:'Form', icon:'📋'},
+  {key:'otp_verified', label:'OTP', icon:'✅'},
+  {key:'chat_started', label:'Chat', icon:'💬'},
+  {key:'chat_complete', label:'Report', icon:'📄'},
+  {key:'payment_page', label:'Payment', icon:'💳'},
+  {key:'payment_clicked', label:'Clicked', icon:'👆'},
+  {key:'payment_done', label:'Paid', icon:'💰'},
+];
+
+const FUNNEL_ORDER = FUNNEL_STEPS.map(s=>s.key);
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.display='block';
+  setTimeout(()=>t.style.display='none',2500);
+}
+
+async function doLogin(){
+  const name = document.getElementById('lu').value.trim();
+  const pass = document.getElementById('lp').value.trim();
+  if(!name || !pass){ document.getElementById('lerr').style.display='block'; return; }
+
+  // Check against telecallers list
+  try {
+    const r = await fetch(`${BACKEND}/get-telecallers`);
+    const d = await r.json();
+    const caller = (d.telecallers||[]).find(t =>
+      t.name.toLowerCase() === name.toLowerCase() &&
+      (t.password||'caller123') === pass
+    );
+    if(caller){
+      callerName = caller.name;
+      document.getElementById('login-page').style.display='none';
+      document.getElementById('app').style.display='block';
+      document.getElementById('caller-name-display').textContent = '👤 '+callerName;
+      loadLeads();
+      setInterval(loadLeads, 30000);
+      setInterval(()=>{ if(allLeads.some(l=>l.followUpDate&&!l.followUpDone)) checkFollowUps(); }, 60000);
+    } else {
+      document.getElementById('lerr').style.display='block';
+    }
+  } catch(e) {
+    document.getElementById('lerr').style.display='block';
+  }
+}
+
+function doLogout(){
+  callerName=''; allLeads=[];
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-page').style.display='flex';
+  document.getElementById('lu').value='';
+}
+
+async function loadLeads(){
+  try {
+    const r = await fetch(`${BACKEND}/caller-leads?name=${encodeURIComponent(callerName)}`);
+    const data = await r.json();
+    allLeads = Array.isArray(data) ? data.reverse() : [];
+    updateStats();
+    renderLeads();
+    // Check follow-ups after first load
+    setTimeout(checkFollowUps, 800);
+  } catch(e){ toast('Leads load nahi hui'); }
+}
+
+function updateStats(){
+  document.getElementById('st-total').textContent = allLeads.length;
+  document.getElementById('st-pending').textContent = allLeads.filter(l=>!l.callerStatus||l.callerStatus==='pending').length;
+  document.getElementById('st-called').textContent = allLeads.filter(l=>l.callerStatus==='called').length;
+  document.getElementById('st-interested').textContent = allLeads.filter(l=>l.callerStatus==='interested').length;
+  document.getElementById('st-booked').textContent = allLeads.filter(l=>l.callerStatus==='booked').length;
+}
+
+function setFilter(f, el){
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderLeads();
+}
+
+function filterLeads(){
+  renderLeads();
+}
+
+function getFilteredLeads(){
+  const q = (document.getElementById('srch').value||'').toLowerCase();
+  return allLeads.filter(l=>{
+    const name = (l.ownerName||l.Owner||'').toLowerCase();
+    const phone = (l.ownerPhone||l.Phone||'');
+    const pet = (l.petName||l.Pet||'').toLowerCase();
+    const matchQ = !q || name.includes(q) || phone.includes(q) || pet.includes(q);
+    const status = l.callerStatus || 'pending';
+    const matchF = currentFilter==='all' || status===currentFilter;
+    return matchQ && matchF;
+  });
+}
+
+function funnelBar(funnelStep){
+  const currentIdx = FUNNEL_ORDER.indexOf(funnelStep||'landed');
+  return `<div class="funnel-track">` +
+    FUNNEL_STEPS.map((s,i)=>{
+      const state = i < currentIdx ? 'done' : i===currentIdx ? 'current' : 'pending';
+      const icon = state==='done' ? '✓' : s.icon;
+      return `<div class="ft-step">
+        <div class="ft-dot ${state}">${icon}</div>
+        <span class="ft-label">${s.label}</span>
+      </div>` + (i<FUNNEL_STEPS.length-1 ? '<span class="ft-arrow">›</span>' : '');
+    }).join('') +
+  `</div>`;
+}
+
+function statusBadgeClass(s){
+  const map={pending:'sb-pending',called:'sb-called',interested:'sb-interested',booked:'sb-booked',not_interested:'sb-not_interested',follow_up:'sb-follow_up'};
+  return map[s]||'sb-pending';
+}
+
+function renderLeads(){
+  const data = getFilteredLeads();
+  const c = document.getElementById('leads-container');
+  if(!data.length){
+    c.innerHTML=`<div class="empty-state"><div>📭</div>Koi lead nahi mili</div>`;
+    return;
+  }
+  c.innerHTML = data.map((l,i)=>{
+    const name = l.ownerName||l.Owner||'—';
+    const phone = l.ownerPhone||l.Phone||'—';
+    const petName = l.petName||l.Pet||'—';
+    const petType = l.petType||l.Type||'';
+    const petBreed = l.petBreed||l.Breed||'';
+    const petAge = l.petAge||l.Age||'';
+    const problem = l.problem||l.Problem||'';
+    const date = l.date||l.Date||'—';
+    const time = l.time||l.Time||'';
+    const doctor = l.doctorName||l.Doctor||'—';
+    const status = l.callerStatus||'pending';
+    const funnelStep = l.funnelStep||'landed';
+    const consultType = l.consultationType||'free';
+    const reportUrl = l.reportUrl||'';
+    const notes = l.callerNotes||'';
+    const isPaid = consultType==='paid' || funnelStep==='payment_done';
+
+    return `<div class="lead-card ${status}" id="card-${i}">
+      <div class="lc-top" onclick="toggleDetail(${i})">
+        <div class="lc-av">${petType==='cat'?'🐱':'🐶'}</div>
+        <div class="lc-info">
+          <div class="lc-name">${name} ${isPaid?'<span style="background:#bbf7d0;color:#14532d;font-size:10px;padding:2px 6px;border-radius:8px;margin-left:4px;">PAID ✓</span>':''}</div>
+          <div class="lc-pet">🐾 ${petName} &nbsp;|&nbsp; ${petBreed||petType} &nbsp;|&nbsp; ${petAge}</div>
+          <div class="lc-time">📅 ${date} ${time} &nbsp;|&nbsp; 🏥 ${doctor}</div>
+        </div>
+        <div class="lc-right">
+          <span class="status-badge ${statusBadgeClass(status)}">${status.replace('_',' ')}</span>
+          <span class="lc-phone">📞 ${phone}</span>
+          <span style="font-size:11px;color:#94a3b8;">▼ Details</span>
+        </div>
+      </div>
+      ${funnelBar(funnelStep)}
+      <div class="lc-detail" id="detail-${i}">
+        <div class="detail-grid">
+          <div class="dg-item"><div class="dg-label">Owner</div><div class="dg-val">${name}</div></div>
+          <div class="dg-item"><div class="dg-label">Phone</div><div class="dg-val"><a href="tel:${phone}" style="color:var(--blue);">${phone}</a></div></div>
+          <div class="dg-item"><div class="dg-label">Pet Name</div><div class="dg-val">${petName}</div></div>
+          <div class="dg-item"><div class="dg-label">Breed / Type</div><div class="dg-val">${petBreed||'—'} (${petType})</div></div>
+          <div class="dg-item"><div class="dg-label">Age</div><div class="dg-val">${petAge||'—'}</div></div>
+          <div class="dg-item"><div class="dg-label">Doctor</div><div class="dg-val">${doctor}</div></div>
+          <div class="dg-item"><div class="dg-label">Consultation</div><div class="dg-val" style="color:${isPaid?'#16a34a':'#d97706'}">${isPaid?'💰 Paid (₹399)':'Free'}</div></div>
+          <div class="dg-item"><div class="dg-label">Funnel Stage</div><div class="dg-val">${funnelStep}</div></div>
+        </div>
+        ${problem?`<div class="problem-text">📋 <b>Health Checkup Summary:</b><br>${problem.substring(0,400)}${problem.length>400?'...':''}</div>`:''}
+        <div class="action-row">
+          <button class="act-btn btn-call" onclick="window.location='tel:${phone}'">📞 Call Now</button>
+          <button class="act-btn btn-wa" onclick="openWA('${phone}','${name}','${petName}')">💬 WhatsApp</button>
+          ${reportUrl?`<button class="act-btn btn-pdf" onclick="window.open('${reportUrl}','_blank')">📄 PDF Report</button>`:'<button class="act-btn btn-pdf" onclick="findReport('+i+')">📄 PDF Report</button>'}
+          <select class="status-sel" id="sel-${i}" onchange="updateStatus(${i},'${l._id||''}','${phone}')">
+            <option value="pending" ${status==='pending'?'selected':''}>⏳ Pending</option>
+            <option value="called" ${status==='called'?'selected':''}>📞 Called</option>
+            <option value="interested" ${status==='interested'?'selected':''}>✅ Interested</option>
+            <option value="follow_up" ${status==='follow_up'?'selected':''}>🔄 Follow Up</option>
+            <option value="booked" ${status==='booked'?'selected':''}>🎉 Booked</option>
+            <option value="not_interested" ${status==='not_interested'?'selected':''}>❌ Not Interested</option>
+          </select>
+        </div>
+        <!-- FOLLOW-UP DATE ROW -->
+        <div class="followup-row ${status==='follow_up'?'show':''}" id="furow-${i}">
+          <label>📅 Follow-Up Date & Time Set Karo</label>
+          <input type="datetime-local" id="fu-date-${i}" value="${l.followUpDate||''}">
+          <textarea id="fu-note-${i}" rows="2" placeholder="Follow-up note (kya puchna hai, kya batana hai)...">${l.followUpNote||''}</textarea>
+          <button class="set-fu-btn" onclick="setFollowUp(${i},'${l._id||''}','${phone}')">⏰ Follow-Up Schedule Karo</button>
+        </div>
+        ${l.followUpDate?`<div style="margin-top:8px;background:#fef3c7;border-radius:7px;padding:7px 10px;font-size:12px;color:#92400e;">📅 Follow-up: <b>${new Date(l.followUpDate).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</b>${l.followUpNote?' — '+l.followUpNote:''}</div>`:''}
+        <textarea class="notes-area" id="notes-${i}" placeholder="Notes daalo (optional)...">${notes}</textarea>
+        <button class="save-note-btn" onclick="saveNotes(${i},'${l._id||''}','${phone}')">💾 Notes Save karo</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleDetail(i){
+  const d = document.getElementById(`detail-${i}`);
+  d.classList.toggle('open');
+}
+
+async function updateStatus(i, id, phone){
+  const status = document.getElementById(`sel-${i}`).value;
+  const card = document.getElementById(`card-${i}`);
+  card.className = 'lead-card '+status;
+
+  // Show/hide follow-up date row
+  const fuRow = document.getElementById(`furow-${i}`);
+  if(fuRow) fuRow.classList.toggle('show', status==='follow_up');
+
+  const lead = getFilteredLeads()[i];
+  if(lead) lead.callerStatus = status;
+  updateStats();
+
+  try {
+    await fetch(`${BACKEND}/update-caller-status`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({leadId:id, phone, callerStatus:status, callerName, key:'vetraj2024'})
+    });
+    toast('Status: '+status.replace('_',' '));
+    // If marked booked/called/interested, remove from follow-up popup if shown
+    if(['booked','called','interested','not_interested'].includes(status)){
+      removeFuItem(id||phone);
+    }
+  } catch(e){ toast('Update fail'); }
+}
+
+async function setFollowUp(i, id, phone){
+  const dateVal = document.getElementById(`fu-date-${i}`).value;
+  const noteVal = document.getElementById(`fu-note-${i}`).value.trim();
+  if(!dateVal){ toast('⚠️ Date aur time select karo'); return; }
+
+  const lead = getFilteredLeads()[i];
+  if(lead){ lead.followUpDate = dateVal; lead.followUpNote = noteVal; }
+
+  try {
+    await fetch(`${BACKEND}/update-caller-status`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({leadId:id, phone, followUpDate:dateVal, followUpNote:noteVal, callerName, key:'vetraj2024'})
+    });
+    toast('⏰ Follow-up set ho gaya: '+new Date(dateVal).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}));
+  } catch(e){ toast('Set fail'); }
+}
+
+// ━━━━ FOLLOW-UP POPUP ━━━━
+let fuPendingIds = new Set();
+
+function checkFollowUps(){
+  const now = new Date();
+  const fuLeads = allLeads.filter(l=>{
+    if(!l.followUpDate) return false;
+    if(l.followUpDone) return false;
+    if(['booked','not_interested'].includes(l.callerStatus)) return false;
+    return true; // show all pending follow-ups
+  });
+
+  if(!fuLeads.length) return;
+
+  const overdue = fuLeads.filter(l=> new Date(l.followUpDate) < now);
+  const upcoming = fuLeads.filter(l=> new Date(l.followUpDate) >= now);
+
+  fuPendingIds = new Set(fuLeads.map(l=>l._id||l.ownerPhone));
+
+  const overlay = document.getElementById('followup-overlay');
+  const body = document.getElementById('fu-body');
+  const count = document.getElementById('fu-count');
+  const header = document.getElementById('fu-header');
+
+  count.textContent = fuLeads.length + ' pending';
+  if(overdue.length) header.classList.add('blink');
+  else header.classList.remove('blink');
+
+  body.innerHTML = [...overdue, ...upcoming].map(l=>{
+    const fuDate = new Date(l.followUpDate);
+    const isOverdue = fuDate < now;
+    const isToday = fuDate.toDateString() === now.toDateString();
+    const timeStr = fuDate.toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    const diffMin = Math.round((fuDate-now)/60000);
+    const timeLabel = isOverdue ? `⚠️ ${Math.abs(diffMin)} min overdue!` : isToday ? `⏰ ${diffMin} min mein` : timeStr;
+    const cls = isOverdue?'overdue':isToday?'today':'';
+    const uid = l._id||l.ownerPhone||'';
+    return `<div class="fu-item ${cls}" id="fui-${uid}">
+      <div class="fu-item-top">
+        <div>
+          <div class="fu-item-name">${l.ownerName||'—'} &nbsp;<span style="font-weight:400;font-size:12px;color:#64748b;">(${l.petName||'—'})</span></div>
+          <div class="fu-item-pet">📞 ${l.ownerPhone||'—'} &nbsp;|&nbsp; ${l.petBreed||l.petType||''}</div>
+        </div>
+        <div class="fu-item-time ${isOverdue?'overdue':isToday?'today':''}">${timeLabel}</div>
+      </div>
+      ${l.followUpNote?`<div class="fu-item-note">📝 ${l.followUpNote}</div>`:''}
+      ${l.problem?`<div class="fu-item-note" style="color:#9a3412;">🐾 ${l.problem.substring(0,80)}...</div>`:''}
+      <div class="fu-actions">
+        <button class="fu-act-btn fu-call" onclick="window.location='tel:${l.ownerPhone}';markFuAction('${uid}','called')">📞 Call Karo</button>
+        <button class="fu-act-btn fu-done" onclick="markFuAction('${uid}','called')">✅ Called</button>
+        <button class="fu-act-btn fu-later" onclick="document.getElementById('fui-${uid}').style.opacity='.4'">Skip</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  overlay.classList.add('show');
+
+  // Keep blinking until action taken — re-check every 30 sec
+  if(!window._fuInterval){
+    window._fuInterval = setInterval(()=>{
+      if(fuPendingIds.size === 0){ clearInterval(window._fuInterval); window._fuInterval=null; return; }
+      header.classList.toggle('blink');
+    }, 800);
+  }
+}
+
+async function markFuAction(uid, status){
+  const lead = allLeads.find(l=>(l._id||l.ownerPhone)===uid);
+  if(!lead) return;
+  try{
+    await fetch(`${BACKEND}/update-caller-status`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({leadId:lead._id,phone:lead.ownerPhone,callerStatus:status,followUpDone:true,callerName,key:'vetraj2024'})
+    });
+  }catch(e){}
+  lead.callerStatus=status; lead.followUpDone=true;
+  fuPendingIds.delete(uid);
+  const el = document.getElementById('fui-'+uid);
+  if(el) el.style.display='none';
+  document.getElementById('fu-count').textContent = fuPendingIds.size+' pending';
+  if(fuPendingIds.size===0){ checkAndDismiss(); }
+  updateStats(); renderLeads();
+}
+
+function removeFuItem(uid){
+  fuPendingIds.delete(uid);
+  const el = document.getElementById('fui-'+uid);
+  if(el) el.style.display='none';
+  if(fuPendingIds.size===0) checkAndDismiss();
+}
+
+function checkAndDismiss(){
+  document.getElementById('followup-overlay').classList.remove('show');
+  clearInterval(window._fuInterval); window._fuInterval=null;
+}
+
+function snoozeFollowup(){
+  document.getElementById('followup-overlay').classList.remove('show');
+  clearInterval(window._fuInterval); window._fuInterval=null;
+  toast('⏰ 30 min baad yaad dilaya jaayega');
+  setTimeout(()=>{ if(fuPendingIds.size>0) checkFollowUps(); }, 30*60*1000);
+}
+
+async function saveNotes(i, id, phone){
+  const notes = document.getElementById(`notes-${i}`).value;
+  try {
+    await fetch(`${BACKEND}/update-caller-status`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({leadId:id, phone, callerNotes:notes, key:'vetraj2024'})
+    });
+    toast('Notes save ho gayi ✓');
+  } catch(e){ toast('Save fail'); }
+}
+
+async function findReport(i){
+  const lead = getFilteredLeads()[i];
+  const phone = (lead.ownerPhone||lead.Phone||'').replace(/\D/g,'').slice(-10);
+  // Try to find report from server
+  try {
+    const r = await fetch(`${BACKEND}/get-report?phone=${phone}&key=vetraj2024`);
+    const d = await r.json();
+    if(d.url){ window.open(d.url,'_blank'); }
+    else { toast('Report abhi available nahi — pet parent ne complete nahi kiya'); }
+  } catch(e){ toast('Report nahi mili'); }
+}
+
+function openWA(phone, ownerName, petName){
+  const msg = `Namaste ${ownerName} ji! Main Vetraj Pet Hospital se bol rahi hun. Aapke ${petName} ki health report review ki — kuch important points hain jo discuss karne hain. Kya abhi 5 minute baat kar sakte hain? 🐾`;
+  const clean = phone.replace(/\D/g,'');
+  window.open(`https://wa.me/91${clean}?text=${encodeURIComponent(msg)}`,'_blank');
+}
+
+function toggleManualForm(){
+  const f = document.getElementById('manual-form');
+  const icon = document.getElementById('manual-toggle-icon');
+  const open = f.style.display==='block';
+  f.style.display = open?'none':'block';
+  icon.textContent = open?'▼ Expand':'▲ Close';
+}
+
+async function saveManualLead(){
+  const name = document.getElementById('ml-name').value.trim();
+  const phone = document.getElementById('ml-phone').value.trim().replace(/\D/g,'').slice(-10);
+  const pet = document.getElementById('ml-pet').value.trim();
+  const type = document.getElementById('ml-type').value;
+  const breed = document.getElementById('ml-breed').value.trim();
+  const age = document.getElementById('ml-age').value.trim();
+  const problem = document.getElementById('ml-problem').value.trim();
+  const status = document.getElementById('ml-status').value;
+
+  if(!name){ toast('⚠️ Owner naam zaroori hai'); return; }
+  if(!phone || phone.length<10){ toast('⚠️ Sahi phone number daalo'); return; }
+  if(!problem){ toast('⚠️ Problem/notes daalo'); return; }
+
+  try {
+    const r = await fetch(`${BACKEND}/add-manual-lead`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        ownerName:name, ownerPhone:phone, petName:pet, petType:type,
+        petBreed:breed, petAge:age, problem:problem,
+        assignedTo:callerName, callerStatus:status,
+        source:'manual_call', key:'vetraj2024'
+      })
+    });
+    const d = await r.json();
+    if(d.success){
+      toast('✅ Lead save ho gayi — dashboard mein dikh rahi hai');
+      // Clear form
+      ['ml-name','ml-phone','ml-pet','ml-breed','ml-age','ml-problem'].forEach(id=>document.getElementById(id).value='');
+      document.getElementById('manual-form').style.display='none';
+      document.getElementById('manual-toggle-icon').textContent='▼ Expand';
+      setTimeout(loadLeads, 1000);
+    } else { toast('❌ Save nahi hua: '+(d.error||'')); }
+  } catch(e){ toast('❌ Error: '+e.message); }
+}
+
+document.getElementById('lu').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+document.getElementById('lp').addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+</script>
+</body>
+</html>

@@ -257,7 +257,7 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
     </div>
     <div class="f">
       <input class="inp" id="oname" type="text" placeholder="Apna naam likhein..."
-        maxlength="50" autocomplete="off"
+        maxlength="50" autocomplete="off" style="text-transform:capitalize"
         onfocus="onInputFocus('qb-name')"
         onkeydown="if(event.key==='Enter'){event.preventDefault();focusNext('oname','ophone','qb-phone');}">
     </div>
@@ -325,7 +325,7 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
     </div>
     <div class="f">
       <input class="inp" id="pname" type="text" placeholder="Jaise: Tommy, Moti, Sheru, Kitty..."
-        maxlength="30" autocomplete="off"
+        maxlength="30" autocomplete="off" style="text-transform:capitalize"
         onfocus="onInputFocus('qb-pname')"
         onkeydown="if(event.key==='Enter'){event.preventDefault();scrollToEl('qb-type');}">
     </div>
@@ -335,8 +335,8 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
       <div class="qb-t"><span class="hl">Dog</span> hai ya <span class="hl">Cat</span>?</div>
     </div>
     <div class="g2">
-      <button class="opt" onclick="pick(this,'pt','dog');scrollToEl('qb-age');">🐕 Dog</button>
-      <button class="opt" onclick="pick(this,'pt','cat');scrollToEl('qb-age');">🐈 Cat</button>
+      <button class="opt" onclick="pick(this,'pt','dog');updateBreedPlaceholder('dog');scrollToEl('qb-age');">🐕 Dog</button>
+      <button class="opt" onclick="pick(this,'pt','cat');updateBreedPlaceholder('cat');scrollToEl('qb-age');">🐈 Cat</button>
     </div>
 
     <div class="qb" id="qb-age">
@@ -381,6 +381,16 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--text);dis
 
 <!-- CHAT -->
 <div class="hide" id="chatscreen" style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+  <!-- Progress bar — shown during health checkup -->
+  <div id="hc-progress-bar" style="display:none;padding:6px 14px 0;flex-shrink:0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <span style="font-size:10px;font-weight:700;color:#64748b;letter-spacing:.5px;">CHECKUP PROGRESS</span>
+      <span id="hc-progress-pct" style="font-size:10px;font-weight:800;color:#0a2d5a;">0%</span>
+    </div>
+    <div style="height:6px;background:#e2e8f0;border-radius:10px;overflow:hidden;">
+      <div id="hc-progress-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#1a5a8a,#22c55e);border-radius:10px;transition:width .5s ease;"></div>
+    </div>
+  </div>
   <div class="msgs" id="msgs"></div>
 </div>
 
@@ -436,6 +446,165 @@ let rec=null,listening=false,speaking=false;
 let voices=[],msgN=0,hcN=0,payDone=false,videoAsked=false,reportSent=false;
 let otpVerified=false,otpTimerInt=null;
 let picks={};
+let hcAnswers={}; // stores health checkup answers
+let hcStarted=false; // waiting for trigger
+
+// ━━━━ FUNNEL TRACKING ━━━━
+function trackFunnel(step,meta){
+  try{
+    fetch(`${BACKEND}/track-funnel`,{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({phone:oPhone||"unknown",step,meta:meta||""})
+    }).catch(()=>{});
+  }catch(e){}
+}
+
+// ━━━━ HEALTH CHECKUP QUESTIONS (pre-defined, with options) ━━━━
+function getHCQuestions(){
+  const p=pName||"aapka pet";
+  const isOld=pAge&&(pAge.includes("7+")||pAge.includes("3-7"));
+  const isPuppy=pAge&&(pAge.includes("0-6")||pAge.includes("6-12"));
+  const breed=(pBreed||"").toLowerCase();
+  const isLarge=breed&&/german|labrador|golden|husky|rottweiler|great dane|doberman|mastiff|saint bernard/i.test(breed);
+  const isSmall=breed&&/pomeranian|chihuahua|shih tzu|maltese|dachshund|poodle|bichon|spitz|toy/i.test(breed);
+  const isBrachy=breed&&/pug|bulldog|persian|himalayan|british short|exotic short/i.test(breed);
+  const isCat=pType==='cat';
+  const breedNote=pBreed?` (${pBreed})`:"";
+
+  // Breed-specific Q7 — joint/breathing/dental based on breed type
+  const q7 = isBrachy ? {
+    q:`**${p}${breedNote}** ke naak aur saans ke baare mein batao — koi dikkat?`,
+    opts:["✅ Saans bilkul theek hai","😮‍💨 Thodi heavy breathing hoti hai","🌬️ Khelte time jaldi thak jaata hai","😴 Raat mein aawaz aati hai saans mein"],
+    ack:{
+      "✅ Saans bilkul theek hai":`Accha hai — breathing clear hai abhi.`,
+      "😮‍💨 Thodi heavy breathing hoti hai":`[RED:Heavy breathing ${pBreed||'is breed'} mein common problem hai] — nasal passage narrow hoti hai, dhyan zaroori hai.`,
+      "🌬️ Khelte time jaldi thak jaata hai":`[RED:Jaldi thakna breathing restriction ka sign hai] — ${pBreed||'yeh breed'} mein surgery tak ki zaroorat pad sakti hai.`,
+      "😴 Raat mein aawaz aati hai saans mein":`[RED:Raat ki aawaz snoring nahi, airway obstruction hai] — serious check-up zaroori hai.`
+    }
+  } : isLarge ? {
+    q:`**${p}${breedNote}** ke **joints aur chalna-phirna** kaisa hai?`,
+    opts:["✅ Bilkul normal chalta hai","🦴 Thodi stiffness subah ko","⚠️ Limp karta hai kabhi kabhi","❌ Seedhi tarah nahi uthta"],
+    ack:{
+      "✅ Bilkul normal chalta hai":`Joints abhi theek hain — achha hai.`,
+      "🦴 Thodi stiffness subah ko":`[RED:Subah ki stiffness ${pBreed||'large breed'} mein hip dysplasia ka early sign hai] — jaldi dhyan dena zaroori hai.`,
+      "⚠️ Limp karta hai kabhi kabhi":`[RED:Limping serious joint problem ka sign hai] — ${p} ko pain ho raha hai aur treatment chahiye.`,
+      "❌ Seedhi tarah nahi uthta":`[RED:Yeh advanced joint disease ho sakti hai] — turant doctor se milna zaroori hai.`
+    }
+  } : isSmall ? {
+    q:`**${p}${breedNote}** ke **daant aur muh** kaisa hai — koi smell ya dikkat?`,
+    opts:["✅ Daant saaf, koi smell nahi","🦷 Thodi smell aati hai muh se","😬 Tartar ya plaque dikh raha hai","🤒 Khana khaate time takleef hoti hai"],
+    ack:{
+      "✅ Daant saaf, koi smell nahi":`Dental health achhi hai — good.`,
+      "🦷 Thodi smell aati hai muh se":`[RED:Muh ki smell dental infection ka sign hai] — ${pBreed||'small breeds'} mein yeh jaldi serious hoti hai.`,
+      "😬 Tartar ya plaque dikh raha hai":`[RED:Tartar build-up] gum disease aur heart problems tak le ja sakta hai — cleaning zaroori hai.`,
+      "🤒 Khana khaate time takleef hoti hai":`[RED:Khane mein takleef] tooth pain ya gum infection ka sign hai — immediately dekhna chahiye.`
+    }
+  } : isCat ? {
+    q:`**${p}${breedNote}** ka **litter box behaviour** kaisa hai?`,
+    opts:["✅ Regularly use karta/karti hai","⚠️ Kabhi kabhi bahar kar deta/deti hai","🚨 Bahut baar jaata/jaati hai — thoda thoda","❌ Litter se door rehta/rehti hai"],
+    ack:{
+      "✅ Regularly use karta/karti hai":`Litter behaviour normal hai — good.`,
+      "⚠️ Kabhi kabhi bahar kar deta/deti hai":`[RED:Bahar karna stress ya medical issue ka sign ho sakta hai] — dhyan dena zaroori hai.`,
+      "🚨 Bahut baar jaata/jaati hai — thoda thoda":`[RED:Baar baar thoda karna UTI ya kidney problem ka sign hai] — serious concern.`,
+      "❌ Litter se door rehta/rehti hai":`[RED:Litter avoid karna pain ka sign hai] — cat ko discomfort ho raha hai.`
+    }
+  } : {
+    q:`**${p}** ka **activity level** kaisa hai?`,
+    opts:["🏃 Bahut active aur playful","👍 Normal rehta hai","😴 Thoda thaka sa lagta hai","⚠️ Bahut lazy / uthta nahi"],
+    ack:{
+      "🏃 Bahut active aur playful":`Active hai — achha sign hai!`,
+      "👍 Normal rehta hai":`Normal activity — theek hai.`,
+      "😴 Thoda thaka sa lagta hai":`[RED:Thakaan] nutrition ki kami ya andar koi problem ka early sign ho sakta hai.`,
+      "⚠️ Bahut lazy / uthta nahi":`[RED:Itni laziness normal nahi hai] — ${p} andar se theek nahi lag raha.`
+    }
+  };
+
+  return [
+    {
+      q:`**${p}${breedNote}** ko kaun sa khaana dete ho aap?`,
+      note:"Ghar ka khana sabse best hota hai — Vetraj food chart se puri nutrition milti hai",
+      opts:["🏠 Ghar ka khaana","📦 Packet / dry food","🔀 Dono milakar","🤔 Jo milta hai woh"],
+      ack:{
+        "🏠 Ghar ka khaana":`Achha! Ghar ka khaana dete ho — yeh ek acha kadam hai. Lekin bina proper nutrition chart ke ${p} ko sab vitamins nahi milte.`,
+        "📦 Packet / dry food":`Samajh gaya. Packet food mein preservatives hote hain — [RED:${p} ke liver par dheere dheere asar hota hai].`,
+        "🔀 Dono milakar":`Mix dete ho — theek hai. Lekin balance zaroori hai, warna ${p} ko sahi nutrition nahi milti.`,
+        "🤔 Jo milta hai woh":`Noted. Iska matlab ${p} ka khaana routine fix nahi hai — [RED:yeh ek concern hai].`
+      }
+    },
+    {
+      q:`${p} ki **deworming** aakhri baar kab hui thi?`,
+      opts:["1 mahine ke andar","3-6 mahine pehle","6-12 mahine pehle","❌ Yaad nahi / Nahi hui kabhi"],
+      ack:{
+        "1 mahine ke andar":`Good! Deworming recent hai — yeh ek acha sign hai.`,
+        "3-6 mahine pehle":`3-6 mahine ho gaye — thoda time aa gaya hai dobara karne ka.`,
+        "6-12 mahine pehle":`[RED:6 mahine se zyada ho gaye] — ${p} ke andar keede ho sakte hain jo dikhte nahi.`,
+        "❌ Yaad nahi / Nahi hui kabhi":`[RED:Yeh serious hai.] Bina deworming ke ${p} ka internal health khatre mein hai.`
+      }
+    },
+    {
+      q:`**Vaccination** ka kya haal hai — ${p}${breedNote} ki?`,
+      opts:["✅ Sab updated hai","⚠️ Kuch pending hai","❓ Pata nahi","❌ Kabhi nahi hui"],
+      ack:{
+        "✅ Sab updated hai":`Bahut achha! Vaccination updated hai — yeh zaroori hai.`,
+        "⚠️ Kuch pending hai":`[RED:Pending vaccination] se ${p} ko infection ka risk rehta hai.`,
+        "❓ Pata nahi":`Agar pata nahi to sambhavit hai ki kuch dose miss ho gaye hain — [RED:risk area].`,
+        "❌ Kabhi nahi hui":`[RED:Kabhi vaccination nahi hui] — yeh ${p} ke liye bahut bada khatraa hai.`
+      }
+    },
+    {
+      q:`**${p}** ki potty kaisi aati hai?`,
+      opts:["✅ Normal (brown, solid)","🟡 Peeli / light color","⚫ Kaali ya dark","💧 Loose / diarrhea rehti hai"],
+      ack:{
+        "✅ Normal (brown, solid)":`Potty normal hai — yeh digestive health ka ek sign hai.`,
+        "🟡 Peeli / light color":`[RED:Peeli potty] liver ya digestive issue ka sign ho sakti hai — dhyan dena zaroori hai.`,
+        "⚫ Kaali ya dark":`[RED:Kaali potty serious concern hai] — internal bleeding ya liver problem ho sakti hai.`,
+        "💧 Loose / diarrhea rehti hai":`[RED:Loose motions] matlab ${p} ka gut theek nahi hai — infection ya parasite bhi ho sakta hai.`
+      }
+    },
+    {
+      q:`${p} ka **coat aur fur** kaisa lag raha hai?`,
+      opts:["✨ Shiny aur smooth","🌫️ Dull aur rough","❄️ Dandruff dikh raha hai","Baal bahut zyada jhad rahe hain"],
+      ack:{
+        "✨ Shiny aur smooth":`Coat achha hai — nutrition ka ek positive sign.`,
+        "🌫️ Dull aur rough":`[RED:Dull coat] matlab nutrition mein koi kami hai — vitamins ya omega fatty acids ki zaroorat hai.`,
+        "❄️ Dandruff dikh raha hai":`Dandruff skin infection ya nutrition deficiency ka sign hai — [RED:ignore nahi karna chahiye].`,
+        "Baal bahut zyada jhad rahe hain":`[RED:Zyada baal jhadna] hormonal imbalance ya serious deficiency ka sign ho sakta hai.`
+      }
+    },
+    {
+      q:`${p} ka **activity level** kaisa hai?`,
+      opts:["🏃 Bahut active aur playful","👍 Normal rehta hai","😴 Thoda thaka sa lagta hai","⚠️ Bahut lazy / uthta nahi"],
+      ack:{
+        "🏃 Bahut active aur playful":`Active hai — achha sign hai!`,
+        "👍 Normal rehta hai":`Normal activity — theek hai.`,
+        "😴 Thoda thaka sa lagta hai":`[RED:Thakaan] nutrition ki kami ya andar koi problem ka early sign ho sakta hai.`,
+        "⚠️ Bahut lazy / uthta nahi":`[RED:Itni laziness normal nahi hai] — ${p} andar se theek nahi lag raha.`
+      }
+    },
+    q7,
+    {
+      q:`**${p}** ki koi medical history hai?`,
+      opts:["❌ Koi nahi — bilkul healthy","🤒 Pehle bimaar hua tha","💊 Abhi koi medicine chal rahi hai","🏥 Surgery ya treatment hua hai"],
+      ack:{
+        "❌ Koi nahi — bilkul healthy":`Koi badi history nahi — noted.`,
+        "🤒 Pehle bimaar hua tha":`Pehle bimaar hua tha — uski history zaroori hai treatment ke liye.`,
+        "💊 Abhi koi medicine chal rahi hai":`[RED:Abhi medicine chal rahi hai] — iska matlab ${p} ki health ongoing concern mein hai.`,
+        "🏥 Surgery ya treatment hua hai":`Surgery ya treatment history hai — yeh zaroor dhyan mein rakhna padega.`
+      }
+    },
+    {
+      q:isCat
+        ? `**${p}** last kab **heat** mein aayi thi — kab mating hui thi?`
+        : `**${p}** last kab **heat** mein aaya tha — kab uski **meeting** hui thi?`,
+      opts:["1 mahine mein","3-6 mahine mein","6 mahine se zyada","❌ Kabhi nahi / Pata nahi"],
+      ack:{
+        "1 mahine mein":`Haan — recent heat cycle tha. Yeh important hai health ke liye.`,
+        "3-6 mahine mein":`3-6 mahine pehle — noted. Reproductive health ka dhyan rakhna zaroori hai.`,
+        "6 mahine se zyada":`[RED:6 mahine se zyada] — yeh reproductive health check karna chahiye.`,
+        "❌ Kabhi nahi / Pata nahi":`Agar kabhi heat nahi aaya — ya pata nahi — to yeh ek important area hai dekhne ke liye.`
+      }
+    }
+  ];
+}
 
 if(window.speechSynthesis){window.speechSynthesis.onvoiceschanged=()=>{voices=window.speechSynthesis.getVoices();};voices=window.speechSynthesis.getVoices();}
 
@@ -518,30 +687,54 @@ const BREEDS = {
   "desi cat":"Indian Desi Cat","indie cat":"Indian Desi Cat","street cat":"Indian Desi Cat"
 };
 
+const DOG_BREEDS_LIST = ["Labrador Retriever","German Shepherd","Golden Retriever","Siberian Husky","Pomeranian","Beagle","Pug","Rottweiler","Doberman Pinscher","Boxer","Bulldog","Cocker Spaniel","Dalmatian","Shih Tzu","Maltese","Indian Pariah Dog (Desi)","Indian Spitz","Rajapalayam","Mudhol Hound","Great Dane","Saint Bernard","Samoyed","Chow Chow","Akita","Shiba Inu","Border Collie","Lhasa Apso","Dachshund","Poodle","Yorkshire Terrier"];
+const CAT_BREEDS_LIST = ["Persian Cat","Siamese Cat","Maine Coon","Ragdoll Cat","Bengal Cat","British Shorthair","Scottish Fold","Bombay Cat","Himalayan Cat","Abyssinian Cat","Indian Desi Cat","Turkish Angora","Russian Blue","American Shorthair","Sphynx","Norwegian Forest Cat"];
+
+function updateBreedPlaceholder(type){
+  const inp = document.getElementById('pbreed');
+  const sugg = document.getElementById('breed-sugg');
+  if(!inp) return;
+  inp.value = '';
+  sugg.style.display = 'none';
+  if(type==='cat'){
+    inp.placeholder = 'Jaise: Persian, Siamese, Bengal, Desi...';
+    setTimeout(()=>showPopularBreeds('cat'), 100);
+  } else {
+    inp.placeholder = 'Jaise: lab, gsd, golden, husky...';
+    setTimeout(()=>showPopularBreeds('dog'), 100);
+  }
+}
+
+function showPopularBreeds(type){
+  const sugg = document.getElementById('breed-sugg');
+  const list = type==='cat' ? CAT_BREEDS_LIST.slice(0,6) : DOG_BREEDS_LIST.slice(0,6);
+  sugg.innerHTML = list.map(b=>
+    `<div onclick="selectBreed('${b}')" style="padding:10px 14px;font-size:13px;font-weight:600;color:#0f172a;border-bottom:1px solid #f1f5f9;cursor:pointer;">${b}</div>`
+  ).join('');
+  sugg.style.display='block';
+}
+
 function breedInput(inp){
   const val = inp.value.trim().toLowerCase();
   const sugg = document.getElementById('breed-sugg');
-  
-  // Auto-expand short code
-  if(BREEDS[val]){
-    // Show suggestion to confirm
+  const isCat = (pType||picks['pt'])==='cat';
+
+  if(!val){
+    showPopularBreeds(isCat?'cat':'dog');
+    return;
   }
-  
-  if(!val){sugg.style.display='none';return;}
-  
-  // Find matches
-  const matches = [];
-  // Exact key match first
-  if(BREEDS[val]) matches.push(BREEDS[val]);
-  // Partial matches
-  Object.entries(BREEDS).forEach(([k,v])=>{
-    if(k.startsWith(val) && !matches.includes(v)) matches.push(v);
-  });
-  // Value partial matches
-  Object.values(BREEDS).forEach(v=>{
-    if(v.toLowerCase().includes(val) && !matches.includes(v)) matches.push(v);
-  });
-  
+
+  // Filter from correct species list
+  const sourceList = isCat ? CAT_BREEDS_LIST : DOG_BREEDS_LIST;
+  const matches = sourceList.filter(b=>b.toLowerCase().includes(val));
+
+  // Also check BREEDS dict as fallback
+  if(!matches.length){
+    Object.entries(BREEDS).forEach(([k,v])=>{
+      if(k.includes(val) && !matches.includes(v)) matches.push(v);
+    });
+  }
+
   const unique = [...new Set(matches)].slice(0,6);
   if(!unique.length){sugg.style.display='none';return;}
   
@@ -553,7 +746,8 @@ function breedInput(inp){
 
 function showBreedSugg(){
   const val = document.getElementById('pbreed').value.trim().toLowerCase();
-  if(!val) return;
+  const currentType = pType || picks['pt'] || 'dog';
+  if(!val){ showPopularBreeds(currentType==='cat'?'cat':'dog'); return; }
   breedInput(document.getElementById('pbreed'));
 }
 
@@ -699,6 +893,7 @@ async function verifyOtp(){
       $("btn-send-otp").style.display="none";
       $("btn-continue-s2").style.display="block";
       toast("✅ WhatsApp verify ho gaya!");
+      trackFunnel("otp_verified","phone:"+($("ophone").value.trim()));
     } else {
       toast("❌ " + (d.error||"Galat OTP — dobara daalen"));
     }
@@ -724,25 +919,28 @@ function startChat(){
   pAge=picks["pa"]||"unknown";pBreed=$("pbreed").value.trim()||"";
   if(!pName){toast("⚠️ Pet ka naam daalo");$("pname").focus();return;}
   if(!pType){toast("⚠️ Dog ya Cat select karo");return;}
+  if(!pBreed){toast("⚠️ "+pName+" ki breed zaroori hai — select karo");$("pbreed").focus();showBreedSugg();return;}
+  if(!picks["pa"]){toast("⚠️ "+pName+" ki umar select karo");return;}
 
   fetch(`${BACKEND}/save-lead`,{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({ownerName:oName,ownerPhone:oPhone,petName:pName,petType:pType,petAge:pAge,petBreed:pBreed,doctorName:doc.name,problem:"Checkup started",whatsappVerified:otpVerified})
   }).catch(()=>{});
+  trackFunnel("chat_started","pet:"+pName+"|type:"+pType);
 
   $("s1").classList.add("hide");$("s2").classList.add("hide");
   $("chatscreen").classList.remove("hide");$("botbar").classList.remove("hide");
 
-  // Always start in health checkup mode — single loop
-  chatMode="health";hcN=0;hist=[];
+  chatMode="health"; hcN=0; hist=[]; hcAnswers={}; hcStarted=false;
 
-  // Doctor welcome + auto-start checkup
-  docMsg(`Namaskar <span class="hi">${oName}</span> ji! 🙏\n\n<span class="hi">${pName}</span> ke baare mein thodi jaankaari lunga — sirf 2 minute.\n\nYeh health checkup <span class="ghi">bilkul FREE</span> hai.`);
+  // Welcome — FREE clearly stated, wait for trigger
+  docMsg(`Namaskar <span class="hi">${oName}</span> ji! 🙏\n\nMain <b>${doc.name}</b> bol raha hun — Vetraj Pet Hospital se.`);
   setTimeout(async()=>{
-    showTyping();await sleep(1200);rmTyping();
-    const fm=`${pName} ka health checkup karo. Type:${pType}, Age:${pAge}${pBreed?', Breed:'+pBreed:''}. Pehla sawaal poochho — natural WhatsApp style mein.`;
-    hist.push({role:"user",content:fm});
-    await apiCall("health");
-  },1500);
+    showTyping(); await sleep(1400); rmTyping();
+    docMsg(`<span class="hi">${pName}</span> ka <span class="ghi">FREE health checkup</span> karna chahta hun — <b>bilkul koi charge nahi</b>.\n\nSirf 2 minute lagenge. Main aapko 8 simple sawaal poochhna chahta hun. 📋`);
+    await sleep(1800);
+    showTyping(); await sleep(900); rmTyping();
+    docMsg(`Shuru karne ke liye <b>kuch bhi type karo</b> — "Hi" ya "Haan" likhke bhejo 👇`);
+  }, 800);
 }
 
 // MESSAGES
@@ -832,11 +1030,89 @@ function showVideoAsk(){
   );
 }
 
+// Update progress bar
+function updateHCProgress(answered, total){
+  const bar = document.getElementById('hc-progress-bar');
+  const fill = document.getElementById('hc-progress-fill');
+  const pct = document.getElementById('hc-progress-pct');
+  if(!bar) return;
+  bar.style.display = 'block';
+  const percent = Math.round((answered / total) * 100);
+  fill.style.width = percent + '%';
+  pct.textContent = percent + '%';
+  // Color shift green as it fills
+  if(percent >= 75) fill.style.background = 'linear-gradient(90deg,#16a34a,#22c55e)';
+  else if(percent >= 50) fill.style.background = 'linear-gradient(90deg,#1a5a8a,#22c55e)';
+  else fill.style.background = 'linear-gradient(90deg,#1a5a8a,#3b82f6)';
+}
+
+// Show a health checkup question with option buttons
+function askHCQuestion(idx){
+  const qs=getHCQuestions();
+  if(idx>=qs.length) return;
+  const q=qs[idx];
+  const total=qs.length;
+  const num=idx+1;
+  updateHCProgress(idx, total);
+  const opts=q.opts.map(o=>({t:o,v:o}));
+  docMsg(`<span style="opacity:.55;font-size:10px;font-weight:700;letter-spacing:.5px;">SAWAAL ${num}/${total}</span>\n${q.text||q.q}`, opts);
+}
+
+// Called after 8 health checkup answers — dramatic close + PDF + payment
+async function showCheckupComplete(){
+  if(payDone) return;
+
+  // Progress to 100%
+  const totalQ = getHCQuestions().length;
+  updateHCProgress(totalQ, totalQ);
+
+  const dangerAnswers=["❌ Yaad nahi / Nahi hui kabhi","❌ Kabhi nahi hui","⚫ Kaali ya dark","💧 Loose / diarrhea rehti hai","⚠️ Bahut lazy / uthta nahi","💊 Abhi koi medicine chal rahi hai","Baal bahut zyada jhad rahe hain","❄️ Dandruff dikh raha hai","🚫 Bahut kam pita hai","💧 Bahut zyada pita hai","📦 Packet / dry food","6 mahine se zyada","❌ Kabhi nahi / Pata nahi"];
+  const ans=Object.values(hcAnswers);
+  const dangerCount=ans.filter(a=>dangerAnswers.includes(a)).length;
+
+  showTyping(); await sleep(1200); rmTyping();
+  docMsg(`${oName} ji — maine ${pName} ka poora checkup kar liya. Saare sawaalon ke jawab note kar liye hain. 📋`);
+
+  await sleep(1000);
+  showTyping(); await sleep(1000); rmTyping();
+
+  if(dangerCount>=3){
+    docMsg(`[RED:${oName} ji — main seedha baat karta hun.]\n\n[RED:${pName} abhi KHATRE mein hai.] Maine jo patterns dekhe hain — yeh normal nahi hain. Agar abhi dhyan nahi diya toh aage bahut mushkil ho sakti hai. ⚠️`);
+  } else if(dangerCount>=1){
+    docMsg(`[RED:${oName} ji — ${pName} mein kuch cheezein hain jo mujhe chintit kar rahi hain.]\n\nYeh abhi chhoti lag rahi hain — lekin samay par seedha doctor se baat nahi ki toh yeh badh sakti hain.`);
+  } else {
+    docMsg(`${oName} ji — checkup complete hua. Upar se theek lag raha hai, lekin [RED:andar ki kuch cheezein hain jo sirf expert examination mein saamne aayengi].`);
+  }
+
+  await sleep(1000);
+  showTyping(); await sleep(800); rmTyping();
+  docMsg(`Deworming, vaccination, coat, activity — sab mila ke [RED:${pName} ko abhi seedha doctor ki attention chahiye].\n\nMain ${pName} ke liye personally guide karna chahta hun — isliye mujhse seedha baat karo. 🩺`);
+
+  trackFunnel("chat_complete","pet:"+pName+"|danger:"+dangerCount);
+  // Generate PDF + send WhatsApp (background — don't wait long)
+  sendReport();
+  await sleep(600);
+
+  docMsg(`📄 [GREEN:${pName} ki Health Report tayaar ho gayi hai!]\n\nReport aapke WhatsApp pe bhej di gayi hai — check karo.`);
+
+  await sleep(5000);
+  showPay();
+}
+
 function showPay(){
   if(payDone)return;payDone=true;
+  trackFunnel("payment_page","doctor:"+doc.name);
 
-  // Send WhatsApp report (free checkup summary) regardless of payment
-  sendReport();
+  // ── Lead save: 399 card dikhte hi — payment click ka wait nahi ──
+  const problemSummary = Object.entries(hcAnswers||{}).map(([q,a])=>q+": "+a).join(" | ").substring(0,500) || "Health checkup completed";
+  fetch(`${BACKEND}/save-lead`,{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      ownerName:oName, ownerPhone:oPhone,
+      petName:pName, petType:pType, petAge:pAge, petBreed:pBreed,
+      doctorName:doc.name, problem:problemSummary,
+      whatsappVerified:otpVerified, funnelStep:"payment_page"
+    })
+  }).catch(()=>{});
 
   const msgs=$("msgs");const d=document.createElement("div");
   d.innerHTML=`<div class="paycard">
@@ -865,13 +1141,24 @@ function showPay(){
   msgs.appendChild(d);scrollChat();
 }
 
-// Send WhatsApp health report
+// Generate PDF + Send WhatsApp health report
 async function sendReport(){
   if(reportSent)return;reportSent=true;
-  const summary=hist.slice(-6).map(m=>`${m.role==='user'?'Owner':'Dr'}:${m.content}`).join(' | ');
+  const summary=hist.slice(-8).map(m=>`${m.role==='user'?'Owner':'Dr'}:${m.content}`).join(' | ');
+  let reportUrl="";
   try{
+    // Step 1: Generate PDF
+    const pdfRes=await fetch(`${BACKEND}/generate-report`,{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ownerName:oName,petName:pName,petType:pType,petAge:pAge,petBreed:pBreed,chatHistory:hist,doctorName:doc.name,phone:oPhone})
+    });
+    const pdfData=await pdfRes.json();
+    if(pdfData.success) reportUrl=pdfData.reportUrl;
+  }catch(e){}
+  try{
+    // Step 2: Send WhatsApp with PDF URL
     await fetch(`${BACKEND}/send-report`,{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({phone:oPhone,ownerName:oName,petName:pName,petType:pType,petAge:pAge,chatSummary:summary,doctorName:doc.name})
+      body:JSON.stringify({phone:oPhone,ownerName:oName,petName:pName,petType:pType,petAge:pAge,chatSummary:summary,doctorName:doc.name,reportUrl})
     });
   }catch(e){}
 }
@@ -928,6 +1215,7 @@ function showSOS(){
 }
 
 function bookNow(){
+  trackFunnel("payment_clicked","amount:399|doctor:"+doc.name);
   // Mark lead as paid
   fetch(`${BACKEND}/update-lead-type`,{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({phone:oPhone,consultationType:"paid"})
@@ -958,6 +1246,7 @@ async function openRazorpay(){
         await fetch(`${BACKEND}/payment/verify`,{method:"POST",headers:{"Content-Type":"application/json"},
           body:JSON.stringify({...response,orderData:{orderId:"VTJ-"+Date.now(),productName:"Consultation",qty:1,price:399,gst:0,delivery:0,total:399,customer:{name:oName,phone:oPhone,address:"",pincode:""}}})
         });
+        trackFunnel("payment_done","amount:399|razorpay:"+response.razorpay_payment_id);
         toast("✅ Payment successful! Doctor call schedule ho rahi hai.");
         const params=new URLSearchParams({name:oName,phone:oPhone,pet:pName,problem:""});
         setTimeout(()=>window.location.href=`/booking.html?${params}`,1500);
@@ -1019,7 +1308,7 @@ async function process(text,fromVoice=false){
   userMsg(text);
 
   // Agar user wapas solution/booking maange — pay card dobara dikhao
-  if(!payDone && /solution|book|appointment|consultation|chahie|abhi|payment|slot|serious|haan|han\b|yes|baat kara|doctor se|karwa|dikh|dikhao|batao|karo na|karwa do|lena hai|book kar|kar do|kara do|contact|connect/i.test(text)){
+  if(!payDone && chatMode!=="health" && /solution|book|appointment|consultation|chahie|abhi|payment|slot|serious|haan|han\b|yes|baat kara|doctor se|karwa|dikh|dikhao|batao|karo na|karwa do|lena hai|book kar|kar do|kara do|contact|connect/i.test(text)){
     hist.push({role:"user",content:text});
     showTyping();await sleep(700);rmTyping();
     docMsg(`<span class="hi">${oName}</span> ji — bilkul! <span class="hi">${pName}</span> ke liye abhi slot available hai — aaj hi book karein.`);
@@ -1029,11 +1318,41 @@ async function process(text,fromVoice=false){
   }
 
   if(chatMode==="health"){
-    hcN++;
+    const qs=getHCQuestions();
+
+    // First message is just the trigger — start Q1
+    if(!hcStarted){
+      hcStarted=true;
+      hist.push({role:"user",content:text});
+      userMsg(text);
+      showTyping(); await sleep(1200); rmTyping();
+      askHCQuestion(0);
+      busy=false; $("sb").disabled=false; return;
+    }
+
+    // Subsequent answers — hcN is which question was just answered
+    hcAnswers[hcN]=text;
     hist.push({role:"user",content:text});
-    showTyping();await sleep(700+Math.random()*800);
-    if(hcN>=8&&!payDone){rmTyping();showPay();busy=false;$("sb").disabled=false;return;}
-    await apiCall("health");
+
+    const ackMap=qs[hcN]&&qs[hcN].ack;
+    const ackText=ackMap&&ackMap[text]
+      ? ackMap[text]
+      : `Theek hai — noted! ✅`;
+
+    hcN++;
+
+    showTyping(); await sleep(900+Math.random()*600); rmTyping();
+    docMsg(ackText);
+
+    if(hcN>=getHCQuestions().length){
+      await sleep(1200);
+      await showCheckupComplete();
+      busy=false; $("sb").disabled=false; return;
+    }
+
+    await sleep(900);
+    askHCQuestion(hcN);
+    busy=false; $("sb").disabled=false; return;
   } else {
     msgN++;
     hist.push({role:"user",content:text});
@@ -1045,7 +1364,7 @@ async function process(text,fromVoice=false){
 
 async function apiCall(mode){
   let reply="";
-  const ctx={ownerName:oName,ownerPhone:oPhone,petName:pName,petType:pType,petAge:pAge,petBreed:pBreed,msgCount:msgN,doctorName:doc?doc.name:""};
+  const ctx={ownerName:oName,ownerPhone:oPhone,petName:pName,petType:pType,petAge:pAge,petBreed:pBreed,msgCount:msgN,hcCount:hcN,doctorName:doc?doc.name:""};
   
   // Try up to 3 times silently
   for(let attempt=0; attempt<3; attempt++){

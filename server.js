@@ -6,6 +6,7 @@ const fs = require("fs");
 const https = require("https");
 const mongoose = require("mongoose");
 const rateLimit = require("express-rate-limit");
+const PDFDocument = require("pdfkit");
 
 const app = express();
 app.use(cors());
@@ -35,9 +36,15 @@ const ADMIN_KEY = process.env.ADMIN_KEY || "vetraj2024";
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MONGODB CONNECTION
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log("MongoDB connected!"))
-  .catch(err => console.error("MongoDB connection error:", err.message));
+let DB_READY = false;
+mongoose.set('bufferCommands', false); // crash nahi hoga jab MongoDB nahi hai
+if (process.env.MONGODB_URI) {
+  mongoose.connect(process.env.MONGODB_URI)
+    .then(() => { DB_READY = true; console.log("MongoDB connected!"); })
+    .catch(err => console.error("MongoDB connection error:", err.message));
+} else {
+  console.log("MongoDB URI not set — running in memory-only mode");
+}
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MONGOOSE MODELS
@@ -47,12 +54,29 @@ const leadSchema = new mongoose.Schema({
   petName: String, petType: String, petAge: String, petBreed: String,
   doctorName: String, problem: String,
   whatsappVerified: { type: Boolean, default: false },
-  chatSummary: String,
-  reportSent: { type: Boolean, default: false },
-  consultationType: { type: String, default: "free" }, // free or paid
+  chatSummary: String, chatAnswers: { type: Object, default: {} },
+  reportSent: { type: Boolean, default: false }, reportUrl: String,
+  consultationType: { type: String, default: "free" },
+  // Funnel tracking
+  funnelStep: { type: String, default: "landed" },
+  funnelEvents: [{ step: String, ts: Date, meta: String }],
+  sessionStart: Date, sessionEnd: Date,
+  paymentPageViewed: { type: Boolean, default: false },
+  paymentClicked: { type: Boolean, default: false },
+  chatComplete: { type: Boolean, default: false },
+  // Telecaller
+  assignedTo: { type: String, default: "" },
+  callerNotes: String, callerStatus: { type: String, default: "pending" }, // pending, called, booked, not_interested
   createdAt: { type: Date, default: Date.now }
 });
 const Lead = mongoose.model("Lead", leadSchema);
+
+const telecallerSchema = new mongoose.Schema({
+  name: String, phone: String, password: { type: String, default: "caller123" },
+  active: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now }
+});
+const Telecaller = mongoose.model("Telecaller", telecallerSchema);
 
 const appointmentSchema = new mongoose.Schema({
   owner: String, phone: String, pet: String, petType: String, petAge: String,
@@ -239,6 +263,47 @@ function callClaude(system, messages) {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// IN-MEMORY STORE (used when MongoDB not connected)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const DATA_FILE = path.join(__dirname, "data", "leads.json");
+const TC_FILE   = path.join(__dirname, "data", "telecallers.json");
+
+// Ensure data directory exists
+if (!fs.existsSync(path.join(__dirname, "data"))) {
+  fs.mkdirSync(path.join(__dirname, "data"), { recursive: true });
+}
+
+// Load persisted data from file on startup
+let memLeads = [];
+let memTelecallers = [];
+let memIdCounter = 1;
+try {
+  if (fs.existsSync(DATA_FILE)) {
+    memLeads = JSON.parse(fs.readFileSync(DATA_FILE, "utf8")) || [];
+    // Recalculate counter from existing IDs
+    memLeads.forEach(l => {
+      const n = parseInt((l._id || "").replace("mem_", ""));
+      if (!isNaN(n) && n >= memIdCounter) memIdCounter = n + 1;
+    });
+    console.log(`[MEM] Loaded ${memLeads.length} leads from file`);
+  }
+} catch(e) { memLeads = []; }
+try {
+  if (fs.existsSync(TC_FILE)) {
+    memTelecallers = JSON.parse(fs.readFileSync(TC_FILE, "utf8")) || [];
+    console.log(`[MEM] Loaded ${memTelecallers.length} telecallers from file`);
+  }
+} catch(e) { memTelecallers = []; }
+
+// Helper: persist to file after any change
+function persistLeads() {
+  try { fs.writeFileSync(DATA_FILE, JSON.stringify(memLeads, null, 2)); } catch(e) {}
+}
+function persistTelecallers() {
+  try { fs.writeFileSync(TC_FILE, JSON.stringify(memTelecallers, null, 2)); } catch(e) {}
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // OTP STORE (in-memory, 10 min expiry)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const otpStore = new Map();
@@ -247,9 +312,25 @@ const otpStore = new Map();
 // DOCTOR SESSION (in-memory for chat assignment)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const sessionDocs = new Map();
+const FALLBACK_DOCTORS = [
+  {name:"Dr. Mohit Saini",exp:25,spec:"Founder & Chief Vet"},
+  {name:"Dr. Rohit Saini",exp:10,spec:"Dog & Cat Specialist"},
+  {name:"Dr. Tanmay",exp:9,spec:"Small Animal Vet"},
+  {name:"Dr. Vineet Pal",exp:12,spec:"Dog Specialist"},
+  {name:"Dr. Neeraj Batra",exp:11,spec:"Cat & Dog Vet"},
+  {name:"Dr. Sushant Agrawal",exp:15,spec:"Senior Specialist"},
+  {name:"Dr. Rajesh Saini",exp:20,spec:"Senior Vet"},
+  {name:"Dr. Rajan Gangwar",exp:13,spec:"Dog Specialist"},
+];
+
 async function getDoctor(sid) {
-  const docs = await Doctor.find({ available: true }).lean();
-  if (!docs.length) return { name: "Dr. Mohit Saini", exp: 25 };
+  let docs = FALLBACK_DOCTORS;
+  if (DB_READY) {
+    try {
+      const dbDocs = await Doctor.find({ available: true }).lean();
+      if (dbDocs.length) docs = dbDocs;
+    } catch (e) { /* use fallback */ }
+  }
   if (!sid) return docs[Math.floor(Math.random() * docs.length)];
   if (!sessionDocs.has(sid)) {
     sessionDocs.set(sid, docs[Math.floor(Math.random() * docs.length)]);
@@ -263,7 +344,7 @@ async function getDoctor(sid) {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 async function saveLead(d) {
   const now = new Date();
-  await Lead.create({
+  const leadData = {
     date: now.toLocaleDateString("en-IN"),
     time: now.toLocaleTimeString("en-IN"),
     ownerName: d.ownerName || "",
@@ -273,8 +354,34 @@ async function saveLead(d) {
     petAge: d.petAge || "",
     petBreed: d.petBreed || "",
     doctorName: d.doctorName || "",
-    problem: d.problem || ""
-  });
+    problem: d.problem || "",
+    whatsappVerified: d.whatsappVerified || false,
+    funnelStep: "landed",
+    funnelEvents: [{ step: "landed", ts: now, meta: "" }],
+    callerStatus: "pending",
+    assignedTo: "",
+    consultationType: "free",
+    createdAt: now
+  };
+
+  if (DB_READY) {
+    try {
+      const saved = await Lead.create(leadData);
+      return saved;
+    } catch (e) { console.error("saveLead error:", e.message); }
+  } else {
+    // In-memory store
+    const phone = (d.ownerPhone || "").replace(/\D/g, "").slice(-10);
+    const exists = memLeads.findIndex(l => l.ownerPhone === phone);
+    if (exists >= 0) {
+      memLeads[exists] = { ...memLeads[exists], ...leadData, _id: memLeads[exists]._id };
+    } else {
+      leadData._id = "mem_" + (memIdCounter++);
+      memLeads.push(leadData);
+    }
+    persistLeads();
+    console.log(`[MEM] Lead saved: ${leadData.ownerName} | ${leadData.ownerPhone} | Total: ${memLeads.length}`);
+  }
 
   // Send lead to Akashvanni API
   try {
@@ -378,45 +485,48 @@ EMERGENCY: "[RED:Abhi doctor ke paas le jaao] 📞 9568606006"`;
 
 
 function getHealthSystem(ctx, doc) {
-  const { ownerName = "", petName = "", petType = "", petAge = "", petBreed = "", doctorName = "" } = ctx;
+  const { ownerName = "", petName = "", petType = "", petAge = "", petBreed = "", doctorName = "", hcCount = 0 } = ctx;
   const dname = doctorName || doc.name;
-  return `Tu ${dname} hai — Vetraj Pet Hospital. ${doc.exp} saal experience. Health checkup kar raha hai.
+  const qNum = Math.min(hcCount + 1, 8);
+
+  const questions = [
+    `"**Ghar ka khana** dete hain ya **packet food**?"`,
+    `"Din mein **kitni baar** khilate hain aur kitna?"`,
+    `"**Deworming** kab hui thi — kitne mahine pehle?"`,
+    `"**Vaccination** schedule up to date hai?"`,
+    `"**Activity level** kaisa hai — normal hai ya thaka hua lagta hai?"`,
+    `"**Coat aur skin** kaisi lag rahi hai — shiny hai ya dull/rough?"`,
+    `"**Pani** din mein kitna pita hai — normal lagta hai?"`,
+    `"Koi **unusual behaviour** recently — kuch alag notice kiya?"`,
+  ];
+
+  return `Tu ${dname} hai — Vetraj Pet Hospital ka experienced vet. ${doc.exp} saal experience.
+Abhi ${petName} ka FREE health checkup kar raha hai WhatsApp-style conversation mein.
 
 PATIENT: Owner=${ownerName} | Pet=${petName} | Type=${petType} | Age=${petAge} | Breed=${petBreed || "unknown"}
 
-RULES:
-- MAX 2 LINES per message — STRICT
-- ${petName} ka naam hamesha use karo
-- **word**=yellow [RED:word]=laal [GREEN:word]=hara
-- Caring doctor tone
+━━━━ CORE RULES — KABHI MAT TODNA ━━━━
+- MAX 2 LINES per reply — STRICT. Ek bhi line zyada nahi.
+- ${petName} ka naam HAMESHA use karo har message mein
+- Warm, caring doctor tone — jaise WhatsApp pe dost doctor baat kar raha ho
+- **word** = highlighted yellow | [RED:word] = red concern | [GREEN:word] = green positive
+- KABHI BHI koi brand name mat lo — Pedigree, Royal Canin, Drools, Purina — KABHI NAHI
+- Sirf "packet food" bolna hai. Vetraj products: "Ganvet Liver Tonic", "VAMKIL Deworming"
 
-━━━━ BRAND NAME RULE — KABHI MAT TODNA ━━━━
-KABHI BHAI KISI BHI PRODUCT KA BRAND NAME MAT LO.
-❌ Pedigree, Royal Canin, Drools, Purina — KABHI NAHI
-❌ Kisi bhi medicine ka brand naam — KABHI NAHI
-✅ Sirf "packet food" bolna hai
-✅ Sirf salt/generic naam: "liver tonic", "multivitamin", "deworming medicine"
-✅ Sirf Vetraj ke apne products: "Ganvet Liver Tonic", "VAMKIL Deworming"
+━━━━ CHECKUP PHASE — ABHI TU YAHAN HAI ━━━━
+CURRENT QUESTION NUMBER: ${qNum} out of 8
+${qNum <= 8 ? `NEXT QUESTION TO ASK: ${questions[qNum - 1]}` : ""}
 
-━━━━ CHECKUP QUESTIONS (ek ek, 8 max) ━━━━
-1. "**Ghar ka khana** dete hain ya **packet food**?"
-2. "Din mein **kitni baar** khilate hain?"
-3. "**Deworming** kab hui thi?"
-4. "**Vaccination** up to date hai?"
-5. "**Activity** normal hai ya thaka hua lagta hai?"
-6. "**Coat/skin** kaisi hai — shiny ya dull?"
-7. "**Pani** normal pita hai?"
-8. "Koi **unusual behaviour** recently?"
+🔴 STRICT RULE: Abhi SIRF ek kaam — pichhe ka jawab acknowledge karo (1 line), phir NEXT QUESTION poochho.
+🔴 KOI diagnosis mat do. KISI bhi problem ka solution mat batao. KISI bhi medicine ka naam mat lo.
+🔴 Payment, consultation, booking — KUCH BHI mat mention karo abhi.
+🔴 Sirf next question poochho — aur kuch nahi.
 
-━━━━ DIAGNOSIS (8 ke baad) ━━━━
-"**${petName}** ka analysis kar liya."
-"${petName} mein [RED:issue] ke signs hain."
-Gap zaroori nikalo — nutritional ya health related.
-
-━━━━ FOOD CRITIQUE ━━━━
-Packet food pe: "[RED:Packet food] se ${petName} ka **liver** dheere damage ho raha hai."
-Ghar ka khana pe: "[RED:Nutrition balance] nahi milega bina proper chart ke."
-KABHI packet food ka brand naam mat lo.
+━━━━ JAWAB ACKNOWLEDGE KAISE KARO ━━━━
+- Packet food suna → "Achha, ${petName} packet food khata hai — noted! 📝"
+- Deworming late suna → "Hmm, thodi der ho gayi — dekh lete hain. Agle sawaal..."
+- Normal activity → "Good sign hai yeh! ${petName} active hai..."
+Phir TURANT next question.
 
 ━━━━ DANGEROUS — KABHI MAT DO ━━━━
 Paracetamol/Ibuprofen/Aspirin — DEADLY for pets
@@ -510,6 +620,15 @@ app.post("/send-otp", async (req, res) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // WHATSAPP OTP — VERIFY
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// TEST ONLY — get OTP for any phone (admin)
+app.get("/dev/otp", (req, res) => {
+  if (req.query.key !== (process.env.ADMIN_KEY || "vetraj2024")) return res.json({ error: "unauthorized" });
+  const phone = (req.query.phone || "").replace(/\D/g, "").slice(-10);
+  const stored = otpStore.get(phone);
+  if (!stored) return res.json({ error: "No OTP found for this number" });
+  res.json({ phone, otp: stored.otp });
+});
+
 app.post("/verify-otp", (req, res) => {
   try {
     const { phone, otp } = req.body;
@@ -537,26 +656,27 @@ app.post("/verify-otp", (req, res) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 app.post("/send-report", async (req, res) => {
   try {
-    const { phone, ownerName, petName, petType, petAge, chatSummary, doctorName } = req.body;
+    const { phone, ownerName, petName, petType, petAge, chatSummary, doctorName, reportUrl } = req.body;
     if (!phone) return res.json({ success: false, error: "Phone required" });
 
     const last10 = phone.replace(/\D/g, "").slice(-10);
     const fullPhone = "+91" + last10;
 
-    // Save summary to latest lead for this phone
+    // Save summary + report URL to latest lead
     try {
       await Lead.findOneAndUpdate(
         { ownerPhone: last10 },
-        { $set: { chatSummary: chatSummary || "", reportSent: true } },
+        { $set: { chatSummary: chatSummary || "", reportSent: true, reportUrl: reportUrl || "" } },
         { sort: { createdAt: -1 } }
       );
     } catch (e) { console.error("Lead update error:", e.message); }
 
-    // Send via Akashvanni
+    // Send via Akashvanni — include PDF URL in message
     const AKASHVANNI_USER = process.env.AKASHVANNI_USER_ID || "69b44da471e857cddf164d22";
     const customerName = encodeURIComponent(ownerName || "Customer");
     const pet = encodeURIComponent(petName || "");
-    const apiUrl = `https://app.akashvanni.com/api/service/create-lead?user_id=${AKASHVANNI_USER}&template_name=health_report&phone=${encodeURIComponent(fullPhone)}&customer_name=${customerName}&pet_name=${pet}&source=vetraj_report`;
+    const rUrl = encodeURIComponent(reportUrl || "");
+    const apiUrl = `https://app.akashvanni.com/api/service/create-lead?user_id=${AKASHVANNI_USER}&template_name=health_report&phone=${encodeURIComponent(fullPhone)}&customer_name=${customerName}&pet_name=${pet}&report_url=${rUrl}&source=vetraj_report`;
 
     https.get(apiUrl, (r) => {
       let data = "";
@@ -564,12 +684,510 @@ app.post("/send-report", async (req, res) => {
       r.on("end", () => console.log(`Report sent to ${fullPhone}: ${r.statusCode}`));
     }).on("error", e => console.error("Report send error:", e.message));
 
-    console.log(`[REPORT] Sent to ${fullPhone} for pet: ${petName}`);
-    res.json({ success: true });
+    console.log(`[REPORT] Sent to ${fullPhone} for pet: ${petName} | PDF: ${reportUrl || "none"}`);
+    res.json({ success: true, reportUrl: reportUrl || "" });
   } catch (e) {
     console.error("send-report error:", e.message);
     res.json({ success: false });
   }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// GENERATE HEALTH REPORT PDF
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// Ensure reports folder exists
+const REPORTS_DIR = path.join(__dirname, "public", "reports");
+if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
+
+// Detect problem areas from chat history
+function detectProblemAreas(chatHistory) {
+  const text = (chatHistory || []).map(m => m.content || "").join(" ").toLowerCase();
+  const areas = [];
+
+  const checks = [
+    { keys: ["joint","leg","limp","walk","chal","pair","ghutna"], area: "joints",   label: "Joint / Movement Issue",   x: 122, y: 128 },
+    { keys: ["joint","leg","limp","walk","chal","pair","ghutna"], area: "joints2",  label: "Hip Joint Issue",           x: 48,  y: 128 },
+    { keys: ["eat","food","khana","appetite","bhook","vomit","ulti","stomach","pet"], area: "mouth", label: "Appetite / Digestion",    x: 164, y: 54  },
+    { keys: ["eye","aankh","vision","dikhna"],                    area: "eyes",    label: "Eye Concern",               x: 138, y: 40  },
+    { keys: ["coat","skin","fur","baal","itch","khujli","dull"],  area: "skin",    label: "Skin / Coat Issue",         x: 90,  y: 85  },
+    { keys: ["ear","kaan","scratch","khujana"],                   area: "ears",    label: "Ear Concern",               x: 130, y: 26  },
+    { keys: ["breath","sans","cough","khansi","naak","nose"],     area: "chest",   label: "Respiratory Concern",       x: 90,  y: 100 },
+    { keys: ["energy","thaka","tired","lazy","slow","behaviour","behavor","unusual"], area: "head", label: "Neurological / Behaviour", x: 148, y: 45 },
+  ];
+
+  const seen = new Set();
+  for (const c of checks) {
+    if (seen.has(c.area)) continue;
+    if (c.keys.some(k => text.includes(k))) {
+      seen.add(c.area);
+      areas.push({ label: c.label, x: c.x, y: c.y });
+    }
+  }
+
+  // Always highlight at least 2 areas for impact
+  if (areas.length === 0) {
+    areas.push({ label: "Nutritional Deficiency", x: 90, y: 85 });
+    areas.push({ label: "Immunity Concern",        x: 148, y: 45 });
+  } else if (areas.length === 1) {
+    areas.push({ label: "Overall Health Risk",     x: 90, y: 85 });
+  }
+
+  return areas;
+}
+
+// Draw dog silhouette + highlighted circles
+function drawDog(doc, offsetX, offsetY, problemAreas) {
+  const c = { r: 0.15, g: 0.25, b: 0.45 }; // navy body color
+
+  // Body
+  doc.save().ellipse(offsetX + 90, offsetY + 90, 55, 38).fillAndStroke([c.r, c.g, c.b], [c.r, c.g, c.b]);
+
+  // Head
+  doc.circle(offsetX + 148, offsetY + 45, 22).fillAndStroke([c.r, c.g, c.b], [c.r, c.g, c.b]);
+
+  // Neck
+  doc.polygon(
+    [offsetX + 128, offsetY + 60],
+    [offsetX + 138, offsetY + 55],
+    [offsetX + 145, offsetY + 65],
+    [offsetX + 133, offsetY + 72]
+  ).fillAndStroke([c.r, c.g, c.b], [c.r, c.g, c.b]);
+
+  // Ear
+  doc.ellipse(offsetX + 132, offsetY + 27, 10, 15).rotate(-20, { origin: [offsetX + 132, offsetY + 27] }).fillAndStroke([0.1, 0.18, 0.35], [0.1, 0.18, 0.35]);
+
+  // Snout
+  doc.ellipse(offsetX + 164, offsetY + 53, 12, 8).fillAndStroke([0.22, 0.34, 0.55], [0.22, 0.34, 0.55]);
+
+  // Nose tip
+  doc.circle(offsetX + 170, offsetY + 52, 3).fillAndStroke([0.05, 0.05, 0.05], [0.05, 0.05, 0.05]);
+
+  // Eye
+  doc.circle(offsetX + 140, offsetY + 40, 3).fillAndStroke([0.9, 0.9, 0.9], [0.9, 0.9, 0.9]);
+
+  // Front legs
+  doc.roundedRect(offsetX + 118, offsetY + 120, 12, 45, 4).fillAndStroke([c.r, c.g, c.b], [c.r, c.g, c.b]);
+  doc.roundedRect(offsetX + 104, offsetY + 120, 12, 45, 4).fillAndStroke([c.r, c.g, c.b], [c.r, c.g, c.b]);
+
+  // Back legs
+  doc.roundedRect(offsetX + 54, offsetY + 120, 12, 45, 4).fillAndStroke([c.r, c.g, c.b], [c.r, c.g, c.b]);
+  doc.roundedRect(offsetX + 40, offsetY + 120, 12, 45, 4).fillAndStroke([c.r, c.g, c.b], [c.r, c.g, c.b]);
+
+  // Tail
+  doc.save()
+    .moveTo(offsetX + 35, offsetY + 80)
+    .bezierCurveTo(offsetX + 15, offsetY + 55, offsetX + 5, offsetY + 40, offsetX + 20, offsetY + 30)
+    .lineWidth(7).strokeColor([0.15, 0.25, 0.45]).stroke();
+  doc.restore();
+
+  // Problem area highlights — red glowing circles
+  for (const area of problemAreas) {
+    const px = offsetX + area.x;
+    const py = offsetY + area.y;
+
+    // Outer glow
+    doc.circle(px, py, 22).fillOpacity(0.15).fillColor([1, 0, 0]).fill();
+    doc.fillOpacity(1);
+
+    // Circle border
+    doc.circle(px, py, 18).lineWidth(2).strokeColor([0.9, 0.1, 0.1]).stroke();
+
+    // Dashed inner circle
+    doc.circle(px, py, 12).lineWidth(1).dash(3, { space: 2 }).strokeColor([1, 0.2, 0.2]).stroke().undash();
+  }
+
+  doc.restore();
+}
+
+app.post("/generate-report", async (req, res) => {
+  try {
+    const { ownerName, petName, petType, petAge, petBreed, chatHistory, doctorName, phone } = req.body;
+
+    const reportId = "VR" + Date.now().toString().slice(-8);
+    const fileName = `report_${reportId}.pdf`;
+    const filePath = path.join(REPORTS_DIR, fileName);
+
+    const problemAreas = detectProblemAreas(chatHistory || []);
+
+    // Build concern list from problem areas
+    const concerns = problemAreas.map(a => a.label);
+    // Add defaults if needed
+    if (!concerns.includes("Nutritional Deficiency")) concerns.push("Nutritional Imbalance Risk");
+    if (concerns.length < 3) concerns.push("Immunity Weakness Detected");
+
+    const pdfDoc = new PDFDocument({ size: "A4", margin: 40 });
+    const stream = fs.createWriteStream(filePath);
+    pdfDoc.pipe(stream);
+
+    const W = 595, navy = "#0a2d5a", red = "#cc1111", orange = "#d97706";
+
+    // ── HEADER ──────────────────────────────────────────
+    pdfDoc.rect(0, 0, W, 70).fill(navy);
+    pdfDoc.fontSize(22).fillColor("#ffffff").font("Helvetica-Bold")
+      .text("🐾 VETRAJ PET HOSPITAL", 40, 14);
+    pdfDoc.fontSize(9).fillColor("#93c5fd")
+      .text("Health Checkup Report  |  Vetraj Pet Hospital", 40, 42);
+    pdfDoc.fontSize(8).fillColor("#cbd5e1")
+      .text(`Report ID: ${reportId}   |   Date: ${new Date().toLocaleDateString("en-IN")}`, 40, 56);
+
+    // ── WARNING BANNER ───────────────────────────────────
+    pdfDoc.rect(0, 70, W, 28).fill("#fef2f2");
+    pdfDoc.fontSize(10).fillColor(red).font("Helvetica-Bold")
+      .text("⚠️  ATTENTION: Health concerns detected — Immediate consultation recommended", 40, 79);
+
+    // ── PET & OWNER INFO ─────────────────────────────────
+    pdfDoc.rect(30, 112, 250, 100).lineWidth(1).strokeColor("#dde3ef").stroke();
+    pdfDoc.rect(30, 112, 250, 22).fill("#eef2fa");
+    pdfDoc.fontSize(9).fillColor(navy).font("Helvetica-Bold").text("PET OWNER DETAILS", 38, 119);
+    pdfDoc.font("Helvetica").fontSize(9).fillColor("#1e293b")
+      .text(`Name   :  ${ownerName || "—"}`,          38, 140)
+      .text(`Phone  :  +91-XXXXXXXX${(phone||"").slice(-2)}`, 38, 155)
+      .text(`City    :  India`,                         38, 170)
+      .text(`Report  :  FREE Health Checkup`,           38, 185);
+
+    pdfDoc.rect(300, 112, 265, 100).lineWidth(1).strokeColor("#dde3ef").stroke();
+    pdfDoc.rect(300, 112, 265, 22).fill("#eef2fa");
+    pdfDoc.fontSize(9).fillColor(navy).font("Helvetica-Bold").text("PET DETAILS", 308, 119);
+    pdfDoc.font("Helvetica").fontSize(9).fillColor("#1e293b")
+      .text(`Name    :  ${petName  || "—"}`, 308, 140)
+      .text(`Species :  ${petType  || "Dog"}`, 308, 155)
+      .text(`Breed   :  ${petBreed || "Mixed Breed"}`, 308, 170)
+      .text(`Age     :  ${petAge   || "—"}`, 308, 185);
+
+    // ── DIAGNOSIS BOX ────────────────────────────────────
+    pdfDoc.rect(30, 224, 535, 22).fill(red);
+    pdfDoc.fontSize(10).fillColor("#ffffff").font("Helvetica-Bold")
+      .text("HEALTH ASSESSMENT  —  CONCERNS DETECTED", 38, 230);
+
+    let cy = 256;
+    for (const concern of concerns.slice(0, 5)) {
+      pdfDoc.rect(30, cy, 535, 20).fill(cy % 40 === 16 ? "#fff5f5" : "#ffffff");
+      pdfDoc.circle(46, cy + 10, 4).fill(red);
+      pdfDoc.fontSize(9).fillColor("#1e293b").font("Helvetica-Bold")
+        .text(concern, 58, cy + 6);
+      pdfDoc.font("Helvetica").fillColor("#64748b")
+        .text("Requires immediate attention", 300, cy + 6);
+      cy += 22;
+    }
+    // Border around assessment
+    pdfDoc.rect(30, 224, 535, cy - 224).lineWidth(1).strokeColor("#fca5a5").stroke();
+
+    // ── DOG DIAGRAM ──────────────────────────────────────
+    const dogBoxY = cy + 16;
+    pdfDoc.rect(30, dogBoxY, 535, 210).lineWidth(1).strokeColor("#dde3ef").stroke();
+    pdfDoc.rect(30, dogBoxY, 535, 22).fill("#eef2fa");
+    pdfDoc.fontSize(9).fillColor(navy).font("Helvetica-Bold")
+      .text("BODY ANALYSIS — Problem Areas Highlighted", 38, dogBoxY + 7);
+
+    // Draw dog centered
+    const dogOffX = 185, dogOffY = dogBoxY + 30;
+    drawDog(pdfDoc, dogOffX, dogOffY, problemAreas);
+
+    // Legend
+    let legY = dogBoxY + 38;
+    pdfDoc.fontSize(8).fillColor(red).font("Helvetica-Bold").text("PROBLEM AREAS:", 420, legY);
+    legY += 14;
+    for (const area of problemAreas.slice(0, 5)) {
+      pdfDoc.circle(427, legY + 4, 4).fill(red);
+      pdfDoc.fontSize(8).fillColor("#1e293b").font("Helvetica").text(area.label, 436, legY);
+      legY += 16;
+    }
+
+    // ── DOCTOR RECOMMENDATION ────────────────────────────
+    const recY = dogBoxY + 220;
+    pdfDoc.rect(30, recY, 535, 80).fill("#fffbeb").stroke();
+    pdfDoc.rect(30, recY, 535, 22).fill(orange);
+    pdfDoc.fontSize(10).fillColor("#ffffff").font("Helvetica-Bold")
+      .text("DR. RECOMMENDATION", 38, recY + 7);
+    pdfDoc.fontSize(9).fillColor("#92400e").font("Helvetica")
+      .text(`Dr. ${doctorName || "Vetraj Expert Vet"} ke analysis ke anusar, ${petName || "aapke pet"} mein kuch health concerns detected hue hain.`, 38, recY + 30)
+      .text(`Inhe nazarandaaz karna theek nahi hoga — seedha consultation se sahi treatment plan milega.`, 38, recY + 46)
+      .text(`Consulting: ${doctorName || "Vetraj Expert Vet"}  |  Appointment: ₹399 only  |  Call: 9568606006`, 38, recY + 62);
+
+    // ── CTA ──────────────────────────────────────────────
+    const ctaY = recY + 90;
+    pdfDoc.rect(30, ctaY, 535, 36).fill(navy);
+    pdfDoc.fontSize(12).fillColor("#ffffff").font("Helvetica-Bold")
+      .text(`📞 Book Expert Consultation: vetraj.in  |  Helpline: 9568606006`, 38, ctaY + 12);
+
+    // ── FOOTER ───────────────────────────────────────────
+    pdfDoc.fontSize(7).fillColor("#94a3b8").font("Helvetica")
+      .text(`Yeh report ${doctorName || "Vetraj Expert Vet"} dwara Vetraj Pet Hospital ki taraf se jari ki gayi hai. Appointment ke liye: 9568606006`, 30, 790, { width: 535, align: "center" });
+
+    pdfDoc.end();
+
+    stream.on("finish", () => {
+      const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+      const reportUrl = `${baseUrl}/reports/${fileName}`;
+      console.log(`[PDF] Generated: ${fileName}`);
+      res.json({ success: true, reportUrl, reportId });
+    });
+
+    stream.on("error", (e) => {
+      console.error("PDF stream error:", e.message);
+      res.json({ success: false });
+    });
+
+  } catch (e) {
+    console.error("generate-report error:", e.message);
+    res.json({ success: false });
+  }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// FUNNEL TRACKING
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.post("/track-funnel", async (req, res) => {
+  try {
+    const { phone, step, meta, chatAnswers, reportUrl } = req.body;
+    if (!phone || !step) return res.json({ success: false });
+    const last10 = phone.replace(/\D/g, "").slice(-10);
+    const now = new Date();
+    const update = {
+      $set: { funnelStep: step },
+      $push: { funnelEvents: { step, ts: now, meta: meta || "" } }
+    };
+    if (chatAnswers) update.$set.chatAnswers = chatAnswers;
+    if (reportUrl) update.$set.reportUrl = reportUrl;
+    if (step === "chat_complete") { update.$set.chatComplete = true; update.$set.sessionEnd = now; }
+    if (step === "payment_page") update.$set.paymentPageViewed = true;
+    if (step === "payment_clicked") update.$set.paymentClicked = true;
+    if (step === "payment_done") update.$set.consultationType = "paid";
+
+    if (!DB_READY) {
+      const idx = memLeads.findIndex(l => l.ownerPhone === last10);
+      if (idx >= 0) {
+        memLeads[idx].funnelStep = step;
+        if (!memLeads[idx].funnelEvents) memLeads[idx].funnelEvents = [];
+        memLeads[idx].funnelEvents.push({ step, ts: now, meta: meta || "" });
+        if (reportUrl) memLeads[idx].reportUrl = reportUrl;
+        if (chatAnswers) memLeads[idx].chatAnswers = chatAnswers;
+        if (step === "chat_complete") memLeads[idx].chatComplete = true;
+        if (step === "payment_page") memLeads[idx].paymentPageViewed = true;
+        if (step === "payment_clicked") memLeads[idx].paymentClicked = true;
+        if (step === "payment_done") memLeads[idx].consultationType = "paid";
+        persistLeads();
+      }
+      return res.json({ success: true });
+    }
+    await Lead.findOneAndUpdate(
+      { ownerPhone: last10 }, update, { sort: { createdAt: -1 } }
+    );
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false }); }
+});
+
+// ━━━━ MANUAL LEAD (Telecaller incoming call) ━━━━
+app.post("/add-manual-lead", async (req, res) => {
+  try {
+    const { key, ownerName, ownerPhone, petName, petType, petBreed, petAge, problem, assignedTo, callerStatus, source } = req.body;
+    if (key !== (process.env.ADMIN_KEY || "vetraj2024")) return res.json({ success: false, error: "unauthorized" });
+    if (!ownerName || !ownerPhone) return res.json({ success: false, error: "naam aur phone zaroori hai" });
+    const now = new Date();
+    const leadData = {
+      date: now.toLocaleDateString("en-IN"),
+      time: now.toLocaleTimeString("en-IN"),
+      ownerName: ownerName || "",
+      ownerPhone: ownerPhone.replace(/\D/g,"").slice(-10),
+      petName: petName || "",
+      petType: petType || "",
+      petAge: petAge || "",
+      petBreed: petBreed || "",
+      doctorName: "",
+      problem: problem || "",
+      whatsappVerified: false,
+      funnelStep: "chat_complete",
+      funnelEvents: [{ step: "manual_call", ts: now, meta: `caller:${assignedTo||''}` }],
+      callerStatus: callerStatus || "called",
+      assignedTo: assignedTo || "",
+      consultationType: "free",
+      source: source || "manual_call",
+      createdAt: now
+    };
+    if (!DB_READY) {
+      leadData._id = "mem_" + (memIdCounter++);
+      memLeads.push(leadData);
+      persistLeads();
+      return res.json({ success: true, id: leadData._id });
+    }
+    const saved = await Lead.create(leadData);
+    res.json({ success: true, id: saved._id });
+  } catch (e) { res.json({ success: false, error: e.message }); }
+});
+
+// ━━━━ GET REPORT URL FOR TELECALLER ━━━━
+app.get("/get-report", (req, res) => {
+  const { phone, key } = req.query;
+  if (key !== (process.env.ADMIN_KEY || "vetraj2024")) return res.json({ error: "unauthorized" });
+  const last10 = (phone || "").replace(/\D/g, "").slice(-10);
+  const lead = memLeads.find(l => l.ownerPhone === last10);
+  if (lead && lead.reportUrl) return res.json({ url: lead.reportUrl });
+  // Try to find latest report file for this phone
+  try {
+    const files = fs.readdirSync(REPORTS_DIR).filter(f => f.endsWith('.pdf')).sort().reverse();
+    if (files.length) {
+      const baseUrl = req.protocol + '://' + req.get('host');
+      return res.json({ url: `${baseUrl}/reports/${files[0]}` });
+    }
+  } catch(e) {}
+  res.json({ url: null });
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// GET LEADS JSON (enhanced with funnel)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// First get-leads-json — forwards to proper one below
+
+// ━━━━ DELETE LEAD ━━━━
+app.post("/delete-lead", async (req, res) => {
+  try {
+    const { id, key } = req.body;
+    if (key !== (process.env.ADMIN_KEY || "vetraj2024")) return res.json({ success: false, error: "unauthorized" });
+    if (!DB_READY) {
+      const idx = memLeads.findIndex(l => l._id === id || String(l._id) === String(id));
+      if (idx >= 0) { memLeads.splice(idx, 1); persistLeads(); }
+      return res.json({ success: true });
+    }
+    await Lead.findByIdAndDelete(id);
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false, error: e.message }); }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// TELECALLER MANAGEMENT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.get("/get-telecallers", async (req, res) => {
+  try {
+    if (!DB_READY) return res.json({ telecallers: memTelecallers.filter(t => t.active !== false) });
+    const list = await Telecaller.find({ active: true }).lean();
+    res.json({ telecallers: list });
+  } catch (e) { res.json({ telecallers: [] }); }
+});
+
+app.post("/save-telecaller", async (req, res) => {
+  try {
+    const { name, phone, password } = req.body;
+    const key = req.query.key || req.body.key;
+    if (key !== (process.env.ADMIN_KEY || "vetraj2024")) return res.json({ success: false, error: "unauthorized" });
+    if (!DB_READY) {
+      memTelecallers.push({ _id: "mem_tc_" + Date.now(), name, phone, password: password || "caller123", active: true });
+      persistTelecallers();
+      return res.json({ success: true });
+    }
+    await Telecaller.create({ name, phone, password: password || "caller123" });
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false }); }
+});
+
+app.post("/delete-telecaller", async (req, res) => {
+  try {
+    const { id, name } = req.body;
+    const key = req.query.key || req.body.key;
+    if (key !== (process.env.ADMIN_KEY || "vetraj2024")) return res.json({ success: false });
+    if (!DB_READY) {
+      const idx = memTelecallers.findIndex(t => t._id === id || t.name === name);
+      if (idx >= 0) memTelecallers[idx].active = false;
+      persistTelecallers();
+      return res.json({ success: true });
+    }
+    if (id) await Telecaller.findByIdAndUpdate(id, { active: false });
+    else if (name) await Telecaller.findOneAndUpdate({ name }, { active: false });
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false }); }
+});
+
+app.post("/assign-lead", async (req, res) => {
+  try {
+    const { phone, assignedTo, leadId, callerName } = req.body;
+    const key = req.query.key || req.body.key;
+    if (key !== (process.env.ADMIN_KEY || "vetraj2024")) return res.json({ success: false });
+    const assignName = callerName || assignedTo;
+    if (!DB_READY) {
+      const idx = memLeads.findIndex(l => l._id === leadId || l.ownerPhone === (phone||'').replace(/\D/g,'').slice(-10));
+      if (idx >= 0) { memLeads[idx].assignedTo = assignName; persistLeads(); }
+      return res.json({ success: true });
+    }
+    if (leadId) {
+      await Lead.findByIdAndUpdate(leadId, { $set: { assignedTo: assignName } });
+    } else if (phone) {
+      const last10 = phone.replace(/\D/g, "").slice(-10);
+      await Lead.findOneAndUpdate({ ownerPhone: last10 }, { $set: { assignedTo: assignName } }, { sort: { createdAt: -1 } });
+    }
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false }); }
+});
+
+app.post("/update-caller-status", async (req, res) => {
+  try {
+    const { phone, callerStatus, callerNotes, callerName, leadId, followUpDate, followUpNote, followUpDone } = req.body;
+    if (!DB_READY) {
+      const idx = memLeads.findIndex(l => l._id === leadId || l.ownerPhone === (phone||'').replace(/\D/g,'').slice(-10));
+      if (idx >= 0) {
+        if (callerStatus) memLeads[idx].callerStatus = callerStatus;
+        if (callerNotes !== undefined) memLeads[idx].callerNotes = callerNotes;
+        if (followUpDate !== undefined) memLeads[idx].followUpDate = followUpDate;
+        if (followUpNote !== undefined) memLeads[idx].followUpNote = followUpNote;
+        if (followUpDone !== undefined) memLeads[idx].followUpDone = followUpDone;
+        // Log activity
+        if (!memLeads[idx].activityLog) memLeads[idx].activityLog = [];
+        memLeads[idx].activityLog.push({
+          ts: new Date(), by: callerName || 'caller',
+          action: callerStatus || (followUpDate ? 'follow_up_set' : 'note_saved'),
+          note: followUpDate ? `Follow-up: ${followUpDate}` : (callerNotes || '')
+        });
+        persistLeads();
+      }
+      return res.json({ success: true });
+    }
+    const set = {};
+    if (callerStatus) set.callerStatus = callerStatus;
+    if (callerNotes !== undefined) set.callerNotes = callerNotes;
+    if (followUpDate !== undefined) set.followUpDate = followUpDate;
+    if (followUpNote !== undefined) set.followUpNote = followUpNote;
+    if (followUpDone !== undefined) set.followUpDone = followUpDone;
+    const update = { $set: set, $push: { activityLog: { ts: new Date(), by: callerName||'caller', action: callerStatus||'update', note: followUpDate||callerNotes||'' } } };
+    if (leadId) { await Lead.findByIdAndUpdate(leadId, update); }
+    else if (phone) {
+      const last10 = phone.replace(/\D/g, "").slice(-10);
+      await Lead.findOneAndUpdate({ ownerPhone: last10 }, update, { sort: { createdAt: -1 } });
+    }
+    res.json({ success: true });
+  } catch (e) { res.json({ success: false }); }
+});
+
+app.get("/caller-leads", async (req, res) => {
+  try {
+    const { name } = req.query;
+    if (!name) return res.json([]);
+    if (!DB_READY) return res.json(memLeads.filter(l => l.assignedTo === name));
+    const leads = await Lead.find({ assignedTo: name }).sort({ createdAt: -1 }).limit(200).lean();
+    res.json(leads);
+  } catch (e) { res.json([]); }
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// FUNNEL STATS (for dashboard)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+app.get("/funnel-stats", async (req, res) => {
+  try {
+    const key = req.query.key;
+    if (key !== (process.env.ADMIN_KEY || "vetraj2024")) return res.json({ error: "unauthorized" });
+    if (!DB_READY) return res.json({ steps: [] });
+    const steps = ["landed", "otp_verified", "chat_started", "chat_complete", "payment_page", "payment_clicked", "payment_done"];
+    const results = {};
+    for (const step of steps) {
+      results[step] = await Lead.countDocuments({ funnelStep: step });
+    }
+    // Also count by broader criteria
+    results.total = await Lead.countDocuments({});
+    results.otp_verified_total = await Lead.countDocuments({ whatsappVerified: true });
+    results.chat_complete_total = await Lead.countDocuments({ chatComplete: true });
+    results.payment_page_total = await Lead.countDocuments({ paymentPageViewed: true });
+    results.payment_done_total = await Lead.countDocuments({ consultationType: "paid" });
+    res.json(results);
+  } catch (e) { res.json({ steps: [] }); }
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -601,6 +1219,7 @@ app.post("/save-appointment", async (req, res) => {
 
 app.get("/get-appointments", async (req, res) => {
   if (req.query.key !== ADMIN_KEY) return res.status(403).json({ error: "Access denied" });
+  if (!DB_READY) return res.json({ appointments: [] });
   try {
     const appts = await Appointment.find().sort({ createdAt: -1 }).lean();
     res.json({ appointments: appts });
@@ -609,6 +1228,7 @@ app.get("/get-appointments", async (req, res) => {
 
 app.post("/update-appointment", async (req, res) => {
   if (req.query.key !== ADMIN_KEY) return res.status(403).json({ error: "Access denied" });
+  if (!DB_READY) return res.json({ success: true });
   try {
     const { id, status, doctor } = req.body;
     const update = {};
@@ -623,6 +1243,7 @@ app.post("/update-appointment", async (req, res) => {
 app.get("/get-leads-json", async (req, res) => {
   if (req.query.key !== ADMIN_KEY) return res.status(403).json({ error: "Access denied" });
   try {
+    if (!DB_READY) return res.json({ leads: [...memLeads].reverse() });
     const leads = await Lead.find().sort({ createdAt: -1 }).lean();
     res.json({ leads });
   } catch (e) { res.json({ leads: [] }); }
@@ -643,32 +1264,37 @@ app.get("/download-leads", async (req, res) => {
 
 // ━━━━ DOCTORS MANAGEMENT ━━━━
 app.get("/get-doctors", async (req,res) => {
-  const docs = await Doctor.find().lean();
-  res.json({doctors: docs});
+  if(!DB_READY) return res.json({doctors:[]});
+  try { const docs = await Doctor.find().lean(); res.json({doctors: docs}); }
+  catch(e) { res.json({doctors:[]}); }
 });
 
 app.post("/save-doctor", async (req,res) => {
   if(req.query.key !== ADMIN_KEY) return res.status(403).json({error:"denied"});
-  const d = req.body;
-  if(d._id) {
-    await Doctor.findByIdAndUpdate(d._id, d);
-  } else {
-    await Doctor.create(d);
-  }
-  res.json({success:true});
+  if(!DB_READY) return res.json({success:true});
+  try {
+    const d = req.body;
+    if(d._id) { await Doctor.findByIdAndUpdate(d._id, d); }
+    else { await Doctor.create(d); }
+    res.json({success:true});
+  } catch(e) { res.json({success:false}); }
 });
 
 app.post("/delete-doctor", async (req,res) => {
   if(req.query.key !== ADMIN_KEY) return res.status(403).json({error:"denied"});
-  await Doctor.findByIdAndDelete(req.body.id || req.body._id);
-  res.json({success:true});
+  if(!DB_READY) return res.json({success:true});
+  try { await Doctor.findByIdAndDelete(req.body.id || req.body._id); res.json({success:true}); }
+  catch(e) { res.json({success:false}); }
 });
 
 app.post("/toggle-doctor", async (req,res) => {
   if(req.query.key !== ADMIN_KEY) return res.status(403).json({error:"denied"});
-  const doc = await Doctor.findById(req.body.id || req.body._id);
-  if(doc) { doc.available = !doc.available; await doc.save(); }
-  res.json({success:true, available: doc?.available});
+  if(!DB_READY) return res.json({success:true});
+  try {
+    const doc = await Doctor.findById(req.body.id || req.body._id);
+    if(doc) { doc.available = !doc.available; await doc.save(); }
+    res.json({success:true, available: doc?.available});
+  } catch(e) { res.json({success:false}); }
 });
 
 // ━━━━ AUTO DISTRIBUTE ━━━━
@@ -700,50 +1326,55 @@ app.post("/auto-distribute", async (req,res) => {
 
 // ━━━━ CATEGORIES ━━━━
 app.get("/get-categories", async (req, res) => {
-  const cats = await Category.find().lean();
-  res.json({categories: cats.map(c => ({id:c.catId, emoji:c.emoji, name:c.name}))});
+  if(!DB_READY) return res.json({categories:[]});
+  try { const cats = await Category.find().lean(); res.json({categories: cats.map(c => ({id:c.catId, emoji:c.emoji, name:c.name}))}); }
+  catch(e) { res.json({categories:[]}); }
 });
 
 app.post("/save-categories", async (req, res) => {
   if(req.query.key !== ADMIN_KEY) return res.status(403).json({error:"denied"});
-  await Category.deleteMany({});
-  await Category.insertMany(req.body.categories.map(c => ({catId:c.id, emoji:c.emoji, name:c.name})));
-  res.json({success:true});
+  if(!DB_READY) return res.json({success:true});
+  try { await Category.deleteMany({}); await Category.insertMany(req.body.categories.map(c => ({catId:c.id, emoji:c.emoji, name:c.name}))); res.json({success:true}); }
+  catch(e) { res.json({success:false}); }
 });
 
 // ━━━━ PRODUCTS ━━━━
 app.get("/get-products", async (req, res) => {
-  const prods = await Product.find().lean();
-  res.json({ products: prods });
+  if(!DB_READY) return res.json({products:[]});
+  try { const prods = await Product.find().lean(); res.json({ products: prods }); }
+  catch(e) { res.json({products:[]}); }
 });
 
 app.post("/save-product", async (req, res) => {
   if(req.query.key !== ADMIN_KEY) return res.status(403).json({error:"denied"});
-  const p = req.body;
-  if(p._id) {
-    await Product.findByIdAndUpdate(p._id, p);
-  } else {
-    await Product.create(p);
-  }
-  res.json({ success: true });
+  if(!DB_READY) return res.json({success:true});
+  try {
+    const p = req.body;
+    if(p._id) { await Product.findByIdAndUpdate(p._id, p); } else { await Product.create(p); }
+    res.json({ success: true });
+  } catch(e) { res.json({success:false}); }
 });
 
 app.post("/delete-product", async (req, res) => {
   if(req.query.key !== ADMIN_KEY) return res.status(403).json({error:"denied"});
-  await Product.findByIdAndDelete(req.body.id || req.body._id);
-  res.json({ success: true });
+  if(!DB_READY) return res.json({success:true});
+  try { await Product.findByIdAndDelete(req.body.id || req.body._id); res.json({ success: true }); }
+  catch(e) { res.json({success:false}); }
 });
 
 // ━━━━ ORDERS ━━━━
 app.post("/track-order", async (req, res) => {
-  await Order.create({...req.body, createdAt: new Date()});
-  res.json({ success: true });
+  if(!DB_READY) return res.json({success:true});
+  try { await Order.create({...req.body, createdAt: new Date()}); res.json({ success: true }); }
+  catch(e) { res.json({success:false}); }
 });
 
 app.post("/save-order", async (req, res) => {
-  const order = await Order.create({...req.body, status: req.body.status || "confirmed"});
-  console.log(`New Order: ${order.orderId} — ${order.productName} — ₹${order.total} — ${order.customer?.name}`);
-  res.json({ success: true, orderId: order.orderId });
+  if(!DB_READY) return res.json({success:true, orderId:'mem_'+Date.now()});
+  try {
+    const order = await Order.create({...req.body, status: req.body.status || "confirmed"});
+    res.json({ success: true, orderId: order.orderId });
+  } catch(e) { res.json({success:false}); }
 });
 
 app.get("/get-orders", async (req, res) => {
@@ -842,38 +1473,40 @@ app.get("/export/orders", async (req, res) => {
 
 // ━━━━ MEDICINES ━━━━
 app.get("/get-medicines", async (req,res) => {
-  const meds = await Medicine.find().lean();
-  res.json({medicines: meds});
+  if(!DB_READY) return res.json({medicines:[]});
+  try { const meds = await Medicine.find().lean(); res.json({medicines: meds}); }
+  catch(e) { res.json({medicines:[]}); }
 });
 
 app.post("/save-medicine", async (req,res) => {
   if(req.query.key !== ADMIN_KEY) return res.status(403).json({error:"denied"});
-  const m = req.body;
-  if(m._id) {
-    await Medicine.findByIdAndUpdate(m._id, m);
-  } else {
-    await Medicine.create(m);
-  }
-  res.json({success:true});
+  if(!DB_READY) return res.json({success:true});
+  try {
+    const m = req.body;
+    if(m._id) { await Medicine.findByIdAndUpdate(m._id, m); } else { await Medicine.create(m); }
+    res.json({success:true});
+  } catch(e) { res.json({success:false}); }
 });
 
 app.post("/update-stock", async (req,res) => {
   if(req.query.key !== ADMIN_KEY) return res.status(403).json({error:"denied"});
-  const {id, stock} = req.body;
-  await Medicine.findByIdAndUpdate(id, {stock});
-  res.json({success:true});
+  if(!DB_READY) return res.json({success:true});
+  try { const {id, stock} = req.body; await Medicine.findByIdAndUpdate(id, {stock}); res.json({success:true}); }
+  catch(e) { res.json({success:false}); }
 });
 
 // ━━━━ PRESCRIPTIONS ━━━━
 app.post("/save-prescription", async (req,res) => {
-  await Prescription.create(req.body);
-  res.json({success:true});
+  if(!DB_READY) return res.json({success:true});
+  try { await Prescription.create(req.body); res.json({success:true}); }
+  catch(e) { res.json({success:false}); }
 });
 
 app.get("/get-prescriptions", async (req,res) => {
   if(req.query.key !== ADMIN_KEY) return res.status(403).json({error:"denied"});
-  const rxs = await Prescription.find().sort({createdAt:-1}).lean();
-  res.json({prescriptions: rxs});
+  if(!DB_READY) return res.json({prescriptions:[]});
+  try { const rxs = await Prescription.find().sort({createdAt:-1}).lean(); res.json({prescriptions: rxs}); }
+  catch(e) { res.json({prescriptions:[]}); }
 });
 
 // ━━━━ CSV EXPORTS ━━━━
@@ -885,34 +1518,42 @@ function toCSV(data, headers) {
 
 app.get("/export/leads", async (req,res) => {
   if(req.query.key !== ADMIN_KEY) return res.status(403).send("denied");
-  const leads = await Lead.find().lean();
-  if(!leads.length) return res.status(404).send("No data");
-  const csv = toCSV(leads,['date','time','ownerName','ownerPhone','petName','petType','petAge','petBreed','doctorName','problem']);
-  res.setHeader('Content-Disposition','attachment; filename="vetraj_leads.csv"');
-  res.setHeader('Content-Type','text/csv');
-  res.send(csv);
+  if(!DB_READY) { const csv = toCSV(memLeads,['date','time','ownerName','ownerPhone','petName','petType','petAge','petBreed','doctorName','problem']); res.setHeader('Content-Disposition','attachment; filename="vetraj_leads.csv"'); res.setHeader('Content-Type','text/csv'); return res.send(csv); }
+  try {
+    const leads = await Lead.find().lean();
+    const csv = toCSV(leads,['date','time','ownerName','ownerPhone','petName','petType','petAge','petBreed','doctorName','problem']);
+    res.setHeader('Content-Disposition','attachment; filename="vetraj_leads.csv"');
+    res.setHeader('Content-Type','text/csv');
+    res.send(csv);
+  } catch(e) { res.status(500).send("Error"); }
 });
 
 app.get("/export/appointments", async (req,res) => {
   if(req.query.key !== ADMIN_KEY) return res.status(403).send("denied");
-  const filter = req.query.status;
-  const query = filter && filter!=='all' ? {status:filter} : {};
-  const appts = await Appointment.find(query).lean();
-  const csv = toCSV(appts,['owner','phone','pet','date','time','doctor','status','amount','createdAt']);
-  res.setHeader('Content-Disposition',`attachment; filename="vetraj_appts_${filter||'all'}.csv"`);
-  res.setHeader('Content-Type','text/csv');
-  res.send(csv);
+  if(!DB_READY) return res.send('');
+  try {
+    const filter = req.query.status;
+    const query = filter && filter!=='all' ? {status:filter} : {};
+    const appts = await Appointment.find(query).lean();
+    const csv = toCSV(appts,['owner','phone','pet','date','time','doctor','status','amount','createdAt']);
+    res.setHeader('Content-Disposition',`attachment; filename="vetraj_appts_${filter||'all'}.csv"`);
+    res.setHeader('Content-Type','text/csv');
+    res.send(csv);
+  } catch(e) { res.send(''); }
 });
 
 app.get("/export/revenue", async (req,res) => {
   if(req.query.key !== ADMIN_KEY) return res.status(403).send("denied");
-  const appts = await Appointment.find().lean();
-  const byDate = {};
-  appts.forEach(a=>{const d=a.date||'Unknown';if(!byDate[d])byDate[d]={date:d,booked:0,done:0,refund:0,revenue:0,refundAmt:0,net:0};byDate[d][a.status]=(byDate[d][a.status]||0)+1;if(a.status==='done')byDate[d].revenue+=399;if(a.status==='refund')byDate[d].refundAmt+=399;byDate[d].net=byDate[d].revenue-byDate[d].refundAmt;});
-  const csv = toCSV(Object.values(byDate),['date','booked','done','refund','revenue','refundAmt','net']);
-  res.setHeader('Content-Disposition','attachment; filename="vetraj_revenue.csv"');
-  res.setHeader('Content-Type','text/csv');
-  res.send(csv);
+  if(!DB_READY) return res.send('');
+  try {
+    const appts = await Appointment.find().lean();
+    const byDate = {};
+    appts.forEach(a=>{const d=a.date||'Unknown';if(!byDate[d])byDate[d]={date:d,booked:0,done:0,refund:0,revenue:0,refundAmt:0,net:0};byDate[d][a.status]=(byDate[d][a.status]||0)+1;if(a.status==='done')byDate[d].revenue+=399;if(a.status==='refund')byDate[d].refundAmt+=399;byDate[d].net=byDate[d].revenue-byDate[d].refundAmt;});
+    const csv = toCSV(Object.values(byDate),['date','booked','done','refund','revenue','refundAmt','net']);
+    res.setHeader('Content-Disposition','attachment; filename="vetraj_revenue.csv"');
+    res.setHeader('Content-Type','text/csv');
+    res.send(csv);
+  } catch(e) { res.send(''); }
 });
 
 app.get("/export/prescriptions", async (req,res) => {

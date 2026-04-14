@@ -6,6 +6,7 @@
 <title>Vetraj — Admin Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 :root{
   --navy:#0a1628;--blue:#1a5a8a;--blue2:#2980b9;--cyan:#00d4e8;
@@ -174,6 +175,29 @@ input,textarea,select{
 .empty{text-align:center;padding:28px;color:var(--muted);}
 .empty-i{font-size:36px;margin-bottom:8px;}
 
+/* FUNNEL */
+.funnel-step{background:#fff;border-radius:12px;padding:13px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:12px;}
+.fs-icon{font-size:22px;flex-shrink:0;}
+.fs-info{flex:1;}
+.fs-label{font-size:13px;font-weight:800;color:var(--navy);}
+.fs-count{font-size:22px;font-weight:900;}
+.fs-rate{font-size:11px;color:var(--muted);font-weight:600;}
+.fs-bar-wrap{width:100%;background:#f1f5f9;border-radius:6px;height:6px;overflow:hidden;margin-top:4px;}
+.fs-bar{height:100%;border-radius:6px;transition:width .5s;}
+.tl-row{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;align-items:flex-start;}
+.tl-row:last-child{border-bottom:none;}
+.tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.tl-info{flex:1;}
+.tl-step{font-size:12px;font-weight:700;color:var(--navy);}
+.tl-time{font-size:10px;color:var(--muted);}
+.tl-meta{font-size:11px;color:var(--muted);font-style:italic;}
+.caller-card{background:#fff;border-radius:13px;padding:13px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:10px;display:flex;gap:10px;align-items:flex-start;}
+.caller-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--pink));display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;color:#fff;font-weight:800;}
+.caller-info{flex:1;}
+.caller-name{font-size:14px;font-weight:800;color:var(--navy);}
+.caller-ph{font-size:11px;color:var(--muted);}
+.caller-stats{font-size:11px;color:var(--teal);font-weight:700;margin-top:2px;}
+
 /* RESPONSIVE */
 @media(max-width:400px){.sg{grid-template-columns:1fr 1fr;}.tbl{font-size:11px;}.tbl td,.tbl th{padding:7px 8px;}}
 </style>
@@ -231,6 +255,8 @@ input,textarea,select{
     <div class="nv" onclick="showPg('products')">📦 Products</div>
     <div class="nv" onclick="showPg('whatsapp')">💬 WhatsApp</div>
     <div class="nv" onclick="showPg('apikeys')">🔑 API Keys</div>
+    <div class="nv" onclick="showPg('funnel')">🔽 Funnel</div>
+    <div class="nv" onclick="showPg('callers')">👥 Callers</div>
     <div class="nv" onclick="showPg('daily')">📈 Daily Stats</div>
     <div class="nv" onclick="showPg('foodcharts')">🍽️ Food Charts</div>
     <div class="nv" onclick="showPg('fcsettings')">⚙️ FC Settings</div>
@@ -279,7 +305,7 @@ input,textarea,select{
     </div>
     <div class="tw">
       <div style="overflow-x:auto;"><table class="tbl">
-        <thead><tr><th>#</th><th>Owner</th><th>Phone</th><th>Pet</th><th>Problem</th><th>Doctor</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+        <thead><tr><th>#</th><th>Owner</th><th>Phone</th><th>Pet</th><th>Problem</th><th>Doctor</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody id="leads-tbody"></tbody>
       </table></div>
     </div>
@@ -694,7 +720,95 @@ input,textarea,select{
     </div>
   </div>
 
+  <!-- FUNNEL PAGE -->
+  <div class="pg" id="pg-funnel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:14px;font-weight:800;color:var(--navy);">🔽 Conversion Funnel</div>
+      <button class="add-btn" onclick="loadFunnel()">🔄 Refresh</button>
+    </div>
+    <!-- Funnel Steps -->
+    <div id="funnel-steps" style="margin-bottom:16px;"></div>
+    <!-- Lead Timeline -->
+    <div class="tw" style="margin-bottom:12px;">
+      <div class="th"><div class="th-t">📋 Lead Timeline — Kisi Lead Pe Click Karo</div></div>
+      <div id="funnel-leads-list" style="padding:10px;max-height:340px;overflow-y:auto;"></div>
+    </div>
+    <!-- Selected Lead Detail -->
+    <div id="funnel-lead-detail" style="display:none;background:#fff;border-radius:13px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:800;color:var(--navy);" id="fld-title">Lead Detail</div>
+        <button onclick="document.getElementById('funnel-lead-detail').style.display='none'" style="background:#f1f5f9;border:none;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:13px;">✕</button>
+      </div>
+      <div id="fld-timeline"></div>
+    </div>
+  </div>
+
+  <!-- CALLERS MANAGEMENT PAGE -->
+  <div class="pg" id="pg-callers">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:14px;font-weight:800;color:var(--navy);">👥 Telecaller Management</div>
+      <button class="add-btn" onclick="openAddCaller()">+ Add Caller</button>
+    </div>
+
+    <!-- PERFORMANCE PANEL -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12px;font-weight:800;color:var(--navy);margin-bottom:8px;letter-spacing:.5px;">📊 PERFORMANCE TRACKER</div>
+      <div id="perf-grid" style="display:grid;gap:10px;"></div>
+    </div>
+
+    <!-- ACTIVITY LOG -->
+    <div style="background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+      <div style="font-size:12px;font-weight:800;color:var(--navy);margin-bottom:8px;">🕐 RECENT ACTIVITY</div>
+      <div id="activity-log" style="font-size:12px;color:var(--muted);max-height:160px;overflow-y:auto;"></div>
+    </div>
+
+    <!-- Caller Cards -->
+    <div id="callers-grid" style="margin-bottom:16px;"></div>
+    <!-- Add Caller Form -->
+    <div id="add-caller-form" style="display:none;background:#fff;border-radius:13px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:12px;">
+      <div style="font-size:13px;font-weight:800;color:var(--navy);margin-bottom:12px;">➕ Naya Telecaller Add Karein</div>
+      <div style="display:grid;gap:10px;">
+        <div><label style="font-size:10px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px;">NAAM *</label>
+          <input id="new-caller-name" type="text" placeholder="Caller ka naam..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;">
+        </div>
+        <div><label style="font-size:10px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px;">PHONE *</label>
+          <input id="new-caller-phone" type="tel" placeholder="10 digit mobile..." style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;">
+        </div>
+        <div><label style="font-size:10px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px;">PASSWORD</label>
+          <input id="new-caller-pass" type="text" placeholder="Default: caller123" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:9px;font-size:14px;font-family:'Poppins',sans-serif;outline:none;">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button onclick="saveCaller()" style="flex:2;padding:12px;background:linear-gradient(135deg,var(--navy),var(--blue));color:#fff;border:none;border-radius:10px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">✅ Save</button>
+        <button onclick="document.getElementById('add-caller-form').style.display='none'" style="flex:1;padding:11px;background:#f1f5f9;color:var(--navy);border:none;border-radius:10px;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Cancel</button>
+      </div>
+    </div>
+    <!-- Lead Assignment -->
+    <div class="tw">
+      <div class="th">
+        <div class="th-t">📋 Lead Assignment</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="ab pp" onclick="autoAssignLeads()">⚡ Auto Assign</button>
+          <button class="add-btn" style="background:var(--teal);" onclick="loadCallersData()">🔄 Refresh</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;"><table class="tbl">
+        <thead><tr><th>#</th><th>Owner</th><th>Phone</th><th>Pet</th><th>Funnel Step</th><th>Assigned To</th><th>Caller Status</th><th>Action</th></tr></thead>
+        <tbody id="assign-leads-tbody"></tbody>
+      </table></div>
+    </div>
+  </div>
+
 </div><!-- /app -->
+
+<!-- CALLER ASSIGN MODAL -->
+<div class="mbg" id="caller-assign-modal">
+  <div class="mc">
+    <div class="mc-h"><span>📞 Caller Ko Assign Karein</span><button class="mc-x" onclick="closeModal('caller-assign-modal')">✕</button></div>
+    <div id="caller-list-modal"></div>
+    <button class="mc-btn" onclick="confirmCallerAssign()">✅ Assign Karein</button>
+  </div>
+</div>
 
 <!-- ASSIGN MODAL -->
 <div class="mbg" id="assign-modal">
@@ -910,6 +1024,7 @@ function initApp(){
   doctors = JSON.parse(localStorage.getItem('vetraj_doctors')||'null') || DEFAULT_DOCTORS;
   updateTime();
   setInterval(updateTime, 30000);
+  setInterval(loadData, 30000); // Auto-refresh every 30 seconds
   loadData();
   loadDashProducts();
   loadOrders();
@@ -937,13 +1052,77 @@ function updateTime(){
   document.getElementById('caller-date').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
 }
 
+// ━━━━ NORMALIZE LEAD — DB fields → dashboard fields ━━━━
+function normalizeLead(l, i){
+  // Support both old CSV format and new DB JSON format
+  return {
+    id: l._id || l.id || (i+1),
+    _id: l._id || '',
+    // Owner
+    Owner: l.ownerName || l.Owner || l['Owner Name'] || '',
+    'Owner Name': l.ownerName || l.Owner || l['Owner Name'] || '',
+    ownerName: l.ownerName || l.Owner || '',
+    Phone: l.ownerPhone || l.Phone || '',
+    ownerPhone: l.ownerPhone || l.Phone || '',
+    // Pet
+    Pet: l.petName || l.Pet || l['Pet Name'] || '',
+    'Pet Name': l.petName || l.Pet || '',
+    petName: l.petName || l.Pet || '',
+    Type: l.petType || l.Type || '',
+    petType: l.petType || l.Type || '',
+    Age: l.petAge || l.Age || '',
+    petAge: l.petAge || l.Age || '',
+    Breed: l.petBreed || l.Breed || '',
+    petBreed: l.petBreed || l.Breed || '',
+    // Doctor & Problem
+    Doctor: l.doctorName || l.Doctor || '',
+    doctorName: l.doctorName || l.Doctor || '',
+    Problem: l.problem || l.Problem || '',
+    problem: l.problem || l.Problem || '',
+    // Date
+    Date: l.date || l.Date || (l.createdAt ? new Date(l.createdAt).toLocaleDateString('en-IN') : ''),
+    date: l.date || l.Date || '',
+    Time: l.time || l.Time || '',
+    // Funnel
+    funnelStep: l.funnelStep || 'landed',
+    funnelEvents: l.funnelEvents || [],
+    chatComplete: l.chatComplete || false,
+    paymentPageViewed: l.paymentPageViewed || false,
+    paymentClicked: l.paymentClicked || false,
+    consultationType: l.consultationType || 'free',
+    // Caller
+    assignedTo: l.assignedTo || '',
+    callerStatus: l.callerStatus || l.callStatus || 'pending',
+    callerNotes: l.callerNotes || '',
+    // Source
+    source: l.source || l.Source || 'consultation',
+    planId: l.planId || '',
+    callStatus: l.callerStatus || l.callStatus || 'pending',
+    whatsappVerified: l.whatsappVerified || false,
+    reportSent: l.reportSent || false,
+    createdAt: l.createdAt || ''
+  };
+}
+
 // ━━━━ DATA ━━━━
 async function loadData(){
-  // Load leads
+  // Load leads from JSON endpoint (supports all fields)
   try{
-    const r = await fetch(`${BACKEND}/download-leads?key=vetraj2024`);
-    if(r.ok){ const csv=await r.text(); leads=parseCSV(csv); }
+    const r = await fetch(`${BACKEND}/get-leads-json?key=vetraj2024`);
+    if(r.ok){
+      const d = await r.json();
+      const raw = d.leads || d || [];
+      leads = Array.isArray(raw) ? raw.map((l,i) => normalizeLead(l,i)) : [];
+    }
   }catch(e){ leads=[]; }
+
+  // Fallback to CSV if JSON returned empty
+  if(!leads.length){
+    try{
+      const r = await fetch(`${BACKEND}/download-leads?key=vetraj2024`);
+      if(r.ok){ const csv=await r.text(); leads=parseCSV(csv); }
+    }catch(e){}
+  }
 
   // Load appointments
   try{
@@ -957,21 +1136,13 @@ async function loadData(){
     if(r.ok){ const d=await r.json(); if(d.doctors&&d.doctors.length>0){ doctors=d.doctors; localStorage.setItem('vetraj_doctors',JSON.stringify(doctors)); } }
   }catch(e){}
 
-  // Load food chart leads (source=food-chart from save-lead)
-  try {
-    const r = await fetch(`${BACKEND}/download-leads?key=vetraj2024&source=food-chart`);
-    if(r.ok){
-      const csv = await r.text();
-      const allL = parseCSV(csv);
-      foodChartLeads = allL.filter(function(l){
-        var src = (l.source||l.Source||'').toLowerCase();
-        var prob = (l.problem||l.Problem||'').toLowerCase();
-        return src==='food-chart' || src==='foodchart' || 
-               prob.includes('food chart') || 
-               (l.planId&&l.planId!=='');
-      });
-    }
-  } catch(e){ foodChartLeads = []; }
+  // Food chart leads — filter from main leads
+  foodChartLeads = leads.filter(function(l){
+    var src = (l.source||'').toLowerCase();
+    var prob = (l.problem||l.Problem||'').toLowerCase();
+    return src==='food-chart' || src==='foodchart' ||
+           prob.includes('food chart') || (l.planId&&l.planId!=='');
+  });
 
   renderAll();
 }
@@ -1041,12 +1212,24 @@ function renderLeads(data){
     <td style="max-width:100px;font-size:11px;color:#64748b;">${(l.Problem||'—').substring(0,35)}${(l.Problem||'').length>35?'...':''}</td>
     <td style="font-size:11px;">${l.Doctor||'<span style="color:#94a3b8;">Unassigned</span>'}</td>
     <td class="gm">${l.Date||'—'}</td>
-    <td><span class="bdg new">New</span></td>
-    <td>
+    <td class="gm" style="white-space:nowrap;">${l.Time||l.time||'—'}</td>
+    <td><span class="bdg new">${l.funnelStep||'New'}</span></td>
+    <td style="white-space:nowrap;">
       <button class="ab bl" onclick="openAssign(${i})">Assign</button>
       <button class="ab gr" onclick="callNum('${l.Phone}')">📞</button>
+      <button class="ab" style="background:#dc2626;color:#fff;" onclick="deleteLead('${l._id||l.id}',${i})">🗑️</button>
     </td>
   </tr>`).join('');
+}
+
+function deleteLead(id, idx){
+  if(!confirm('Yeh lead delete karein? Yeh wapas nahi aayegi.')) return;
+  fetch(`${BACKEND}/delete-lead`,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({id, key:'vetraj2024'})
+  }).then(r=>r.json()).then(d=>{
+    if(d.success){ leads.splice(idx,1); renderLeads(leads); toast('Lead delete ho gayi'); }
+    else toast('Delete fail hua');
+  }).catch(()=>{ leads.splice(idx,1); renderLeads(leads); });
 }
 
 function filterLeads(){
@@ -1855,6 +2038,8 @@ function showPg(name){
   if(name==='products') loadDashProducts();
   if(name==='apikeys') loadApiKeys();
   if(name==='fcsettings'){ _livePromos=null; renderFCSettings(); }
+  if(name==='funnel') loadFunnel();
+  if(name==='callers') loadCallersData();
 }
 
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
@@ -2269,6 +2454,445 @@ Revenue: ₹${rev.toLocaleString('en-IN')}
   );
   window.open(`https://wa.me/919568606006?text=${msg}`,'_blank');
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// FUNNEL TRACKING
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+const FUNNEL_STEPS = [
+  {key:'landed',      label:'Landed',          icon:'🌐', color:'#64748b'},
+  {key:'otp_verified',label:'OTP Verified',     icon:'✅', color:'#0891b2'},
+  {key:'chat_started',label:'Chat Started',     icon:'💬', color:'#7c3aed'},
+  {key:'chat_complete',label:'Chat Complete',   icon:'📋', color:'#db2777'},
+  {key:'payment_page',label:'Payment Page',     icon:'💳', color:'#f59e0b'},
+  {key:'payment_clicked',label:'Pay Clicked',   icon:'👆', color:'#dc2626'},
+  {key:'payment_done',label:'Payment Done',     icon:'💰', color:'#16a34a'},
+];
+
+let funnelLeads = [];
+let selFunnelLead = null, selCallerForAssign = null;
+
+async function loadFunnel(){
+  try{
+    const r = await fetch(`${BACKEND}/get-leads-json?key=vetraj2024`);
+    if(r.ok){
+      const d = await r.json();
+      funnelLeads = d.leads || [];
+      renderFunnelSteps();
+      renderFunnelLeadsList();
+    }
+  }catch(e){ toast('❌ Funnel data load nahi hua'); }
+}
+
+function renderFunnelSteps(){
+  const el = document.getElementById('funnel-steps');
+  if(!el) return;
+  const total = funnelLeads.length || 1;
+  // Count per step (cumulative — each step also has all previous)
+  const counts = {};
+  FUNNEL_STEPS.forEach(s => counts[s.key] = 0);
+  funnelLeads.forEach(l => {
+    const step = l.funnelStep || 'landed';
+    // Mark all steps up to current step
+    let found = false;
+    for(let i = FUNNEL_STEPS.length-1; i >= 0; i--){
+      if(FUNNEL_STEPS[i].key === step || found){
+        counts[FUNNEL_STEPS[i].key]++;
+        found = true;
+      }
+    }
+    // If step not in list, count as landed
+    if(!found) counts['landed']++;
+  });
+
+  el.innerHTML = FUNNEL_STEPS.map((s,i) => {
+    const cnt = counts[s.key] || 0;
+    const pct = Math.round((cnt/total)*100);
+    const prevCnt = i===0 ? total : (counts[FUNNEL_STEPS[i-1].key]||total);
+    const dropOff = i===0 ? 0 : prevCnt - cnt;
+    const convRate = prevCnt > 0 ? Math.round((cnt/prevCnt)*100) : 0;
+    return `<div class="funnel-step" style="border-left:4px solid ${s.color};">
+      <div class="fs-icon">${s.icon}</div>
+      <div class="fs-info">
+        <div class="fs-label">${s.label}</div>
+        <div class="fs-count" style="color:${s.color};">${cnt}</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:2px;">
+          <span class="fs-rate">${pct}% of total</span>
+          ${i>0?`<span class="fs-rate" style="color:${dropOff>0?'var(--red)':'var(--green)'};">
+            ${dropOff>0?'▼ '+dropOff+' drop-off':''}
+          </span><span class="fs-rate" style="color:${convRate<50?'var(--red)':convRate<80?'var(--gold)':'var(--green)'};">
+            ${convRate}% conversion
+          </span>`:''}
+        </div>
+        <div class="fs-bar-wrap"><div class="fs-bar" style="width:${pct}%;background:${s.color};"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderFunnelLeadsList(){
+  const el = document.getElementById('funnel-leads-list');
+  if(!el) return;
+  if(!funnelLeads.length){
+    el.innerHTML='<div class="empty"><div class="empty-i">📊</div><div>Koi lead nahi abhi</div></div>';
+    return;
+  }
+  const stepColors = {};
+  FUNNEL_STEPS.forEach(s => stepColors[s.key] = s.color);
+
+  el.innerHTML = [...funnelLeads].reverse().slice(0,50).map((l,i) => {
+    const step = l.funnelStep || 'landed';
+    const color = stepColors[step] || '#64748b';
+    const events = l.funnelEvents || [];
+    return `<div onclick="showLeadTimeline('${l._id||i}')" style="display:flex;align-items:center;gap:10px;padding:10px 8px;border-bottom:1px solid #f1f5f9;cursor:pointer;border-radius:8px;margin-bottom:2px;"
+            onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+      <div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:700;color:var(--navy);">${l.ownerName||'—'} — ${l.petName||'—'}</div>
+        <div style="font-size:10px;color:var(--muted);">${l.ownerPhone||''} | ${l.petType||''}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <span style="background:${color}22;color:${color};font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;">${step.replace('_',' ')}</span>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">${events.length} events</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showLeadTimeline(idOrIdx){
+  // Find lead by _id or by index
+  let lead = funnelLeads.find(l => (l._id||'') === idOrIdx);
+  if(!lead){
+    // idOrIdx is numeric index from reversed slice
+    const idx = parseInt(idOrIdx);
+    const reversed = [...funnelLeads].reverse();
+    lead = reversed[idx];
+  }
+  if(!lead) return;
+
+  const det = document.getElementById('funnel-lead-detail');
+  const title = document.getElementById('fld-title');
+  const tl = document.getElementById('fld-timeline');
+
+  title.textContent = `📋 ${lead.ownerName||'—'} — ${lead.petName||'—'} (${lead.ownerPhone||''})`;
+
+  const stepColors = {};
+  FUNNEL_STEPS.forEach(s => stepColors[s.key] = s.color);
+
+  const events = lead.funnelEvents || [];
+  if(!events.length){
+    tl.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:10px;">Koi event nahi — funnel tracking recent leads mein hoga</div>';
+  } else {
+    tl.innerHTML = events.map(e => {
+      const color = stepColors[e.step] || '#64748b';
+      const ts = e.ts ? new Date(e.ts).toLocaleString('en-IN') : '—';
+      return `<div class="tl-row">
+        <div class="tl-dot" style="background:${color};"></div>
+        <div class="tl-info">
+          <div class="tl-step">${e.step.replace(/_/g,' ').toUpperCase()}</div>
+          <div class="tl-time">${ts}</div>
+          ${e.meta?`<div class="tl-meta">${e.meta}</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  det.style.display = 'block';
+  det.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// TELECALLER MANAGEMENT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+let callersList = [];
+let callerLeadsAll = [];
+let selCallerAssignLeadId = null;
+
+async function loadCallersData(){
+  try{
+    const [r1, r2] = await Promise.all([
+      fetch(`${BACKEND}/get-telecallers?key=vetraj2024`),
+      fetch(`${BACKEND}/get-leads-json?key=vetraj2024`)
+    ]);
+    if(r1.ok){ const d=await r1.json(); callersList = d.telecallers || []; }
+    if(r2.ok){ const d=await r2.json(); callerLeadsAll = d.leads || []; }
+    renderCallerCards();
+    renderAssignLeads();
+  }catch(e){ toast('❌ Callers data load nahi hua'); }
+}
+
+function renderCallerCards(){
+  const el = document.getElementById('callers-grid');
+  if(!el) return;
+  if(!callersList.length){
+    el.innerHTML = '<div class="empty"><div class="empty-i">👥</div><div>Koi telecaller nahi — Add karein!</div></div>';
+    return;
+  }
+  el.innerHTML = callersList.map(c => {
+    const myLeads = callerLeadsAll.filter(l => (l.assignedTo||'') === c.name);
+    const booked = myLeads.filter(l => (l.callerStatus||'') === 'booked').length;
+    const called = myLeads.filter(l => ['called','interested','follow_up','booked'].includes(l.callerStatus||'')).length;
+    return `<div class="caller-card">
+      <div class="caller-av">${c.name.charAt(0).toUpperCase()}</div>
+      <div class="caller-info">
+        <div class="caller-name">${c.name}</div>
+        <div class="caller-ph">📞 ${c.phone} &nbsp;|&nbsp; 🔑 ${c.password||'caller123'}</div>
+        <div class="caller-ph">🔗 Panel: <a href="/caller.html" target="_blank" style="color:var(--blue);">localhost:3000/caller.html</a></div>
+        <div class="caller-stats">${myLeads.length} assigned &nbsp;•&nbsp; ${called} called &nbsp;•&nbsp; ${booked} booked</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
+        <button class="ab bl" onclick="viewCallerLeads('${c.name}')">👁 View</button>
+        <button class="ab rd" onclick="deleteCaller('${c.name}')">🗑 Del</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Performance Panel
+  const perf = document.getElementById('perf-grid');
+  if(perf){
+    if(!callersList.length){ perf.innerHTML=''; return; }
+    perf.innerHTML = callersList.map(c=>{
+      const ml = callerLeadsAll.filter(l=>(l.assignedTo||'')===c.name);
+      const total = ml.length;
+      const pending = ml.filter(l=>!l.callerStatus||l.callerStatus==='pending').length;
+      const called = ml.filter(l=>l.callerStatus==='called').length;
+      const interested = ml.filter(l=>l.callerStatus==='interested'||l.callerStatus==='follow_up').length;
+      const booked = ml.filter(l=>l.callerStatus==='booked').length;
+      const notInt = ml.filter(l=>l.callerStatus==='not_interested').length;
+      const manualLeads = ml.filter(l=>l.source==='manual_call').length;
+      const conv = total>0?Math.round((booked/total)*100):0;
+      const barW = conv+'%';
+      return `<div style="background:#fff;border-radius:12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#1a5a8a,#2980b9);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;">${c.name.charAt(0).toUpperCase()}</div>
+          <div>
+            <div style="font-weight:800;font-size:14px;color:var(--navy);">${c.name}</div>
+            <div style="font-size:11px;color:var(--muted);">📞 ${c.phone}</div>
+          </div>
+          <div style="margin-left:auto;text-align:right;">
+            <div style="font-size:20px;font-weight:800;color:${conv>=20?'#16a34a':conv>=10?'#d97706':'#dc2626'};">${conv}%</div>
+            <div style="font-size:10px;color:var(--muted);">Conversion</div>
+          </div>
+        </div>
+        <div style="background:#f1f5f9;border-radius:6px;height:6px;margin-bottom:10px;overflow:hidden;">
+          <div style="height:100%;background:linear-gradient(90deg,#16a34a,#4ade80);width:${barW};transition:width .5s;"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;text-align:center;margin-bottom:8px;">
+          <div style="background:#fef9c3;border-radius:7px;padding:6px 4px;"><div style="font-size:16px;font-weight:800;color:#92400e;">${total}</div><div style="font-size:9px;color:#78350f;">Total</div></div>
+          <div style="background:#fef3c7;border-radius:7px;padding:6px 4px;"><div style="font-size:16px;font-weight:800;color:#d97706;">${pending}</div><div style="font-size:9px;color:#92400e;">Pending</div></div>
+          <div style="background:#dbeafe;border-radius:7px;padding:6px 4px;"><div style="font-size:16px;font-weight:800;color:#1d4ed8;">${called}</div><div style="font-size:9px;color:#1e40af;">Called</div></div>
+          <div style="background:#d1fae5;border-radius:7px;padding:6px 4px;"><div style="font-size:16px;font-weight:800;color:#065f46;">${interested}</div><div style="font-size:9px;color:#065f46;">Interested</div></div>
+          <div style="background:#bbf7d0;border-radius:7px;padding:6px 4px;"><div style="font-size:16px;font-weight:800;color:#14532d;">${booked}</div><div style="font-size:9px;color:#14532d;">Booked</div></div>
+          <div style="background:#e0f2fe;border-radius:7px;padding:6px 4px;"><div style="font-size:16px;font-weight:800;color:#0369a1;">${manualLeads}</div><div style="font-size:9px;color:#0369a1;">Manual</div></div>
+        </div>
+        ${(()=>{
+          const now = new Date();
+          const fuLeads = ml.filter(l=>l.followUpDate&&!l.followUpDone&&!['booked','not_interested'].includes(l.callerStatus||''));
+          const overdue = fuLeads.filter(l=>new Date(l.followUpDate)<now);
+          const upcoming = fuLeads.filter(l=>new Date(l.followUpDate)>=now);
+          const fuDone = ml.filter(l=>l.followUpDone).length;
+          if(!fuLeads.length&&!fuDone) return '';
+          return `<div style="border-top:1px solid #f1f5f9;padding-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            <span style="font-size:10px;font-weight:800;color:#475569;">FOLLOW-UPS:</span>
+            ${overdue.length?`<span style="background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;animation:pulse 1s infinite;">🔴 ${overdue.length} OVERDUE</span>`:''}
+            ${upcoming.length?`<span style="background:#fef3c7;color:#d97706;font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;">⏰ ${upcoming.length} Upcoming</span>`:''}
+            ${fuDone?`<span style="background:#d1fae5;color:#065f46;font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;">✅ ${fuDone} Done</span>`:''}
+            ${!fuLeads.length?`<span style="background:#f0fdf4;color:#16a34a;font-size:11px;padding:2px 8px;border-radius:8px;">Sab clear ✓</span>`:''}
+          </div>`;
+        })()}
+      </div>`;
+    }).join('');
+  }
+
+  // Activity Log
+  const actLog = document.getElementById('activity-log');
+  if(actLog){
+    const recentActivity = callerLeadsAll
+      .filter(l=>l.assignedTo && l.callerStatus && l.callerStatus!=='pending')
+      .sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))
+      .slice(0,15);
+    if(!recentActivity.length){
+      actLog.innerHTML='<div style="color:#94a3b8;font-style:italic;">Koi activity nahi abhi</div>';
+    } else {
+      actLog.innerHTML = recentActivity.map(l=>{
+        const sColor={called:'#3b82f6',interested:'#10b981',booked:'#16a34a',not_interested:'#94a3b8',follow_up:'#8b5cf6'}[l.callerStatus]||'#f59e0b';
+        return `<div style="padding:5px 0;border-bottom:1px solid #f1f5f9;display:flex;gap:8px;align-items:center;">
+          <span style="width:8px;height:8px;border-radius:50%;background:${sColor};flex-shrink:0;display:inline-block;"></span>
+          <span style="font-weight:600;color:#0f172a;">${l.assignedTo}</span>
+          <span style="color:#94a3b8;">→</span>
+          <span style="color:#0f172a;">${l.ownerName||'—'} (${l.petName||'—'})</span>
+          <span style="margin-left:auto;background:${sColor}22;color:${sColor};padding:1px 7px;border-radius:8px;font-size:10px;font-weight:700;">${(l.callerStatus||'').replace('_',' ')}</span>
+        </div>`;
+      }).join('');
+    }
+  }
+}
+
+function renderAssignLeads(){
+  const tbody = document.getElementById('assign-leads-tbody');
+  if(!tbody) return;
+  if(!callerLeadsAll.length){
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#94a3b8;">Koi lead nahi</td></tr>';
+    return;
+  }
+  const stepColors = {};
+  FUNNEL_STEPS.forEach(s => stepColors[s.key] = s.color);
+
+  tbody.innerHTML = [...callerLeadsAll].reverse().slice(0,80).map((l,i) => {
+    const step = l.funnelStep || 'landed';
+    const color = stepColors[step] || '#64748b';
+    const cStatus = l.callerStatus || 'pending';
+    const statusColor = cStatus==='booked'?'var(--green)':cStatus==='called'?'var(--teal)':cStatus==='no_answer'?'var(--red)':'var(--gold)';
+    return `<tr>
+      <td class="gm">${i+1}</td>
+      <td class="bw">${l.ownerName||'—'}</td>
+      <td><a href="tel:${l.ownerPhone}" style="color:var(--blue);font-weight:700;">📞 ${l.ownerPhone||'—'}</a></td>
+      <td class="bc">${l.petName||'—'} <span class="gm">(${l.petType||''})</span></td>
+      <td><span style="background:${color}22;color:${color};font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;">${step.replace(/_/g,' ')}</span></td>
+      <td style="font-size:11px;">${l.assignedTo||'<span style="color:#94a3b8;">Unassigned</span>'}</td>
+      <td>
+        <select onchange="updateLeadCallerStatus('${l._id}',this.value)" style="font-size:10px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;font-family:'Poppins',sans-serif;color:${statusColor};">
+          <option value="pending" ${cStatus==='pending'?'selected':''}>⏳ Pending</option>
+          <option value="called" ${cStatus==='called'?'selected':''}>📞 Called</option>
+          <option value="no_answer" ${cStatus==='no_answer'?'selected':''}>❌ No Answer</option>
+          <option value="interested" ${cStatus==='interested'?'selected':''}>✅ Interested</option>
+          <option value="booked" ${cStatus==='booked'?'selected':''}>🎉 Booked</option>
+          <option value="not_interested" ${cStatus==='not_interested'?'selected':''}>🚫 Not Interest</option>
+        </select>
+      </td>
+      <td>
+        <button class="ab pp" onclick="openCallerAssign('${l._id}')">Assign</button>
+        <button class="ab gr" onclick="callNum('${l.ownerPhone}')">📞</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openAddCaller(){
+  document.getElementById('add-caller-form').style.display = 'block';
+  document.getElementById('new-caller-name').value = '';
+  document.getElementById('new-caller-phone').value = '';
+  document.getElementById('new-caller-pass').value = '';
+  document.getElementById('add-caller-form').scrollIntoView({behavior:'smooth'});
+}
+
+async function saveCaller(){
+  const name = document.getElementById('new-caller-name').value.trim();
+  const phone = document.getElementById('new-caller-phone').value.trim();
+  const password = document.getElementById('new-caller-pass').value.trim() || 'caller123';
+  if(!name){toast('⚠️ Naam zaroori hai');return;}
+  if(phone.length < 10){toast('⚠️ Sahi phone number daalo');return;}
+  try{
+    const r = await fetch(`${BACKEND}/save-telecaller?key=vetraj2024`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,phone,password})
+    });
+    const d = await r.json();
+    if(d.success){
+      toast('✅ Caller add ho gaya!');
+      document.getElementById('add-caller-form').style.display = 'none';
+      await loadCallersData();
+    } else {
+      toast('❌ Save nahi hua — ' + (d.error||'Server error'));
+    }
+  }catch(e){ toast('❌ Server error'); }
+}
+
+async function deleteCaller(name){
+  if(!confirm(`"${name}" ko remove karein?`)) return;
+  try{
+    const r = await fetch(`${BACKEND}/delete-telecaller?key=vetraj2024`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name})
+    });
+    toast('🗑 Caller removed');
+    await loadCallersData();
+  }catch(e){ toast('❌ Error'); }
+}
+
+function viewCallerLeads(name){
+  const myLeads = callerLeadsAll.filter(l => (l.assignedTo||'') === name);
+  if(!myLeads.length){ toast(`${name} ke paas koi lead nahi abhi`); return; }
+  alert(`${name} — Assigned Leads (${myLeads.length}):\n\n${myLeads.map(l=>`${l.ownerName||'—'} | ${l.ownerPhone||''} | ${l.petName||''} | Status: ${l.callerStatus||'pending'}`).join('\n')}`);
+}
+
+function openCallerAssign(leadId){
+  selCallerAssignLeadId = leadId;
+  selCallerForAssign = null;
+  const list = document.getElementById('caller-list-modal');
+  if(!callersList.length){
+    list.innerHTML = '<div style="color:var(--muted);padding:10px;text-align:center;">Koi caller nahi — pehle callers mein add karein</div>';
+  } else {
+    list.innerHTML = callersList.map(c => `<div class="mc-item" onclick="selectCallerModal(this,'${c.name}')">
+      <div style="flex:1;">
+        <div class="mc-nm">${c.name}</div>
+        <div class="mc-sl">${callerLeadsAll.filter(l=>l.assignedTo===c.name).length} leads assigned</div>
+      </div>
+    </div>`).join('');
+  }
+  document.getElementById('caller-assign-modal').classList.add('show');
+}
+
+function selectCallerModal(el, name){
+  document.querySelectorAll('#caller-list-modal .mc-item').forEach(d=>d.classList.remove('on'));
+  el.classList.add('on');
+  selCallerForAssign = name;
+}
+
+async function confirmCallerAssign(){
+  if(!selCallerForAssign){toast('⚠️ Caller select karein');return;}
+  if(!selCallerAssignLeadId){toast('⚠️ Lead ID missing');return;}
+  try{
+    const r = await fetch(`${BACKEND}/assign-lead?key=vetraj2024`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({leadId:selCallerAssignLeadId, callerName:selCallerForAssign})
+    });
+    const d = await r.json();
+    if(d.success){
+      toast(`✅ Lead assign ho gayi — ${selCallerForAssign}`);
+      closeModal('caller-assign-modal');
+      await loadCallersData();
+    } else {
+      toast('❌ Assign nahi hua');
+    }
+  }catch(e){ toast('❌ Server error'); }
+}
+
+async function updateLeadCallerStatus(leadId, status){
+  if(!leadId || leadId === 'undefined') return;
+  try{
+    await fetch(`${BACKEND}/update-caller-status?key=vetraj2024`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({leadId, callerStatus:status})
+    });
+    toast(`✅ Status: ${status}`);
+    // Update local data
+    const lead = callerLeadsAll.find(l=>l._id===leadId);
+    if(lead) lead.callerStatus = status;
+  }catch(e){ toast('❌ Update nahi hua'); }
+}
+
+async function autoAssignLeads(){
+  if(!callersList.length){toast('⚠️ Pehle callers add karein');return;}
+  const unassigned = callerLeadsAll.filter(l => !l.assignedTo);
+  if(!unassigned.length){toast('✅ Sab leads already assigned hain');return;}
+  let assigned = 0;
+  for(let i=0;i<unassigned.length;i++){
+    const caller = callersList[i % callersList.length];
+    try{
+      await fetch(`${BACKEND}/assign-lead?key=vetraj2024`,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({leadId:unassigned[i]._id, callerName:caller.name})
+      });
+      assigned++;
+    }catch(e){}
+  }
+  toast(`✅ ${assigned} leads auto-assigned!`);
+  await loadCallersData();
+}
+
+
 </script>
 </body>
 </html>
