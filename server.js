@@ -701,6 +701,19 @@ const REPORTS_DIR = path.join(__dirname, "public", "reports");
 if (!fs.existsSync(REPORTS_DIR)) fs.mkdirSync(REPORTS_DIR, { recursive: true });
 const LOGO_PATH = path.join(__dirname, "public", "vetraj_logo.png");
 
+// Pre-load logo as Buffer so PDFKit never fails on Windows path issues
+let LOGO_BUF = null;
+try {
+  if (fs.existsSync(LOGO_PATH)) {
+    LOGO_BUF = fs.readFileSync(LOGO_PATH);
+    console.log(`[PDF] Logo loaded: ${LOGO_BUF.length} bytes`);
+  } else {
+    console.warn("[PDF] Logo file NOT found at:", LOGO_PATH);
+  }
+} catch(e) {
+  console.error("[PDF] Logo load error:", e.message);
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // SHARED PDF ENGINE — Professional Vetraj Report
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -785,12 +798,13 @@ function buildVetrajReport(doc, { reportId, ownerName, ownerPhone, petName, petT
   // ━━ HEADER: navy bar, white logo box on left, title on right ━━
   doc.rect(0, 0, W, 80).fill(navy);
 
-  // White logo box (rounded look via filled rect)
-  doc.rect(12, 8, 150, 64).fill("#ffffff");
-
-  // Logo image inside white box
-  if (fs.existsSync(LOGO_PATH)) {
-    try { doc.image(LOGO_PATH, 16, 10, { height: 60 }); } catch(e) {}
+  // Logo directly on navy header — no white box
+  if (LOGO_BUF) {
+    try {
+      doc.image(LOGO_BUF, 14, 8, { height: 64 });
+    } catch(e) {
+      console.error("[PDF] Logo draw error:", e.message);
+    }
   }
 
   // "Pet Health Report" title right side
@@ -1088,7 +1102,7 @@ app.get("/get-report", (req, res) => {
 });
 
 app.get("/generate-lead-report", async (req, res) => {
-  const { phone, leadId, key } = req.query;
+  const { phone, leadId, key, force } = req.query;
   if (key !== (process.env.ADMIN_KEY || "vetraj2024")) return res.json({ success: false, error: "unauthorized" });
 
   let lead = null;
@@ -1101,7 +1115,8 @@ app.get("/generate-lead-report", async (req, res) => {
     } catch(e) {}
   }
   if (!lead) return res.json({ success: false, error: "lead not found" });
-  if (lead.reportUrl) return res.json({ success: true, url: lead.reportUrl });
+  // Return cached URL unless force=1 is passed
+  if (lead.reportUrl && force !== "1") return res.json({ success: true, url: lead.reportUrl });
 
   try {
     const { ownerName, ownerPhone, petName, petType, petAge, petBreed, doctorName, problem } = lead;
