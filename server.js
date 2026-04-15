@@ -591,8 +591,8 @@ app.post("/send-otp", async (req, res) => {
     const last10 = cleaned.length > 10 ? cleaned.slice(-10) : cleaned;
     const fullPhone = "+91" + last10;
 
-    // Generate 4-digit OTP (otp_report template expects 4-digit)
-    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expires = Date.now() + 10 * 60 * 1000;
     otpStore.set(last10, { otp, expires });
     setTimeout(() => otpStore.delete(last10), 10 * 60 * 1000);
