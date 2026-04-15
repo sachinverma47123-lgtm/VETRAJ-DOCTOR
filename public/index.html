@@ -1089,13 +1089,17 @@ async function showCheckupComplete(){
   docMsg(`Deworming, vaccination, coat, activity — sab mila ke [RED:${pName} ko abhi seedha doctor ki attention chahiye].\n\nMain ${pName} ke liye personally guide karna chahta hun — isliye mujhse seedha baat karo. 🩺`);
 
   trackFunnel("chat_complete","pet:"+pName+"|danger:"+dangerCount);
-  // Generate PDF + send WhatsApp (background — don't wait long)
-  sendReport();
+
+  // Show "generating" message first
   await sleep(600);
+  docMsg(`⏳ ${pName} ki Health Report tayaar ho rahi hai...`);
 
-  docMsg(`📄 [GREEN:${pName} ki Health Report tayaar ho gayi hai!]\n\nReport aapke WhatsApp pe bhej di gayi hai — check karo.`);
+  // Await sendReport so PDF is generated before showing "sent"
+  await sendReport();
 
-  await sleep(5000);
+  docMsg(`📄 [GREEN:${pName} ki Health Report tayaar ho gayi hai!]\n\nReport aapke WhatsApp pe bhej di gayi hai — check karo. ✅`);
+
+  await sleep(4000);
   showPay();
 }
 
@@ -1221,14 +1225,16 @@ function bookNow(){
     body:JSON.stringify({phone:oPhone,consultationType:"paid"})
   }).catch(()=>{});
 
-  // Open Razorpay payment
-  if(rzpConfig.configured && window.Razorpay){
-    openRazorpay();
-  } else {
-    const params = new URLSearchParams({name:oName||'',phone:oPhone||'',pet:pName||'',problem:''});
-    window.open(`/booking.html?${params.toString()}`, '_blank');
-  }
-  docMsg(`Bahut badhiya! 🎉\n\n<span class="hi">${oName}</span> ji — ₹399 payment karein aur <b>${doc.name}</b> se seedha baat karein.\n\nSawaal? 📞 <b>${HELPLINE}</b> 🙏`);
+  docMsg(`Bahut badhiya! 🎉\n\n<span class="hi">${oName}</span> ji — slot select karein aur ₹399 payment karein.\n<b>${doc.name}</b> se seedha baat hogi! 🩺`);
+
+  // Always go to booking.html first — slot picker → then payment
+  setTimeout(()=>{
+    const params = new URLSearchParams({
+      name: oName||'', phone: oPhone||'', pet: pName||'',
+      type: pType||'', doctor: doc.name||'', problem: ''
+    });
+    window.location.href = `/booking.html?${params.toString()}`;
+  }, 1500);
 }
 
 async function openRazorpay(){

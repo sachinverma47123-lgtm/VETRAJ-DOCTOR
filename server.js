@@ -683,14 +683,23 @@ app.post("/send-report", async (req, res) => {
     const last10 = phone.replace(/\D/g, "").slice(-10);
     const fullPhone = "+91" + last10;
 
-    // Save summary + report URL to latest lead
-    try {
-      await Lead.findOneAndUpdate(
-        { ownerPhone: last10 },
-        { $set: { chatSummary: chatSummary || "", reportSent: true, reportUrl: reportUrl || "" } },
-        { sort: { createdAt: -1 } }
-      );
-    } catch (e) { console.error("Lead update error:", e.message); }
+    // Save summary + report URL to latest lead (memory + DB)
+    const idx = memLeads.findIndex(l => l.ownerPhone === last10);
+    if (idx >= 0) {
+      memLeads[idx].chatSummary = chatSummary || "";
+      memLeads[idx].reportSent = true;
+      if (reportUrl) memLeads[idx].reportUrl = reportUrl;
+      persistLeads();
+    }
+    if (DB_READY) {
+      try {
+        await Lead.findOneAndUpdate(
+          { ownerPhone: last10 },
+          { $set: { chatSummary: chatSummary || "", reportSent: true, reportUrl: reportUrl || "" } },
+          { sort: { createdAt: -1 } }
+        );
+      } catch (e) { console.error("Lead update error:", e.message); }
+    }
 
     // Send via Akashvanni — include PDF URL in message
     const AKASHVANNI_USER = process.env.AKASHVANNI_USER_ID || "69b44da471e857cddf164d22";
