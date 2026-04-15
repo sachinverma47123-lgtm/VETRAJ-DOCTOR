@@ -591,25 +591,46 @@ app.post("/send-otp", async (req, res) => {
     const last10 = cleaned.length > 10 ? cleaned.slice(-10) : cleaned;
     const fullPhone = "+91" + last10;
 
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    // Generate 4-digit OTP (otp_report template expects 4-digit)
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    const expires = Date.now() + 10 * 60 * 1000;
     otpStore.set(last10, { otp, expires });
-
-    // Auto-cleanup after expiry
     setTimeout(() => otpStore.delete(last10), 10 * 60 * 1000);
 
-    // Send via Akashvanni WhatsApp API
     const AKASHVANNI_USER = process.env.AKASHVANNI_USER_ID || "69b44da471e857cddf164d22";
-    const apiUrl = `https://app.akashvanni.com/api/service/create-lead?user_id=${AKASHVANNI_USER}&template_name=otp_verification&phone=${encodeURIComponent(fullPhone)}&customer_name=Customer&otp=${otp}&source=vetraj_otp`;
+    const AKASHVANNI_KEY = process.env.AKASHVANNI_API_KEY || "AIzaSyClzfrOzB818x55FASHvX4JuGQciR9lv7q";
 
-    https.get(apiUrl, (r) => {
+    const payload = JSON.stringify({
+      user_id: AKASHVANNI_USER,
+      to: fullPhone,
+      type: "template",
+      template_name: "otp_report",
+      components: { body: { params: [otp] } },
+      message_type: "authentication"
+    });
+
+    const options = {
+      hostname: "app.akashvanni.com",
+      port: 443,
+      path: "/api/service/whatsapp/send",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(payload),
+        "X-Service-API-Key": AKASHVANNI_KEY
+      }
+    };
+
+    const r = https.request(options, (resp) => {
       let data = "";
-      r.on("data", c => data += c);
-      r.on("end", () => console.log(`OTP sent to ${fullPhone} via Akashvanni: ${r.statusCode}`));
-    }).on("error", e => console.error("OTP Akashvanni error:", e.message));
+      resp.on("data", c => data += c);
+      resp.on("end", () => console.log(`OTP sent to ${fullPhone}: ${resp.statusCode} ${data.substring(0,100)}`));
+    });
+    r.on("error", e => console.error("OTP API error:", e.message));
+    r.write(payload);
+    r.end();
 
-    console.log(`[OTP] ${fullPhone} → ${otp}`); // Log for admin visibility
+    console.log(`[OTP] ${fullPhone} → ${otp}`);
     res.json({ success: true, message: "OTP sent to WhatsApp" });
   } catch (e) {
     console.error("send-otp error:", e.message);
