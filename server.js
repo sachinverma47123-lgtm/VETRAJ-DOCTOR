@@ -701,18 +701,56 @@ app.post("/send-report", async (req, res) => {
       } catch (e) { console.error("Lead update error:", e.message); }
     }
 
-    // Send via Akashvanni — include PDF URL in message
+    // Send PDF report via Akashvanni WhatsApp template API
     const AKASHVANNI_USER = process.env.AKASHVANNI_USER_ID || "69b44da471e857cddf164d22";
-    const customerName = encodeURIComponent(ownerName || "Customer");
-    const pet = encodeURIComponent(petName || "");
-    const rUrl = encodeURIComponent(reportUrl || "");
-    const apiUrl = `https://app.akashvanni.com/api/service/create-lead?user_id=${AKASHVANNI_USER}&template_name=health_report&phone=${encodeURIComponent(fullPhone)}&customer_name=${customerName}&pet_name=${pet}&report_url=${rUrl}&source=vetraj_report`;
+    const AKASHVANNI_KEY = process.env.AKASHVANNI_API_KEY || "AIzaSyClzfrOzB818x55FASHvX4JuGQciR9lv7q";
+    const customerName = ownerName || "Customer";
+    const fileName = reportUrl ? reportUrl.split("/").pop() : `pet_report_${Date.now()}.pdf`;
 
-    https.get(apiUrl, (r) => {
+    const payload = JSON.stringify({
+      user_id: AKASHVANNI_USER,
+      to: fullPhone,
+      type: "template",
+      template_name: "order_report_2",
+      components: {
+        body: {
+          params: [
+            customerName,
+            "Aapke pet ki health report ready hai. Doctor consultation yahan click karke book karein 👇"
+          ]
+        },
+        header: {
+          type: "document",
+          document: {
+            link: reportUrl || "",
+            filename: fileName
+          }
+        }
+      },
+      message_type: "utility",
+      contact_name: customerName
+    });
+
+    const options = {
+      hostname: "app.akashvanni.com",
+      port: 443,
+      path: "/api/service/whatsapp/send",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(payload),
+        "X-Service-API-Key": AKASHVANNI_KEY
+      }
+    };
+
+    const r = https.request(options, (resp) => {
       let data = "";
-      r.on("data", c => data += c);
-      r.on("end", () => console.log(`Report sent to ${fullPhone}: ${r.statusCode}`));
-    }).on("error", e => console.error("Report send error:", e.message));
+      resp.on("data", c => data += c);
+      resp.on("end", () => console.log(`Report sent to ${fullPhone}: ${resp.statusCode} ${data.substring(0,150)}`));
+    });
+    r.on("error", e => console.error("Report API error:", e.message));
+    r.write(payload);
+    r.end();
 
     console.log(`[REPORT] Sent to ${fullPhone} for pet: ${petName} | PDF: ${reportUrl || "none"}`);
     res.json({ success: true, reportUrl: reportUrl || "" });
